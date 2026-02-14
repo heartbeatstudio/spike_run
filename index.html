@@ -80,6 +80,22 @@
     <h2 class="game-font text-3xl text-yellow-400 mb-4">🏆 YOU WIN! 🏆</h2>
     <p class="game-font text-sm text-gray-300 mb-2">All levels completed!</p>
     <p class="game-font text-xs text-gray-500 mb-8">Total Deaths: <span id="final-deaths" class="text-red-400">0</span></p><button id="restart-btn" class="game-font text-sm bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white px-8 py-4 rounded-lg">PLAY AGAIN</button>
+   </div><!-- Secret Level Select -->
+   <div id="level-select" class="absolute inset-0 flex-col items-center justify-center bg-black/95 z-50 hidden">
+    <h2 class="game-font text-2xl text-cyan-400 mb-8">LEVEL SELECT</h2>
+    <div class="grid grid-cols-5 gap-4 mb-8">
+     <button class="level-select-btn game-font text-sm bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105" data-level="0">1</button>
+     <button class="level-select-btn game-font text-sm bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105" data-level="1">2</button>
+     <button class="level-select-btn game-font text-sm bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105" data-level="2">3</button>
+     <button class="level-select-btn game-font text-sm bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105" data-level="3">4</button>
+     <button class="level-select-btn game-font text-sm bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105" data-level="4">5</button>
+     <button class="level-select-btn game-font text-sm bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105" data-level="5">6</button>
+     <button class="level-select-btn game-font text-sm bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105" data-level="6">7</button>
+     <button class="level-select-btn game-font text-sm bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105" data-level="7">8</button>
+     <button class="level-select-btn game-font text-sm bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105" data-level="8">9</button>
+     <button class="level-select-btn game-font text-sm bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105" data-level="9">10</button>
+    </div>
+    <button id="close-level-select" class="game-font text-xs text-gray-500 hover:text-gray-300">ESC TO CLOSE</button>
    </div>
   </div>
   <script>
@@ -98,6 +114,11 @@
     let player = {};
     let keys = {};
     let cameraX = 0;
+
+    // Secret code detection for level select
+    let secretCode = '';
+    const SECRET_TRIGGER = 'debug';
+    let secretTimeout = null;
 
     // Audio Manager - Retro Chiptune Sound System
     const AudioManager = {
@@ -565,6 +586,265 @@
           { x: 31, y: 19, width: 2, moveX: 0, moveY: -8, speed: 0.012 },
           { x: 55, y: 16, width: 3, moveX: 0, moveY: -4, speed: 0.018 }
         ]
+      },
+      // Level 6 - Vertical Gauntlet
+      {
+        width: 45,
+        height: 24,
+        playerStart: { x: 2, y: 21 },
+        tiles: [
+          // Starting area
+          ...Array(5).fill().map((_, i) => ({ x: i, y: 23, type: 1 })),
+          // Spike pit
+          ...Array(8).fill().map((_, i) => ({ x: 5 + i, y: 23, type: 2 })),
+          // Vertical ascent
+          { x: 6, y: 20, type: 1 },
+          { x: 9, y: 17, type: 1 },
+          { x: 12, y: 14, type: 1 },
+          // Enemy section
+          { x: 15, y: 12, type: 1 }, { x: 16, y: 12, type: 1 },
+          { x: 15, y: 11, type: 3 },
+          // Narrow shaft with spike walls
+          { x: 16, y: 10, type: 2 }, { x: 17, y: 10, type: 2 },
+          { x: 16, y: 9, type: 2 }, { x: 17, y: 9, type: 2 },
+          { x: 16, y: 8, type: 2 }, { x: 17, y: 8, type: 2 },
+          { x: 14, y: 9, type: 1 }, { x: 15, y: 9, type: 1 },
+          { x: 14, y: 7, type: 1 }, { x: 15, y: 7, type: 1 },
+          // Mid-level plateau
+          { x: 18, y: 6, type: 1 }, { x: 19, y: 6, type: 1 }, { x: 20, y: 6, type: 1 }, { x: 21, y: 6, type: 1 },
+          // Boost section
+          { x: 20, y: 5, type: 4 },
+          // Upper challenge
+          { x: 25, y: 3, type: 1 },
+          { x: 26, y: 10, type: 3 },
+          { x: 27, y: 10, type: 1 },
+          { x: 30, y: 8, type: 3 },
+          // Final descent
+          { x: 35, y: 6, type: 1 },
+          { x: 38, y: 10, type: 1 },
+          { x: 40, y: 15, type: 1 },
+          // Goal platform
+          { x: 42, y: 18, type: 1 }, { x: 43, y: 18, type: 1 },
+          { x: 43, y: 17, type: 5 },
+        ],
+        movingPlatforms: [
+          { x: 10, y: 18, width: 2, moveX: 0, moveY: -6, speed: 0.015 },
+          { x: 28, y: 12, width: 2, moveX: 3, moveY: -3, speed: 0.018 }
+        ]
+      },
+      // Level 7 - Enemy Swarm
+      {
+        width: 68,
+        height: 18,
+        playerStart: { x: 2, y: 15 },
+        tiles: [
+          // Starting zone
+          ...Array(8).fill().map((_, i) => ({ x: i, y: 17, type: 1 })),
+          // First enemy cluster
+          ...Array(9).fill().map((_, i) => ({ x: 10 + i, y: 17, type: 1 })),
+          { x: 11, y: 16, type: 3 },
+          { x: 14, y: 16, type: 3 },
+          { x: 17, y: 16, type: 3 },
+          // Spike gap
+          { x: 19, y: 17, type: 2 }, { x: 20, y: 17, type: 2 }, { x: 21, y: 17, type: 2 },
+          // Elevated enemy zone
+          ...Array(9).fill().map((_, i) => ({ x: 24 + i, y: 14, type: 1 })),
+          { x: 25, y: 13, type: 3 },
+          { x: 27, y: 13, type: 3 },
+          { x: 29, y: 13, type: 3 },
+          { x: 31, y: 13, type: 3 },
+          // Boost escape
+          { x: 33, y: 13, type: 4 },
+          // Upper path
+          ...Array(5).fill().map((_, i) => ({ x: 38 + i, y: 10, type: 1 })),
+          { x: 40, y: 9, type: 3 },
+          // Spike corridor
+          { x: 45, y: 10, type: 2 }, { x: 46, y: 10, type: 2 },
+          { x: 52, y: 17, type: 2 }, { x: 53, y: 17, type: 2 }, { x: 54, y: 17, type: 2 },
+          // Final stretch
+          ...Array(9).fill().map((_, i) => ({ x: 56 + i, y: 17, type: 1 })),
+          { x: 58, y: 16, type: 3 },
+          { x: 62, y: 16, type: 3 },
+          { x: 57, y: 17, type: 2 },
+          { x: 60, y: 17, type: 2 },
+          { x: 63, y: 17, type: 2 },
+          // Goal
+          { x: 66, y: 14, type: 1 }, { x: 67, y: 14, type: 1 },
+          { x: 67, y: 13, type: 5 },
+        ],
+        movingPlatforms: [
+          { x: 22, y: 14, width: 2, moveX: 4, moveY: 0, speed: 0.022 },
+          { x: 35, y: 17, width: 2, moveX: 0, moveY: -5, speed: 0.020 },
+          { x: 50, y: 12, width: 3, moveX: 3, moveY: 0, speed: 0.025 }
+        ]
+      },
+      // Level 8 - Spike Labyrinth
+      {
+        width: 58,
+        height: 20,
+        playerStart: { x: 2, y: 17 },
+        tiles: [
+          // Starting platform
+          ...Array(4).fill().map((_, i) => ({ x: i, y: 19, type: 1 })),
+          // Massive spike floor
+          ...Array(47).fill().map((_, i) => ({ x: 4 + i, y: 19, type: 2 })),
+          // Floating platforms creating path
+          { x: 5, y: 16, type: 1 },
+          { x: 8, y: 14, type: 1 },
+          { x: 11, y: 16, type: 1 },
+          { x: 14, y: 12, type: 1 }, { x: 15, y: 12, type: 1 },
+          { x: 14, y: 11, type: 4 }, // Boost 1
+          { x: 17, y: 14, type: 1 },
+          { x: 20, y: 10, type: 1 },
+          { x: 23, y: 13, type: 1 },
+          { x: 23, y: 12, type: 3 }, // Enemy 1
+          { x: 26, y: 8, type: 1 }, { x: 27, y: 8, type: 1 },
+          { x: 26, y: 7, type: 4 }, // Boost 2
+          { x: 29, y: 11, type: 1 },
+          { x: 32, y: 14, type: 1 },
+          { x: 35, y: 10, type: 1 },
+          { x: 35, y: 9, type: 3 }, // Enemy 2
+          { x: 38, y: 6, type: 1 }, { x: 39, y: 6, type: 1 },
+          { x: 38, y: 5, type: 4 }, // Boost 3
+          { x: 41, y: 9, type: 1 },
+          { x: 44, y: 12, type: 1 },
+          { x: 44, y: 11, type: 3 }, // Enemy 3
+          { x: 47, y: 15, type: 1 }, { x: 48, y: 15, type: 1 },
+          // Spike walls (ceiling hazards)
+          { x: 10, y: 6, type: 2 },
+          { x: 20, y: 6, type: 2 },
+          { x: 30, y: 6, type: 2 },
+          { x: 40, y: 6, type: 2 },
+          // Final zone
+          ...Array(5).fill().map((_, i) => ({ x: 51 + i, y: 19, type: 1 })),
+          { x: 52, y: 19, type: 2 }, { x: 53, y: 19, type: 2 },
+          // Goal
+          { x: 56, y: 16, type: 1 }, { x: 57, y: 16, type: 1 },
+          { x: 57, y: 15, type: 5 },
+        ],
+        movingPlatforms: []
+      },
+      // Level 9 - Moving Platform Master
+      {
+        width: 62,
+        height: 22,
+        playerStart: { x: 2, y: 19 },
+        tiles: [
+          // Starting platform
+          ...Array(6).fill().map((_, i) => ({ x: i, y: 21, type: 1 })),
+          // Mid-platform
+          { x: 20, y: 13, type: 1 }, { x: 21, y: 13, type: 1 }, { x: 22, y: 13, type: 1 },
+          { x: 21, y: 12, type: 3 },
+          // Spike section
+          { x: 28, y: 21, type: 2 }, { x: 29, y: 21, type: 2 }, { x: 30, y: 21, type: 2 },
+          // Static landing zone
+          { x: 46, y: 14, type: 1 }, { x: 47, y: 14, type: 1 }, { x: 48, y: 14, type: 1 },
+          // Upper challenge
+          { x: 50, y: 5, type: 1 }, { x: 51, y: 5, type: 1 }, { x: 52, y: 5, type: 1 },
+          { x: 51, y: 4, type: 3 },
+          { x: 52, y: 4, type: 3 },
+          // Boost section
+          { x: 52, y: 4, type: 4 },
+          // Final platform
+          { x: 56, y: 10, type: 1 }, { x: 57, y: 10, type: 1 }, { x: 58, y: 10, type: 1 },
+          { x: 57, y: 10, type: 2 },
+          // Goal
+          { x: 60, y: 8, type: 1 }, { x: 61, y: 8, type: 1 },
+          { x: 61, y: 7, type: 5 },
+        ],
+        movingPlatforms: [
+          { x: 8, y: 18, width: 2, moveX: 0, moveY: -8, speed: 0.015 },
+          { x: 15, y: 18, width: 2, moveX: 0, moveY: -8, speed: 0.015 },
+          { x: 25, y: 16, width: 2, moveX: 4, moveY: -5, speed: 0.018 },
+          { x: 32, y: 11, width: 2, moveX: -3, moveY: -4, speed: 0.020 },
+          { x: 38, y: 14, width: 3, moveX: 6, moveY: 0, speed: 0.028 },
+          { x: 42, y: 8, width: 2, moveX: 0, moveY: -4, speed: 0.016 }
+        ]
+      },
+      // Level 10 - The Ultimate Challenge
+      {
+        width: 85,
+        height: 25,
+        playerStart: { x: 2, y: 22 },
+        tiles: [
+          // PHASE 1: Spike Field Ascent
+          // Starting ground
+          ...Array(6).fill().map((_, i) => ({ x: i, y: 24, type: 1 })),
+          // Spike field
+          ...Array(15).fill().map((_, i) => ({ x: 6 + i, y: 24, type: 2 })),
+          // Ascending platforms over spikes
+          { x: 7, y: 21, type: 1 },
+          { x: 10, y: 18, type: 1 },
+          { x: 13, y: 15, type: 1 }, { x: 14, y: 15, type: 1 },
+          { x: 14, y: 14, type: 3 }, // Enemy 1
+          { x: 16, y: 12, type: 1 },
+          { x: 19, y: 9, type: 1 }, { x: 20, y: 9, type: 1 },
+          // Spike ceiling
+          { x: 15, y: 6, type: 2 }, { x: 16, y: 6, type: 2 }, { x: 17, y: 6, type: 2 },
+
+          // PHASE 2: Enemy Gauntlet
+          // Platform zone
+          ...Array(15).fill().map((_, i) => ({ x: 26 + i, y: 15, type: 1 })),
+          // Enemy swarm (6 enemies)
+          { x: 27, y: 14, type: 3 }, // Enemy 2
+          { x: 30, y: 14, type: 3 }, // Enemy 3
+          { x: 33, y: 14, type: 3 }, // Enemy 4
+          { x: 36, y: 14, type: 3 }, // Enemy 5
+          { x: 38, y: 14, type: 3 }, // Enemy 6
+          { x: 40, y: 14, type: 3 }, // Enemy 7
+          // Spike traps
+          { x: 28, y: 15, type: 2 },
+          { x: 32, y: 15, type: 2 },
+          { x: 35, y: 15, type: 2 },
+          { x: 39, y: 15, type: 2 },
+          // Boost escape
+          { x: 41, y: 14, type: 4 },
+
+          // PHASE 3: Precision Spike Corridor
+          // Upper platform
+          { x: 46, y: 8, type: 1 }, { x: 47, y: 8, type: 1 }, { x: 48, y: 8, type: 1 },
+          // Spike maze floor
+          ...Array(15).fill().map((_, i) => ({ x: 49 + i, y: 24, type: 2 })),
+          // Spike walls (vertical barriers)
+          { x: 50, y: 8, type: 2 }, { x: 50, y: 9, type: 2 }, { x: 50, y: 10, type: 2 }, { x: 50, y: 11, type: 2 }, { x: 50, y: 12, type: 2 },
+          { x: 55, y: 8, type: 2 }, { x: 55, y: 9, type: 2 }, { x: 55, y: 10, type: 2 }, { x: 55, y: 11, type: 2 }, { x: 55, y: 12, type: 2 },
+          { x: 60, y: 8, type: 2 }, { x: 60, y: 9, type: 2 }, { x: 60, y: 10, type: 2 }, { x: 60, y: 11, type: 2 }, { x: 60, y: 12, type: 2 },
+          // Narrow platform path
+          { x: 51, y: 12, type: 1 },
+          { x: 53, y: 9, type: 1 },
+          { x: 53, y: 8, type: 3 }, // Enemy 8
+          { x: 56, y: 11, type: 1 },
+          { x: 58, y: 7, type: 1 }, { x: 59, y: 7, type: 1 },
+          { x: 58, y: 6, type: 4 }, // Boost 1
+          { x: 58, y: 6, type: 3 }, // Enemy 9
+          { x: 61, y: 10, type: 1 },
+          { x: 61, y: 9, type: 4 }, // Boost 2
+
+          // PHASE 4: Final Ascent
+          // Descent to ground
+          { x: 66, y: 14, type: 1 },
+          { x: 69, y: 18, type: 1 },
+          { x: 72, y: 21, type: 1 },
+          // Ground sprint
+          ...Array(8).fill().map((_, i) => ({ x: 73 + i, y: 24, type: 1 })),
+          { x: 74, y: 23, type: 3 }, // Enemy 10
+          { x: 77, y: 23, type: 3 }, // Enemy 11
+          { x: 80, y: 23, type: 3 }, // Enemy 12
+          { x: 75, y: 24, type: 2 },
+          { x: 78, y: 24, type: 2 },
+          // Boost
+          { x: 79, y: 23, type: 4 },
+          // Victory platform
+          { x: 82, y: 12, type: 1 }, { x: 83, y: 12, type: 1 }, { x: 84, y: 12, type: 1 },
+          { x: 84, y: 11, type: 5 },
+        ],
+        movingPlatforms: [
+          { x: 22, y: 20, width: 2, moveX: 0, moveY: -12, speed: 0.012 },
+          { x: 30, y: 18, width: 2, moveX: 5, moveY: 0, speed: 0.024 },
+          { x: 38, y: 18, width: 2, moveX: -5, moveY: 0, speed: 0.024 },
+          { x: 54, y: 15, width: 2, moveX: 3, moveY: -4, speed: 0.020 },
+          { x: 78, y: 20, width: 3, moveX: 0, moveY: -10, speed: 0.015 }
+        ]
       }
     ];
     
@@ -599,12 +879,102 @@
         indicator.textContent = 'OFF';
         indicator.className = 'text-red-400 ml-2';
       }
+
+      // Secret code detection for level select
+      window.addEventListener('keydown', (e) => {
+        // Only detect when not in input fields
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+        // Ignore special keys (except single letters)
+        if (e.key.length > 1) return;
+
+        clearTimeout(secretTimeout);
+
+        // Only add letter keys to the secret code
+        if (e.key.match(/[a-z]/i)) {
+          secretCode += e.key.toLowerCase();
+
+          // Keep only last 10 characters
+          if (secretCode.length > 10) {
+            secretCode = secretCode.slice(-10);
+          }
+
+          // Check if secret code matches
+          if (secretCode.includes(SECRET_TRIGGER)) {
+            secretCode = '';
+            toggleLevelSelect();
+          }
+        }
+
+        // Reset after 3 seconds of no typing
+        secretTimeout = setTimeout(() => {
+          secretCode = '';
+        }, 3000);
+      });
+
+      // Level select handlers
+      document.querySelectorAll('.level-select-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const levelIndex = parseInt(btn.dataset.level);
+          jumpToLevel(levelIndex);
+        });
+      });
+
+      // Close level select with ESC or click
+      document.getElementById('close-level-select').addEventListener('click', closeLevelSelect);
+      window.addEventListener('keydown', (e) => {
+        if (e.code === 'Escape' && !document.getElementById('level-select').classList.contains('hidden')) {
+          closeLevelSelect();
+        }
+      });
     }
     
     function resizeCanvas() {
       const container = document.getElementById('game-container');
       canvas.width = container.clientWidth;
       canvas.height = container.clientHeight;
+    }
+
+    // Level select functions
+    function toggleLevelSelect() {
+      const levelSelect = document.getElementById('level-select');
+      levelSelect.classList.remove('hidden');
+      levelSelect.classList.add('flex');
+      gameRunning = false;
+    }
+
+    function closeLevelSelect() {
+      const levelSelect = document.getElementById('level-select');
+      levelSelect.classList.remove('flex');
+      levelSelect.classList.add('hidden');
+    }
+
+    function jumpToLevel(levelIndex) {
+      closeLevelSelect();
+
+      // Hide start screen if visible
+      document.getElementById('start-screen').classList.add('hidden');
+      document.getElementById('hud').classList.remove('hidden');
+
+      // Set current level
+      currentLevel = levelIndex;
+
+      // Load the level
+      loadLevel(currentLevel);
+
+      // Start game
+      gameRunning = true;
+
+      // Start BGM if not already playing
+      if (AudioManager.ctx && AudioManager.ctx.state === 'suspended') {
+        AudioManager.ctx.resume();
+      }
+      if (!AudioManager.muted) {
+        AudioManager.startBGM();
+      }
+
+      // Start game loop
+      gameLoop();
     }
     
     function startGame() {
