@@ -1,0 +1,18 @@
+{
+  "name": "spike-run-game",
+  "version": "1.0.0",
+  "description": "A browser-based spike run game",
+  "main": "index.html",
+  "scripts": {
+    "dev": "npx serve .",
+    "start": "npx serve ."
+  },
+  "keywords": [
+    "game",
+    "html5",
+    "canvas",
+    "spike-run"
+  ],
+  "author": "",
+  "license": "MIT"
+}

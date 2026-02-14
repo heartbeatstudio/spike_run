@@ -69,6 +69,8 @@
     </div>
     <div class="bg-black/70 px-4 py-2 rounded-lg"><span class="text-gray-400">DEATHS</span> <span id="death-display" class="text-red-400 ml-2">0</span>
     </div>
+    <div id="mute-btn" class="bg-black/70 px-4 py-2 rounded-lg cursor-pointer hover:bg-black/80 transition-colors"><span class="text-gray-400">SOUND</span> <span id="mute-indicator" class="text-green-400 ml-2">ON</span>
+    </div>
    </div><!-- Level Complete -->
    <div id="level-complete" class="absolute inset-0 flex-col items-center justify-center bg-black/90 z-40 hidden">
     <h2 class="game-font text-2xl text-green-400 mb-4">LEVEL COMPLETE!</h2>
@@ -96,7 +98,302 @@
     let player = {};
     let keys = {};
     let cameraX = 0;
-    
+
+    // Audio Manager - Retro Chiptune Sound System
+    const AudioManager = {
+      ctx: null,
+      muted: false,
+      bgmGain: null,
+      sfxGain: null,
+      bgmOscillators: [],
+      bgmTimeout: null,
+
+      init() {
+        try {
+          this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+          // Create gain nodes for volume control
+          this.bgmGain = this.ctx.createGain();
+          this.bgmGain.connect(this.ctx.destination);
+          this.bgmGain.gain.value = 0.3; // BGM at 30% volume
+
+          this.sfxGain = this.ctx.createGain();
+          this.sfxGain.connect(this.ctx.destination);
+          this.sfxGain.gain.value = 0.4; // SFX at 40% volume
+
+          // Load mute preference from localStorage
+          const savedMute = localStorage.getItem('spikeRunnerMuted');
+          if (savedMute === 'true') {
+            this.muted = true;
+            this.bgmGain.gain.value = 0;
+            this.sfxGain.gain.value = 0;
+          }
+        } catch (e) {
+          console.warn('Web Audio API not supported', e);
+        }
+      },
+
+      // Create oscillator helper
+      createOscillator(freq, type, duration, gain) {
+        if (!this.ctx || this.muted) return null;
+
+        const osc = this.ctx.createOscillator();
+        const oscGain = this.ctx.createGain();
+
+        osc.type = type || 'square'; // Default to square wave for chiptune sound
+        osc.frequency.value = freq;
+
+        osc.connect(oscGain);
+        oscGain.connect(gain);
+
+        const now = this.ctx.currentTime;
+        oscGain.gain.setValueAtTime(0.5, now);
+        oscGain.gain.exponentialRampToValueAtTime(0.01, now + duration);
+
+        osc.start(now);
+        osc.stop(now + duration);
+
+        return osc;
+      },
+
+      // Play sound effects
+      playSound(type) {
+        if (!this.ctx || this.muted) return;
+
+        const now = this.ctx.currentTime;
+
+        switch(type) {
+          case 'jump':
+            // Upward sweep
+            const jump = this.ctx.createOscillator();
+            const jumpGain = this.ctx.createGain();
+            jump.type = 'square';
+            jump.connect(jumpGain);
+            jumpGain.connect(this.sfxGain);
+            jump.frequency.setValueAtTime(200, now);
+            jump.frequency.exponentialRampToValueAtTime(400, now + 0.1);
+            jumpGain.gain.setValueAtTime(0.3, now);
+            jumpGain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+            jump.start(now);
+            jump.stop(now + 0.1);
+            break;
+
+          case 'death':
+            // Descending chromatic scale
+            const deathFreqs = [500, 450, 400, 350, 300, 250, 200, 150, 100];
+            deathFreqs.forEach((freq, i) => {
+              const death = this.ctx.createOscillator();
+              const deathGain = this.ctx.createGain();
+              death.type = 'square';
+              death.frequency.value = freq;
+              death.connect(deathGain);
+              deathGain.connect(this.sfxGain);
+              const startTime = now + (i * 0.03);
+              deathGain.gain.setValueAtTime(0.2, startTime);
+              deathGain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.03);
+              death.start(startTime);
+              death.stop(startTime + 0.03);
+            });
+            break;
+
+          case 'levelComplete':
+            // Victory arpeggio: C-E-G-C
+            const victoryNotes = [523.25, 659.25, 783.99, 1046.50];
+            victoryNotes.forEach((freq, i) => {
+              const note = this.ctx.createOscillator();
+              const noteGain = this.ctx.createGain();
+              note.type = 'square';
+              note.frequency.value = freq;
+              note.connect(noteGain);
+              noteGain.connect(this.sfxGain);
+              const startTime = now + (i * 0.15);
+              noteGain.gain.setValueAtTime(0.3, startTime);
+              noteGain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.15);
+              note.start(startTime);
+              note.stop(startTime + 0.15);
+            });
+            break;
+
+          case 'victory':
+            // Extended victory melody
+            const melodyNotes = [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50, 1174.66, 1318.51];
+            melodyNotes.forEach((freq, i) => {
+              const note = this.ctx.createOscillator();
+              const noteGain = this.ctx.createGain();
+              note.type = 'square';
+              note.frequency.value = freq;
+              note.connect(noteGain);
+              noteGain.connect(this.sfxGain);
+              const startTime = now + (i * 0.12);
+              noteGain.gain.setValueAtTime(0.3, startTime);
+              noteGain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.12);
+              note.start(startTime);
+              note.stop(startTime + 0.12);
+            });
+            break;
+
+          case 'boost':
+            // High-pitched pulse
+            const boost = this.ctx.createOscillator();
+            const boostGain = this.ctx.createGain();
+            boost.type = 'square';
+            boost.frequency.value = 800;
+            boost.connect(boostGain);
+            boostGain.connect(this.sfxGain);
+            boostGain.gain.setValueAtTime(0.3, now);
+            boostGain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+            boost.start(now);
+            boost.stop(now + 0.05);
+            break;
+        }
+      },
+
+      // Start background music
+      startBGM() {
+        if (!this.ctx || this.muted) return;
+
+        // Unlock audio context if suspended
+        if (this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+
+        this.stopBGM(); // Stop any existing BGM
+        this.playBGMLoop();
+      },
+
+      // Play BGM loop
+      playBGMLoop() {
+        if (!this.ctx || this.muted) return;
+
+        const now = this.ctx.currentTime;
+        const bpm = 120;
+        const beatDuration = 60 / bpm;
+
+        // Melody in C minor (chiptune adventure style)
+        const melody = [
+          { note: 523.25, duration: 0.5 }, // C
+          { note: 493.88, duration: 0.5 }, // B
+          { note: 392.00, duration: 0.5 }, // G
+          { note: 329.63, duration: 0.5 }, // E
+          { note: 392.00, duration: 0.5 }, // G
+          { note: 466.16, duration: 0.5 }, // Bb
+          { note: 523.25, duration: 0.5 }, // C
+          { note: 587.33, duration: 0.5 }, // D
+          { note: 523.25, duration: 0.5 }, // C
+          { note: 466.16, duration: 0.5 }, // Bb
+          { note: 392.00, duration: 0.5 }, // G
+          { note: 329.63, duration: 0.5 }, // E
+          { note: 293.66, duration: 0.5 }, // D
+          { note: 329.63, duration: 0.5 }, // E
+          { note: 392.00, duration: 1.0 }, // G
+          { note: 0, duration: 0.5 }, // Rest
+        ];
+
+        // Bass line
+        const bass = [
+          { note: 130.81, duration: 1.0 }, // C
+          { note: 146.83, duration: 1.0 }, // D
+          { note: 164.81, duration: 1.0 }, // E
+          { note: 196.00, duration: 1.0 }, // G
+          { note: 130.81, duration: 1.0 }, // C
+          { note: 146.83, duration: 1.0 }, // D
+          { note: 164.81, duration: 1.0 }, // E
+          { note: 196.00, duration: 1.0 }, // G
+        ];
+
+        let time = 0;
+        this.bgmOscillators = [];
+
+        // Play melody
+        melody.forEach((note, i) => {
+          if (note.note > 0) {
+            const osc = this.ctx.createOscillator();
+            const oscGain = this.ctx.createGain();
+            osc.type = 'square';
+            osc.frequency.value = note.note;
+            osc.connect(oscGain);
+            oscGain.connect(this.bgmGain);
+
+            const startTime = now + time;
+            const endTime = startTime + (note.duration * beatDuration);
+
+            oscGain.gain.setValueAtTime(0.15, startTime);
+            oscGain.gain.exponentialRampToValueAtTime(0.01, endTime);
+
+            osc.start(startTime);
+            osc.stop(endTime);
+            this.bgmOscillators.push(osc);
+          }
+          time += note.duration * beatDuration;
+        });
+
+        // Play bass
+        let bassTime = 0;
+        bass.forEach((note, i) => {
+          const osc = this.ctx.createOscillator();
+          const oscGain = this.ctx.createGain();
+          osc.type = 'triangle'; // Softer bass sound
+          osc.frequency.value = note.note;
+          osc.connect(oscGain);
+          oscGain.connect(this.bgmGain);
+
+          const startTime = now + bassTime;
+          const endTime = startTime + (note.duration * beatDuration);
+
+          oscGain.gain.setValueAtTime(0.1, startTime);
+          oscGain.gain.setValueAtTime(0.1, endTime - 0.05);
+          oscGain.gain.exponentialRampToValueAtTime(0.01, endTime);
+
+          osc.start(startTime);
+          osc.stop(endTime);
+          this.bgmOscillators.push(osc);
+
+          bassTime += note.duration * beatDuration;
+        });
+
+        // Schedule next loop
+        const loopDuration = time * 1000;
+        this.bgmTimeout = setTimeout(() => this.playBGMLoop(), loopDuration);
+      },
+
+      // Stop background music
+      stopBGM() {
+        if (this.bgmTimeout) {
+          clearTimeout(this.bgmTimeout);
+          this.bgmTimeout = null;
+        }
+        this.bgmOscillators.forEach(osc => {
+          try {
+            osc.stop();
+          } catch(e) {}
+        });
+        this.bgmOscillators = [];
+      },
+
+      // Toggle mute
+      toggleMute() {
+        this.muted = !this.muted;
+
+        if (this.muted) {
+          this.bgmGain.gain.value = 0;
+          this.sfxGain.gain.value = 0;
+        } else {
+          this.bgmGain.gain.value = 0.3;
+          this.sfxGain.gain.value = 0.4;
+        }
+
+        // Save preference
+        localStorage.setItem('spikeRunnerMuted', this.muted);
+
+        // Update UI
+        const indicator = document.getElementById('mute-indicator');
+        if (indicator) {
+          indicator.textContent = this.muted ? 'OFF' : 'ON';
+          indicator.className = this.muted ? 'text-red-400 ml-2' : 'text-green-400 ml-2';
+        }
+      }
+    };
+
     // Level Definitions (1 = platform, 2 = spike, 3 = enemy, 4 = boost, 5 = goal, 6 = moving platform)
     const levels = [
       // Level 1 - Introduction
@@ -291,6 +588,17 @@
       document.getElementById('start-btn').addEventListener('click', startGame);
       document.getElementById('next-level-btn').addEventListener('click', nextLevel);
       document.getElementById('restart-btn').addEventListener('click', restartGame);
+
+      // Initialize audio
+      AudioManager.init();
+      document.getElementById('mute-btn').addEventListener('click', () => AudioManager.toggleMute());
+
+      // Update mute indicator based on saved preference
+      const indicator = document.getElementById('mute-indicator');
+      if (AudioManager.muted) {
+        indicator.textContent = 'OFF';
+        indicator.className = 'text-red-400 ml-2';
+      }
     }
     
     function resizeCanvas() {
@@ -306,6 +614,13 @@
       deaths = 0;
       loadLevel(currentLevel);
       gameRunning = true;
+
+      // Start background music (unlock audio on user interaction)
+      if (AudioManager.ctx && AudioManager.ctx.state === 'suspended') {
+        AudioManager.ctx.resume();
+      }
+      AudioManager.startBGM();
+
       gameLoop();
     }
     
@@ -366,12 +681,13 @@
     function die() {
       deaths++;
       updateHUD();
-      
+      AudioManager.playSound('death');
+
       // Death animation
       const container = document.getElementById('game-container');
       container.classList.add('death-animation');
       setTimeout(() => container.classList.remove('death-animation'), 300);
-      
+
       loadLevel(currentLevel);
     }
     
@@ -379,10 +695,12 @@
       gameRunning = false;
       if (currentLevel >= levels.length - 1) {
         // Game complete
+        AudioManager.playSound('victory');
         document.getElementById('final-deaths').textContent = deaths;
         document.getElementById('game-complete').classList.remove('hidden');
         document.getElementById('game-complete').classList.add('flex');
       } else {
+        AudioManager.playSound('levelComplete');
         document.getElementById('level-complete').classList.remove('hidden');
         document.getElementById('level-complete').classList.add('flex');
       }
@@ -426,6 +744,7 @@
       if ((keys['Space'] || keys['ArrowUp'] || keys['KeyW']) && player.onGround) {
         player.vy = JUMP_FORCE;
         player.onGround = false;
+        AudioManager.playSound('jump');
       }
       
       // Apply gravity
@@ -500,6 +819,7 @@
         if (tile.type === 4) { // Boost
           player.vy = BOOST_FORCE;
           player.onGround = false;
+          AudioManager.playSound('boost');
         }
         if (tile.type === 5) completeLevel(); // Goal
       });
