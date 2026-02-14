@@ -1,0 +1,695 @@
+<!doctype html>
+<html lang="en" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spike Runner</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- <script src="/_sdk/element_sdk.js"></script> -->
+  <style>
+    body {
+      box-sizing: border-box;
+    }
+    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+    
+    * { margin: 0; padding: 0; }
+    
+    .game-font {
+      font-family: 'Press Start 2P', monospace;
+    }
+    
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 20px #00ff88, 0 0 40px #00ff8855; }
+      50% { box-shadow: 0 0 30px #00ff88, 0 0 60px #00ff8888; }
+    }
+    
+    @keyframes enemy-float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+    }
+    
+    @keyframes boost-pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.7; transform: scale(1.1); }
+    }
+    
+    @keyframes death-flash {
+      0%, 100% { background: #1a0a0a; }
+      50% { background: #ff0000; }
+    }
+    
+    .death-animation {
+      animation: death-flash 0.1s ease-in-out 3;
+    }
+    
+    .boost-pad {
+      animation: boost-pulse 0.5s ease-in-out infinite;
+    }
+    
+    .enemy {
+      animation: enemy-float 1s ease-in-out infinite;
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <!-- <script src="/_sdk/data_sdk.js" type="text/javascript"></script> -->
+ </head>
+ <body class="h-full bg-gray-900 overflow-hidden">
+  <div id="game-container" class="h-full w-full relative flex items-center justify-center"><!-- Start Screen -->
+   <div id="start-screen" class="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-gray-900 via-purple-900 to-gray-900 z-50">
+    <h1 id="game-title" class="game-font text-3xl md:text-5xl text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-yellow-500 to-red-500 mb-8 text-center px-4" style="animation: pulse-glow 2s ease-in-out infinite;">SPIKE RUNNER</h1>
+    <p class="game-font text-xs md:text-sm text-gray-400 mb-8 text-center px-4">Super Hard Platformer</p><button id="start-btn" class="game-font text-sm bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white px-8 py-4 rounded-lg transition-all transform hover:scale-105">START GAME</button>
+    <div class="mt-8 game-font text-xs text-gray-500 text-center px-4">
+     <p>ARROW KEYS / WASD to move</p>
+     <p class="mt-2">SPACE / W / UP to jump</p>
+    </div>
+   </div><!-- Game Canvas -->
+   <canvas id="game-canvas" class="bg-gray-900"></canvas><!-- HUD -->
+   <div id="hud" class="absolute top-4 left-4 right-4 flex justify-between items-start game-font text-xs hidden">
+    <div class="bg-black/70 px-4 py-2 rounded-lg"><span class="text-gray-400">LEVEL</span> <span id="level-display" class="text-yellow-400 ml-2">1</span>
+    </div>
+    <div class="bg-black/70 px-4 py-2 rounded-lg"><span class="text-gray-400">DEATHS</span> <span id="death-display" class="text-red-400 ml-2">0</span>
+    </div>
+   </div><!-- Level Complete -->
+   <div id="level-complete" class="absolute inset-0 flex-col items-center justify-center bg-black/90 z-40 hidden">
+    <h2 class="game-font text-2xl text-green-400 mb-4">LEVEL COMPLETE!</h2>
+    <p class="game-font text-sm text-gray-400 mb-8">Get ready for the next challenge...</p><button id="next-level-btn" class="game-font text-sm bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white px-8 py-4 rounded-lg">NEXT LEVEL</button>
+   </div><!-- Game Complete -->
+   <div id="game-complete" class="absolute inset-0 flex-col items-center justify-center bg-gradient-to-b from-gray-900 via-green-900 to-gray-900 z-40 hidden">
+    <h2 class="game-font text-3xl text-yellow-400 mb-4">🏆 YOU WIN! 🏆</h2>
+    <p class="game-font text-sm text-gray-300 mb-2">All levels completed!</p>
+    <p class="game-font text-xs text-gray-500 mb-8">Total Deaths: <span id="final-deaths" class="text-red-400">0</span></p><button id="restart-btn" class="game-font text-sm bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white px-8 py-4 rounded-lg">PLAY AGAIN</button>
+   </div>
+  </div>
+  <script>
+    // Game Constants
+    const TILE_SIZE = 32;
+    const GRAVITY = 0.8;
+    const JUMP_FORCE = -14;
+    const MOVE_SPEED = 5;
+    const BOOST_FORCE = -20;
+    
+    // Game State
+    let canvas, ctx;
+    let gameRunning = false;
+    let currentLevel = 0;
+    let deaths = 0;
+    let player = {};
+    let keys = {};
+    let cameraX = 0;
+    
+    // Level Definitions (1 = platform, 2 = spike, 3 = enemy, 4 = boost, 5 = goal, 6 = moving platform)
+    const levels = [
+      // Level 1 - Introduction
+      {
+        width: 50,
+        height: 15,
+        playerStart: { x: 2, y: 12 },
+        tiles: [
+          // Ground
+          ...Array(15).fill().map((_, i) => ({ x: i, y: 14, type: 1 })),
+          // Gap with spikes at bottom
+          { x: 17, y: 14, type: 2 }, { x: 18, y: 14, type: 2 },
+          // Continue platform
+          ...Array(10).fill().map((_, i) => ({ x: 19 + i, y: 14, type: 1 })),
+          // Elevated platforms
+          { x: 22, y: 11, type: 1 }, { x: 23, y: 11, type: 1 },
+          { x: 26, y: 9, type: 1 }, { x: 27, y: 9, type: 1 },
+          // Spikes on platform
+          { x: 24, y: 13, type: 2 }, { x: 25, y: 13, type: 2 },
+          // Enemy
+          { x: 28, y: 13, type: 3 },
+          // More platforms
+          ...Array(8).fill().map((_, i) => ({ x: 32 + i, y: 14, type: 1 })),
+          // Boost pad
+          { x: 35, y: 13, type: 4 },
+          // High platform with goal
+          { x: 42, y: 8, type: 1 }, { x: 43, y: 8, type: 1 }, { x: 44, y: 8, type: 1 },
+          { x: 44, y: 7, type: 5 },
+        ],
+        movingPlatforms: [
+          { x: 15, y: 12, width: 2, moveX: 0, moveY: 3, speed: 0.02 }
+        ]
+      },
+      // Level 2 - Vertical Challenge
+      {
+        width: 40,
+        height: 20,
+        playerStart: { x: 2, y: 17 },
+        tiles: [
+          // Starting ground
+          ...Array(8).fill().map((_, i) => ({ x: i, y: 19, type: 1 })),
+          // Spike pit
+          ...Array(4).fill().map((_, i) => ({ x: 8 + i, y: 19, type: 2 })),
+          // Stepping stones with spikes
+          { x: 10, y: 16, type: 1 },
+          { x: 13, y: 14, type: 1 }, { x: 14, y: 14, type: 2 },
+          { x: 16, y: 12, type: 1 },
+          // Enemy patrol
+          { x: 18, y: 11, type: 3 },
+          { x: 19, y: 12, type: 1 }, { x: 20, y: 12, type: 1 }, { x: 21, y: 12, type: 1 },
+          // Boost section
+          { x: 22, y: 11, type: 4 },
+          { x: 25, y: 6, type: 1 }, { x: 26, y: 6, type: 1 },
+          // Spike corridor
+          { x: 28, y: 6, type: 1 }, { x: 29, y: 5, type: 2 },
+          { x: 30, y: 6, type: 1 }, { x: 31, y: 5, type: 2 },
+          { x: 32, y: 6, type: 1 },
+          // Goal
+          { x: 35, y: 6, type: 1 }, { x: 36, y: 6, type: 1 },
+          { x: 36, y: 5, type: 5 },
+        ],
+        movingPlatforms: [
+          { x: 12, y: 19, width: 2, moveX: 0, moveY: -5, speed: 0.015 }
+        ]
+      },
+      // Level 3 - Enemy Gauntlet
+      {
+        width: 60,
+        height: 15,
+        playerStart: { x: 2, y: 12 },
+        tiles: [
+          // Ground with gaps
+          ...Array(10).fill().map((_, i) => ({ x: i, y: 14, type: 1 })),
+          // First enemy section
+          { x: 12, y: 14, type: 1 }, { x: 13, y: 14, type: 1 }, { x: 14, y: 14, type: 1 },
+          { x: 13, y: 13, type: 3 },
+          // Spike jump
+          { x: 16, y: 14, type: 2 }, { x: 17, y: 14, type: 2 },
+          { x: 18, y: 14, type: 1 }, { x: 19, y: 14, type: 1 },
+          // Multi-enemy section
+          ...Array(12).fill().map((_, i) => ({ x: 22 + i, y: 14, type: 1 })),
+          { x: 24, y: 13, type: 3 },
+          { x: 28, y: 13, type: 3 },
+          { x: 32, y: 13, type: 3 },
+          // Boost over spikes
+          { x: 36, y: 14, type: 2 }, { x: 37, y: 14, type: 2 }, { x: 38, y: 14, type: 2 },
+          { x: 35, y: 13, type: 4 },
+          // Final platform
+          ...Array(8).fill().map((_, i) => ({ x: 42 + i, y: 14, type: 1 })),
+          { x: 45, y: 10, type: 1 }, { x: 46, y: 10, type: 1 },
+          { x: 46, y: 9, type: 5 },
+        ],
+        movingPlatforms: [
+          { x: 10, y: 12, width: 2, moveX: 2, moveY: 0, speed: 0.025 },
+          { x: 20, y: 10, width: 2, moveX: 0, moveY: 4, speed: 0.02 }
+        ]
+      },
+      // Level 4 - Precision Platforming
+      {
+        width: 55,
+        height: 18,
+        playerStart: { x: 2, y: 15 },
+        tiles: [
+          // Start
+          { x: 0, y: 17, type: 1 }, { x: 1, y: 17, type: 1 }, { x: 2, y: 17, type: 1 }, { x: 3, y: 17, type: 1 },
+          // Single block jumps with spikes below
+          ...Array(40).fill().map((_, i) => ({ x: 4 + i, y: 17, type: 2 })),
+          { x: 6, y: 14, type: 1 },
+          { x: 9, y: 12, type: 1 },
+          { x: 12, y: 14, type: 1 },
+          { x: 15, y: 11, type: 1 },
+          // Enemy on small platform
+          { x: 18, y: 13, type: 1 }, { x: 18, y: 12, type: 3 },
+          { x: 21, y: 10, type: 1 },
+          // Boost chain
+          { x: 24, y: 14, type: 1 }, { x: 24, y: 13, type: 4 },
+          { x: 28, y: 8, type: 1 },
+          { x: 31, y: 12, type: 1 }, { x: 31, y: 11, type: 4 },
+          { x: 35, y: 5, type: 1 },
+          // Final approach
+          { x: 38, y: 8, type: 1 }, { x: 39, y: 8, type: 1 },
+          { x: 39, y: 7, type: 3 },
+          { x: 42, y: 10, type: 1 },
+          { x: 45, y: 8, type: 1 }, { x: 46, y: 8, type: 1 }, { x: 47, y: 8, type: 1 },
+          { x: 47, y: 7, type: 5 },
+        ],
+        movingPlatforms: []
+      },
+      // Level 5 - The Gauntlet (Final)
+      {
+        width: 70,
+        height: 20,
+        playerStart: { x: 2, y: 17 },
+        tiles: [
+          // Start platform
+          ...Array(5).fill().map((_, i) => ({ x: i, y: 19, type: 1 })),
+          // Spike field
+          ...Array(6).fill().map((_, i) => ({ x: 5 + i, y: 19, type: 2 })),
+          // Floating platforms over spikes
+          { x: 6, y: 16, type: 1 },
+          { x: 9, y: 14, type: 1 }, { x: 9, y: 13, type: 3 },
+          // Continue spike field
+          ...Array(20).fill().map((_, i) => ({ x: 11 + i, y: 19, type: 2 })),
+          { x: 12, y: 16, type: 1 },
+          { x: 15, y: 13, type: 1 },
+          { x: 18, y: 15, type: 1 }, { x: 18, y: 14, type: 3 },
+          { x: 21, y: 12, type: 1 },
+          { x: 24, y: 14, type: 1 }, { x: 24, y: 13, type: 4 },
+          // High section
+          { x: 28, y: 7, type: 1 }, { x: 29, y: 7, type: 1 },
+          { x: 29, y: 6, type: 3 },
+          // Descent with enemies
+          { x: 32, y: 9, type: 1 },
+          { x: 35, y: 11, type: 1 }, { x: 35, y: 10, type: 3 },
+          { x: 38, y: 13, type: 1 },
+          // Ground section
+          ...Array(15).fill().map((_, i) => ({ x: 40 + i, y: 19, type: 1 })),
+          { x: 42, y: 18, type: 2 }, { x: 43, y: 18, type: 2 },
+          { x: 45, y: 18, type: 3 },
+          { x: 48, y: 18, type: 2 },
+          { x: 50, y: 18, type: 3 },
+          // Final boost
+          { x: 52, y: 18, type: 4 },
+          // Victory platform
+          { x: 58, y: 12, type: 1 }, { x: 59, y: 12, type: 1 }, { x: 60, y: 12, type: 1 },
+          { x: 60, y: 11, type: 5 },
+        ],
+        movingPlatforms: [
+          { x: 31, y: 19, width: 2, moveX: 0, moveY: -8, speed: 0.012 },
+          { x: 55, y: 16, width: 3, moveX: 0, moveY: -4, speed: 0.018 }
+        ]
+      }
+    ];
+    
+    // Initialize Game
+    function init() {
+      canvas = document.getElementById('game-canvas');
+      ctx = canvas.getContext('2d');
+      resizeCanvas();
+      window.addEventListener('resize', resizeCanvas);
+      
+      // Input handling
+      window.addEventListener('keydown', (e) => {
+        keys[e.code] = true;
+        if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'KeyW', 'KeyA', 'KeyS', 'KeyD'].includes(e.code)) {
+          e.preventDefault();
+        }
+      });
+      window.addEventListener('keyup', (e) => keys[e.code] = false);
+      
+      // Button handlers
+      document.getElementById('start-btn').addEventListener('click', startGame);
+      document.getElementById('next-level-btn').addEventListener('click', nextLevel);
+      document.getElementById('restart-btn').addEventListener('click', restartGame);
+    }
+    
+    function resizeCanvas() {
+      const container = document.getElementById('game-container');
+      canvas.width = container.clientWidth;
+      canvas.height = container.clientHeight;
+    }
+    
+    function startGame() {
+      document.getElementById('start-screen').classList.add('hidden');
+      document.getElementById('hud').classList.remove('hidden');
+      currentLevel = 0;
+      deaths = 0;
+      loadLevel(currentLevel);
+      gameRunning = true;
+      gameLoop();
+    }
+    
+    function loadLevel(levelIndex) {
+      const level = levels[levelIndex];
+      player = {
+        x: level.playerStart.x * TILE_SIZE,
+        y: level.playerStart.y * TILE_SIZE,
+        width: TILE_SIZE - 8,
+        height: TILE_SIZE - 4,
+        vx: 0,
+        vy: 0,
+        onGround: false,
+        onPlatform: null
+      };
+      cameraX = 0;
+      
+      // Initialize moving platforms
+      level.movingPlatforms.forEach(p => {
+        p.startX = p.x * TILE_SIZE;
+        p.startY = p.y * TILE_SIZE;
+        p.currentX = p.startX;
+        p.currentY = p.startY;
+        p.phase = 0;
+      });
+      
+      // Initialize enemies
+      level.tiles.filter(t => t.type === 3).forEach(e => {
+        e.startX = e.x * TILE_SIZE;
+        e.currentX = e.startX;
+        e.direction = 1;
+        e.moveRange = TILE_SIZE * 1.5;
+      });
+      
+      updateHUD();
+    }
+    
+    function updateHUD() {
+      document.getElementById('level-display').textContent = currentLevel + 1;
+      document.getElementById('death-display').textContent = deaths;
+    }
+    
+    function nextLevel() {
+      document.getElementById('level-complete').classList.remove('flex');
+      document.getElementById('level-complete').classList.add('hidden');
+      currentLevel++;
+      loadLevel(currentLevel);
+      gameRunning = true;
+      gameLoop();
+    }
+    
+    function restartGame() {
+      document.getElementById('game-complete').classList.remove('flex');
+      document.getElementById('game-complete').classList.add('hidden');
+      startGame();
+    }
+    
+    function die() {
+      deaths++;
+      updateHUD();
+      
+      // Death animation
+      const container = document.getElementById('game-container');
+      container.classList.add('death-animation');
+      setTimeout(() => container.classList.remove('death-animation'), 300);
+      
+      loadLevel(currentLevel);
+    }
+    
+    function completeLevel() {
+      gameRunning = false;
+      if (currentLevel >= levels.length - 1) {
+        // Game complete
+        document.getElementById('final-deaths').textContent = deaths;
+        document.getElementById('game-complete').classList.remove('hidden');
+        document.getElementById('game-complete').classList.add('flex');
+      } else {
+        document.getElementById('level-complete').classList.remove('hidden');
+        document.getElementById('level-complete').classList.add('flex');
+      }
+    }
+    
+    function gameLoop() {
+      if (!gameRunning) return;
+      
+      update();
+      render();
+      requestAnimationFrame(gameLoop);
+    }
+    
+    function update() {
+      const level = levels[currentLevel];
+      
+      // Update moving platforms
+      level.movingPlatforms.forEach(p => {
+        p.phase += p.speed;
+        const offset = Math.sin(p.phase * Math.PI * 2);
+        p.currentX = p.startX + offset * p.moveX * TILE_SIZE;
+        p.currentY = p.startY + offset * p.moveY * TILE_SIZE;
+      });
+      
+      // Update enemies
+      level.tiles.filter(t => t.type === 3).forEach(e => {
+        e.currentX += e.direction * 1;
+        if (Math.abs(e.currentX - e.startX) > e.moveRange) {
+          e.direction *= -1;
+        }
+      });
+      
+      // Player movement
+      let moveX = 0;
+      if (keys['ArrowLeft'] || keys['KeyA']) moveX = -MOVE_SPEED;
+      if (keys['ArrowRight'] || keys['KeyD']) moveX = MOVE_SPEED;
+      
+      player.vx = moveX;
+      
+      // Jump
+      if ((keys['Space'] || keys['ArrowUp'] || keys['KeyW']) && player.onGround) {
+        player.vy = JUMP_FORCE;
+        player.onGround = false;
+      }
+      
+      // Apply gravity
+      player.vy += GRAVITY;
+      if (player.vy > 15) player.vy = 15;
+      
+      // Move with platform
+      if (player.onPlatform) {
+        const plat = player.onPlatform;
+        const prevX = plat.prevX || plat.currentX;
+        const prevY = plat.prevY || plat.currentY;
+        player.x += plat.currentX - prevX;
+        player.y += plat.currentY - prevY;
+        plat.prevX = plat.currentX;
+        plat.prevY = plat.currentY;
+      }
+      
+      // Horizontal collision
+      player.x += player.vx;
+      const hTiles = getCollidingTiles(player, level);
+      hTiles.forEach(tile => {
+        if (tile.type === 1) {
+          if (player.vx > 0) {
+            player.x = tile.x * TILE_SIZE - player.width;
+          } else if (player.vx < 0) {
+            player.x = (tile.x + 1) * TILE_SIZE;
+          }
+        }
+      });
+      
+      // Vertical collision
+      player.y += player.vy;
+      player.onGround = false;
+      player.onPlatform = null;
+      
+      const vTiles = getCollidingTiles(player, level);
+      vTiles.forEach(tile => {
+        if (tile.type === 1) {
+          if (player.vy > 0) {
+            player.y = tile.y * TILE_SIZE - player.height;
+            player.vy = 0;
+            player.onGround = true;
+          } else if (player.vy < 0) {
+            player.y = (tile.y + 1) * TILE_SIZE;
+            player.vy = 0;
+          }
+        }
+      });
+      
+      // Moving platform collision
+      level.movingPlatforms.forEach(plat => {
+        const platRect = {
+          x: plat.currentX,
+          y: plat.currentY,
+          width: plat.width * TILE_SIZE,
+          height: TILE_SIZE
+        };
+        
+        if (rectIntersect(player, platRect)) {
+          if (player.vy > 0 && player.y + player.height - player.vy <= platRect.y) {
+            player.y = platRect.y - player.height;
+            player.vy = 0;
+            player.onGround = true;
+            player.onPlatform = plat;
+          }
+        }
+      });
+      
+      // Check hazards
+      vTiles.concat(hTiles).forEach(tile => {
+        if (tile.type === 2) die(); // Spike
+        if (tile.type === 4) { // Boost
+          player.vy = BOOST_FORCE;
+          player.onGround = false;
+        }
+        if (tile.type === 5) completeLevel(); // Goal
+      });
+      
+      // Enemy collision
+      level.tiles.filter(t => t.type === 3).forEach(e => {
+        const enemyRect = {
+          x: e.currentX + 4,
+          y: e.y * TILE_SIZE + 4,
+          width: TILE_SIZE - 8,
+          height: TILE_SIZE - 8
+        };
+        if (rectIntersect(player, enemyRect)) {
+          die();
+        }
+      });
+      
+      // Fall death
+      if (player.y > level.height * TILE_SIZE) {
+        die();
+      }
+      
+      // Camera follow
+      const targetCameraX = player.x - canvas.width / 2;
+      cameraX += (targetCameraX - cameraX) * 0.1;
+      cameraX = Math.max(0, Math.min(cameraX, level.width * TILE_SIZE - canvas.width));
+    }
+    
+    function getCollidingTiles(rect, level) {
+      const colliding = [];
+      level.tiles.forEach(tile => {
+        const tileRect = {
+          x: tile.x * TILE_SIZE,
+          y: tile.y * TILE_SIZE,
+          width: TILE_SIZE,
+          height: TILE_SIZE
+        };
+        if (rectIntersect(rect, tileRect)) {
+          colliding.push(tile);
+        }
+      });
+      return colliding;
+    }
+    
+    function rectIntersect(a, b) {
+      return a.x < b.x + b.width &&
+             a.x + a.width > b.x &&
+             a.y < b.y + b.height &&
+             a.y + a.height > b.y;
+    }
+    
+    function render() {
+      const level = levels[currentLevel];
+      
+      // Clear with gradient background
+      const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      gradient.addColorStop(0, '#1a1a2e');
+      gradient.addColorStop(1, '#16213e');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Draw grid (subtle)
+      ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+      ctx.lineWidth = 1;
+      for (let x = -cameraX % TILE_SIZE; x < canvas.width; x += TILE_SIZE) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+        ctx.stroke();
+      }
+      
+      ctx.save();
+      ctx.translate(-cameraX, 0);
+      
+      // Draw tiles
+      level.tiles.forEach(tile => {
+        const x = tile.x * TILE_SIZE;
+        const y = tile.y * TILE_SIZE;
+        
+        switch(tile.type) {
+          case 1: // Platform
+            ctx.fillStyle = '#4a5568';
+            ctx.fillRect(x, y, TILE_SIZE, TILE_SIZE);
+            ctx.fillStyle = '#718096';
+            ctx.fillRect(x, y, TILE_SIZE, 4);
+            ctx.fillStyle = '#2d3748';
+            ctx.fillRect(x, y + TILE_SIZE - 4, TILE_SIZE, 4);
+            break;
+            
+          case 2: // Spike
+            ctx.fillStyle = '#ef4444';
+            ctx.beginPath();
+            ctx.moveTo(x + TILE_SIZE/2, y);
+            ctx.lineTo(x + TILE_SIZE, y + TILE_SIZE);
+            ctx.lineTo(x, y + TILE_SIZE);
+            ctx.closePath();
+            ctx.fill();
+            // Glow
+            ctx.shadowColor = '#ef4444';
+            ctx.shadowBlur = 10;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            break;
+            
+          case 3: // Enemy
+            const ex = tile.currentX || x;
+            ctx.fillStyle = '#a855f7';
+            ctx.beginPath();
+            ctx.arc(ex + TILE_SIZE/2, y + TILE_SIZE/2, TILE_SIZE/2 - 4, 0, Math.PI * 2);
+            ctx.fill();
+            // Eyes
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(ex + TILE_SIZE/3, y + TILE_SIZE/3, 4, 0, Math.PI * 2);
+            ctx.arc(ex + TILE_SIZE*2/3, y + TILE_SIZE/3, 4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#000';
+            ctx.beginPath();
+            ctx.arc(ex + TILE_SIZE/3, y + TILE_SIZE/3, 2, 0, Math.PI * 2);
+            ctx.arc(ex + TILE_SIZE*2/3, y + TILE_SIZE/3, 2, 0, Math.PI * 2);
+            ctx.fill();
+            break;
+            
+          case 4: // Boost
+            ctx.fillStyle = '#22c55e';
+            ctx.beginPath();
+            ctx.moveTo(x + TILE_SIZE/2, y + 4);
+            ctx.lineTo(x + TILE_SIZE - 4, y + TILE_SIZE/2);
+            ctx.lineTo(x + TILE_SIZE/2 + 4, y + TILE_SIZE/2);
+            ctx.lineTo(x + TILE_SIZE/2 + 4, y + TILE_SIZE - 4);
+            ctx.lineTo(x + TILE_SIZE/2 - 4, y + TILE_SIZE - 4);
+            ctx.lineTo(x + TILE_SIZE/2 - 4, y + TILE_SIZE/2);
+            ctx.lineTo(x + 4, y + TILE_SIZE/2);
+            ctx.closePath();
+            ctx.fill();
+            ctx.shadowColor = '#22c55e';
+            ctx.shadowBlur = 15;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            break;
+            
+          case 5: // Goal
+            ctx.fillStyle = '#fbbf24';
+            ctx.fillRect(x + 4, y + 4, TILE_SIZE - 8, TILE_SIZE - 8);
+            ctx.fillStyle = '#fef3c7';
+            ctx.fillRect(x + 8, y + 8, TILE_SIZE - 16, TILE_SIZE - 16);
+            // Star
+            ctx.fillStyle = '#f59e0b';
+            ctx.beginPath();
+            const cx = x + TILE_SIZE/2;
+            const cy = y + TILE_SIZE/2;
+            for (let i = 0; i < 5; i++) {
+              const angle = (i * 4 * Math.PI / 5) - Math.PI/2;
+              const r = i % 2 === 0 ? 8 : 4;
+              if (i === 0) ctx.moveTo(cx + r * Math.cos(angle), cy + r * Math.sin(angle));
+              else ctx.lineTo(cx + r * Math.cos(angle), cy + r * Math.sin(angle));
+            }
+            ctx.closePath();
+            ctx.fill();
+            break;
+        }
+      });
+      
+      // Draw moving platforms
+      level.movingPlatforms.forEach(plat => {
+        ctx.fillStyle = '#60a5fa';
+        ctx.fillRect(plat.currentX, plat.currentY, plat.width * TILE_SIZE, TILE_SIZE);
+        ctx.fillStyle = '#93c5fd';
+        ctx.fillRect(plat.currentX, plat.currentY, plat.width * TILE_SIZE, 4);
+      });
+      
+      // Draw player
+      ctx.fillStyle = '#10b981';
+      ctx.fillRect(player.x, player.y, player.width, player.height);
+      // Player highlight
+      ctx.fillStyle = '#34d399';
+      ctx.fillRect(player.x, player.y, player.width, 4);
+      // Player eyes
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(player.x + 4, player.y + 6, 6, 6);
+      ctx.fillRect(player.x + player.width - 10, player.y + 6, 6, 6);
+      ctx.fillStyle = '#000';
+      ctx.fillRect(player.x + 6, player.y + 8, 3, 3);
+      ctx.fillRect(player.x + player.width - 8, player.y + 8, 3, 3);
+      
+      ctx.restore();
+    }
+    
+    // Start initialization
+    init();
+  </script>
+ </body>
+</html>
