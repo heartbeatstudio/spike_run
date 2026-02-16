@@ -79,7 +79,23 @@
    <div id="game-complete" class="absolute inset-0 flex-col items-center justify-center bg-gradient-to-b from-gray-900 via-green-900 to-gray-900 z-40 hidden">
     <h2 class="game-font text-3xl text-yellow-400 mb-4">🏆 YOU WIN! 🏆</h2>
     <p class="game-font text-sm text-gray-300 mb-2">All levels completed!</p>
-    <p class="game-font text-xs text-gray-500 mb-8">Total Deaths: <span id="final-deaths" class="text-red-400">0</span></p><button id="restart-btn" class="game-font text-sm bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white px-8 py-4 rounded-lg">PLAY AGAIN</button>
+    <p class="game-font text-xs text-gray-500 mb-2">Total Deaths: <span id="final-deaths" class="text-red-400">0</span></p>
+    <p id="rank-display" class="game-font text-xs text-gray-500 mb-8"></p>
+    <button id="view-leaderboard-btn" class="game-font text-sm bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white px-8 py-4 rounded-lg mb-4">VIEW LEADERBOARD</button>
+    <button id="restart-btn" class="game-font text-sm bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white px-8 py-4 rounded-lg">PLAY AGAIN</button>
+   </div><!-- Name Input Modal -->
+   <div id="name-input-modal" class="absolute inset-0 flex-col items-center justify-center bg-black/95 z-50 hidden">
+    <h2 class="game-font text-2xl text-yellow-400 mb-8">ENTER YOUR NAME</h2>
+    <input id="player-name-input" type="text" maxlength="20" placeholder="Your Name" class="game-font text-sm bg-gray-800 text-white px-6 py-3 rounded-lg mb-6 text-center border-2 border-gray-600 focus:border-green-400 outline-none">
+    <button id="submit-score-btn" class="game-font text-sm bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white px-8 py-4 rounded-lg mb-2">SUBMIT SCORE</button>
+    <button id="skip-score-btn" class="game-font text-xs text-gray-500 hover:text-gray-300 mt-2">Skip</button>
+   </div><!-- Leaderboard Screen -->
+   <div id="leaderboard-screen" class="absolute inset-0 flex-col items-center justify-center bg-gradient-to-b from-gray-900 via-blue-900 to-gray-900 z-50 hidden">
+    <h2 class="game-font text-3xl text-yellow-400 mb-8">🏅 TOP SCORES 🏅</h2>
+    <div id="leaderboard-list" class="w-full max-w-2xl px-4 mb-8">
+     <!-- Dynamically populated -->
+    </div>
+    <button id="close-leaderboard-btn" class="game-font text-sm bg-gradient-to-r from-gray-600 to-gray-500 hover:from-gray-500 hover:to-gray-400 text-white px-8 py-4 rounded-lg">CLOSE</button>
    </div><!-- Secret Level Select -->
    <div id="level-select" class="absolute inset-0 flex-col items-center justify-center bg-black/95 z-50 hidden">
     <h2 class="game-font text-2xl text-cyan-400 mb-8">LEVEL SELECT</h2>
@@ -114,11 +130,28 @@
     let player = {};
     let keys = {};
     let cameraX = 0;
+    let playerFacingRight = true;
 
     // Secret code detection for level select
     let secretCode = '';
     const SECRET_TRIGGER = 'debug';
     let secretTimeout = null;
+
+    // Fly mode hack
+    let flyMode = false;
+    const FLY_SPEED = 8;
+
+    // Boss fight state
+    let bossActive = false;
+    let boss = null;
+    let playerHP = 10;
+    let bullets = [];
+    let bossAttacks = [];
+    let lastShootTime = 0;
+    const SHOOT_COOLDOWN = 300; // milliseconds
+    const BULLET_SPEED = 12;
+    let shootTipTimer = 0;
+    let showShootTip = false;
 
     // Audio Manager - Retro Chiptune Sound System
     const AudioManager = {
@@ -377,6 +410,116 @@
         this.bgmTimeout = setTimeout(() => this.playBGMLoop(), loopDuration);
       },
 
+      // Boss fight music - intense and fast-paced
+      playBossBGMLoop() {
+        if (!this.ctx || this.muted) return;
+
+        const now = this.ctx.currentTime;
+        const bpm = 160; // Faster tempo for boss fight
+        const beatDuration = 60 / bpm;
+
+        // Aggressive melody in D minor
+        const melody = [
+          { note: 587.33, duration: 0.25 }, // D
+          { note: 587.33, duration: 0.25 }, // D
+          { note: 698.46, duration: 0.25 }, // F
+          { note: 587.33, duration: 0.25 }, // D
+          { note: 783.99, duration: 0.5 },  // G
+          { note: 698.46, duration: 0.5 },  // F
+          { note: 587.33, duration: 0.25 }, // D
+          { note: 587.33, duration: 0.25 }, // D
+          { note: 698.46, duration: 0.25 }, // F
+          { note: 587.33, duration: 0.25 }, // D
+          { note: 880.00, duration: 0.5 },  // A
+          { note: 783.99, duration: 0.5 },  // G
+          { note: 698.46, duration: 0.25 }, // F
+          { note: 783.99, duration: 0.25 }, // G
+          { note: 880.00, duration: 0.25 }, // A
+          { note: 932.33, duration: 0.25 }, // Bb
+          { note: 880.00, duration: 0.5 },  // A
+          { note: 698.46, duration: 0.5 },  // F
+        ];
+
+        // Driving bass line
+        const bass = [
+          { note: 146.83, duration: 0.5 }, // D
+          { note: 146.83, duration: 0.5 }, // D
+          { note: 174.61, duration: 0.5 }, // F
+          { note: 146.83, duration: 0.5 }, // D
+          { note: 146.83, duration: 0.5 }, // D
+          { note: 146.83, duration: 0.5 }, // D
+          { note: 220.00, duration: 0.5 }, // A
+          { note: 196.00, duration: 0.5 }, // G
+        ];
+
+        let time = 0;
+        this.bgmOscillators = [];
+
+        // Play melody with more aggressive tone
+        melody.forEach((note, i) => {
+          if (note.note > 0) {
+            const osc = this.ctx.createOscillator();
+            const oscGain = this.ctx.createGain();
+            osc.type = 'sawtooth'; // More aggressive sound for boss
+            osc.frequency.value = note.note;
+            osc.connect(oscGain);
+            oscGain.connect(this.bgmGain);
+
+            const startTime = now + time;
+            const endTime = startTime + (note.duration * beatDuration);
+
+            oscGain.gain.setValueAtTime(0.12, startTime);
+            oscGain.gain.exponentialRampToValueAtTime(0.01, endTime);
+
+            osc.start(startTime);
+            osc.stop(endTime);
+            this.bgmOscillators.push(osc);
+          }
+          time += note.duration * beatDuration;
+        });
+
+        // Heavy bass line
+        let bassTime = 0;
+        bass.forEach((note, i) => {
+          const osc = this.ctx.createOscillator();
+          const oscGain = this.ctx.createGain();
+          osc.type = 'square'; // Heavy bass sound
+          osc.frequency.value = note.note;
+          osc.connect(oscGain);
+          oscGain.connect(this.bgmGain);
+
+          const startTime = now + bassTime;
+          const endTime = startTime + (note.duration * beatDuration);
+
+          oscGain.gain.setValueAtTime(0.15, startTime);
+          oscGain.gain.setValueAtTime(0.15, endTime - 0.05);
+          oscGain.gain.exponentialRampToValueAtTime(0.01, endTime);
+
+          osc.start(startTime);
+          osc.stop(endTime);
+          this.bgmOscillators.push(osc);
+
+          bassTime += note.duration * beatDuration;
+        });
+
+        // Schedule next loop
+        const loopDuration = time * 1000;
+        this.bgmTimeout = setTimeout(() => this.playBossBGMLoop(), loopDuration);
+      },
+
+      // Start boss BGM
+      startBossBGM() {
+        if (!this.ctx || this.muted) return;
+
+        // Unlock audio context if suspended
+        if (this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+
+        this.stopBGM(); // Stop any existing BGM
+        this.playBossBGMLoop();
+      },
+
       // Stop background music
       stopBGM() {
         if (this.bgmTimeout) {
@@ -412,6 +555,65 @@
           indicator.textContent = this.muted ? 'OFF' : 'ON';
           indicator.className = this.muted ? 'text-red-400 ml-2' : 'text-green-400 ml-2';
         }
+      }
+    };
+
+    // Leaderboard API Manager
+    const LeaderboardAPI = {
+      apiUrl: '/api/leaderboard',
+
+      async getTopScores(limit = 10) {
+        try {
+          const response = await fetch(`${this.apiUrl}?limit=${limit}`);
+          const data = await response.json();
+          return data.leaderboard || [];
+        } catch (error) {
+          console.error('Failed to fetch leaderboard:', error);
+          return [];
+        }
+      },
+
+      async submitScore(deaths, playerName) {
+        try {
+          const response = await fetch(this.apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ deaths, playerName })
+          });
+          const data = await response.json();
+          return data;
+        } catch (error) {
+          console.error('Failed to submit score:', error);
+          return { error: 'Network error' };
+        }
+      },
+
+      async render() {
+        const container = document.getElementById('leaderboard-list');
+        container.innerHTML = '<p class="game-font text-xs text-gray-400 text-center">Loading...</p>';
+
+        const scores = await this.getTopScores(10);
+
+        if (scores.length === 0) {
+          container.innerHTML = '<p class="game-font text-xs text-gray-500 text-center">No scores yet. Be the first!</p>';
+          return;
+        }
+
+        container.innerHTML = scores.map((score, index) => {
+          const date = new Date(score.timestamp || score.date);
+          const formattedDate = date.toLocaleDateString();
+          const rankClass = index < 3 ? 'text-yellow-400' : 'text-gray-400';
+          const deathsClass = index === 0 ? 'text-green-400' : 'text-red-400';
+
+          return `
+            <div class="flex justify-between items-center bg-black/50 px-6 py-3 mb-2 rounded-lg">
+              <span class="game-font text-sm ${rankClass}">#${score.rank || index + 1}</span>
+              <span class="game-font text-xs text-green-400 flex-1 ml-4">${score.playerName}</span>
+              <span class="game-font text-xs text-gray-300 mr-4">${formattedDate}</span>
+              <span class="game-font text-sm ${deathsClass}">${score.deaths} deaths</span>
+            </div>
+          `;
+        }).join('');
       }
     };
 
@@ -587,95 +789,100 @@
           { x: 55, y: 16, width: 3, moveX: 0, moveY: -4, speed: 0.018 }
         ]
       },
-      // Level 6 - Vertical Gauntlet
+      // Level 6 - Platform Climb (Completely Redesigned)
       {
-        width: 45,
-        height: 24,
-        playerStart: { x: 2, y: 21 },
+        width: 50,
+        height: 20,
+        playerStart: { x: 2, y: 17 },
         tiles: [
-          // Starting area
-          ...Array(5).fill().map((_, i) => ({ x: i, y: 23, type: 1 })),
-          // Spike pit
-          ...Array(8).fill().map((_, i) => ({ x: 5 + i, y: 23, type: 2 })),
-          // Vertical ascent
-          { x: 6, y: 20, type: 1 },
-          { x: 9, y: 17, type: 1 },
-          { x: 12, y: 14, type: 1 },
-          // Enemy section
-          { x: 15, y: 12, type: 1 }, { x: 16, y: 12, type: 1 },
-          { x: 15, y: 11, type: 3 },
-          // Narrow shaft with spike walls
-          { x: 16, y: 10, type: 2 }, { x: 17, y: 10, type: 2 },
-          { x: 16, y: 9, type: 2 }, { x: 17, y: 9, type: 2 },
-          { x: 16, y: 8, type: 2 }, { x: 17, y: 8, type: 2 },
-          { x: 14, y: 9, type: 1 }, { x: 15, y: 9, type: 1 },
-          { x: 14, y: 7, type: 1 }, { x: 15, y: 7, type: 1 },
-          // Mid-level plateau
-          { x: 18, y: 6, type: 1 }, { x: 19, y: 6, type: 1 }, { x: 20, y: 6, type: 1 }, { x: 21, y: 6, type: 1 },
-          // Boost section
-          { x: 20, y: 5, type: 4 },
-          // Upper challenge
-          { x: 25, y: 3, type: 1 },
-          { x: 26, y: 10, type: 3 },
-          { x: 27, y: 10, type: 1 },
-          { x: 30, y: 8, type: 3 },
-          // Final descent
-          { x: 35, y: 6, type: 1 },
-          { x: 38, y: 10, type: 1 },
-          { x: 40, y: 15, type: 1 },
-          // Goal platform
-          { x: 42, y: 18, type: 1 }, { x: 43, y: 18, type: 1 },
-          { x: 43, y: 17, type: 5 },
+          // Starting ground - nice and long
+          ...Array(12).fill().map((_, i) => ({ x: i, y: 19, type: 1 })),
+
+          // First ascent - wide steps going up
+          { x: 10, y: 17, type: 1 }, { x: 11, y: 17, type: 1 }, { x: 12, y: 17, type: 1 },
+          { x: 13, y: 15, type: 1 }, { x: 14, y: 15, type: 1 }, { x: 15, y: 15, type: 1 },
+          { x: 16, y: 13, type: 1 }, { x: 17, y: 13, type: 1 }, { x: 18, y: 13, type: 1 },
+
+          // First enemy - easy to avoid
+          { x: 17, y: 12, type: 3 },
+
+          // Continue up
+          { x: 19, y: 11, type: 1 }, { x: 20, y: 11, type: 1 }, { x: 21, y: 11, type: 1 },
+
+          // Small spike section - easy to jump
+          { x: 22, y: 11, type: 2 }, { x: 23, y: 11, type: 2 },
+
+          // Landing platform
+          { x: 24, y: 11, type: 1 }, { x: 25, y: 11, type: 1 }, { x: 26, y: 11, type: 1 },
+
+          // Go higher
+          { x: 27, y: 9, type: 1 }, { x: 28, y: 9, type: 1 }, { x: 29, y: 9, type: 1 },
+
+          // Boost pad to reach upper area
+          { x: 28, y: 8, type: 4 },
+
+          // Upper platform
+          { x: 32, y: 5, type: 1 }, { x: 33, y: 5, type: 1 }, { x: 34, y: 5, type: 1 }, { x: 35, y: 5, type: 1 },
+
+          // Second enemy - can walk around
+          { x: 34, y: 4, type: 3 },
+
+          // Descent begins - stepping down
+          { x: 37, y: 7, type: 1 }, { x: 38, y: 7, type: 1 },
+          { x: 39, y: 10, type: 1 }, { x: 40, y: 10, type: 1 },
+          { x: 41, y: 13, type: 1 }, { x: 42, y: 13, type: 1 },
+          { x: 43, y: 16, type: 1 }, { x: 44, y: 16, type: 1 },
+
+          // Final ground before goal
+          ...Array(5).fill().map((_, i) => ({ x: 44 + i, y: 19, type: 1 })),
+
+          // Goal!
+          { x: 48, y: 18, type: 5 },
         ],
         movingPlatforms: [
-          { x: 10, y: 18, width: 2, moveX: 0, moveY: -6, speed: 0.015 },
-          { x: 28, y: 12, width: 2, moveX: 3, moveY: -3, speed: 0.018 }
+          // One easy moving platform
+          { x: 30, y: 14, width: 3, moveX: 0, moveY: -4, speed: 0.010 }
         ]
       },
-      // Level 7 - Enemy Swarm
+      // Level 7 - Enemy Swarm (Easier)
       {
         width: 68,
         height: 18,
         playerStart: { x: 2, y: 15 },
         tiles: [
           // Starting zone
-          ...Array(8).fill().map((_, i) => ({ x: i, y: 17, type: 1 })),
-          // First enemy cluster
-          ...Array(9).fill().map((_, i) => ({ x: 10 + i, y: 17, type: 1 })),
-          { x: 11, y: 16, type: 3 },
-          { x: 14, y: 16, type: 3 },
-          { x: 17, y: 16, type: 3 },
-          // Spike gap
-          { x: 19, y: 17, type: 2 }, { x: 20, y: 17, type: 2 }, { x: 21, y: 17, type: 2 },
-          // Elevated enemy zone
-          ...Array(9).fill().map((_, i) => ({ x: 24 + i, y: 14, type: 1 })),
-          { x: 25, y: 13, type: 3 },
+          ...Array(10).fill().map((_, i) => ({ x: i, y: 17, type: 1 })),
+          // First enemy cluster - reduced to 2 enemies
+          ...Array(10).fill().map((_, i) => ({ x: 10 + i, y: 17, type: 1 })),
+          { x: 12, y: 16, type: 3 },
+          { x: 16, y: 16, type: 3 },
+          // Small spike gap
+          { x: 20, y: 17, type: 2 }, { x: 21, y: 17, type: 2 },
+          // Bridge over gap
+          { x: 22, y: 17, type: 1 }, { x: 23, y: 17, type: 1 },
+          // Elevated enemy zone - reduced to 2 enemies
+          ...Array(12).fill().map((_, i) => ({ x: 24 + i, y: 14, type: 1 })),
           { x: 27, y: 13, type: 3 },
-          { x: 29, y: 13, type: 3 },
           { x: 31, y: 13, type: 3 },
           // Boost escape
-          { x: 33, y: 13, type: 4 },
+          { x: 34, y: 13, type: 4 },
           // Upper path
-          ...Array(5).fill().map((_, i) => ({ x: 38 + i, y: 10, type: 1 })),
-          { x: 40, y: 9, type: 3 },
-          // Spike corridor
-          { x: 45, y: 10, type: 2 }, { x: 46, y: 10, type: 2 },
-          { x: 52, y: 17, type: 2 }, { x: 53, y: 17, type: 2 }, { x: 54, y: 17, type: 2 },
-          // Final stretch
-          ...Array(9).fill().map((_, i) => ({ x: 56 + i, y: 17, type: 1 })),
-          { x: 58, y: 16, type: 3 },
-          { x: 62, y: 16, type: 3 },
-          { x: 57, y: 17, type: 2 },
-          { x: 60, y: 17, type: 2 },
-          { x: 63, y: 17, type: 2 },
+          ...Array(8).fill().map((_, i) => ({ x: 38 + i, y: 10, type: 1 })),
+          // No spike corridor
+          // Moving platform area
+          ...Array(6).fill().map((_, i) => ({ x: 48 + i, y: 14, type: 1 })),
+          // Final stretch - only 1 enemy
+          ...Array(12).fill().map((_, i) => ({ x: 56 + i, y: 17, type: 1 })),
+          { x: 60, y: 16, type: 3 },
+          { x: 58, y: 17, type: 2 },
           // Goal
           { x: 66, y: 14, type: 1 }, { x: 67, y: 14, type: 1 },
           { x: 67, y: 13, type: 5 },
         ],
         movingPlatforms: [
-          { x: 22, y: 14, width: 2, moveX: 4, moveY: 0, speed: 0.022 },
-          { x: 35, y: 17, width: 2, moveX: 0, moveY: -5, speed: 0.020 },
-          { x: 50, y: 12, width: 3, moveX: 3, moveY: 0, speed: 0.025 }
+          { x: 22, y: 15, width: 2, moveX: 3, moveY: 0, speed: 0.018 },
+          { x: 36, y: 17, width: 2, moveX: 0, moveY: -4, speed: 0.016 },
+          { x: 50, y: 12, width: 3, moveX: 2, moveY: 0, speed: 0.020 }
         ]
       },
       // Level 8 - Spike Labyrinth
@@ -724,130 +931,489 @@
         ],
         movingPlatforms: []
       },
-      // Level 9 - Moving Platform Master
+      // Level 9 - Platform Jumps (No Moving Platforms)
       {
-        width: 62,
-        height: 22,
-        playerStart: { x: 2, y: 19 },
+        width: 60,
+        height: 18,
+        playerStart: { x: 2, y: 15 },
         tiles: [
-          // Starting platform
-          ...Array(6).fill().map((_, i) => ({ x: i, y: 21, type: 1 })),
-          // Mid-platform
-          { x: 20, y: 13, type: 1 }, { x: 21, y: 13, type: 1 }, { x: 22, y: 13, type: 1 },
-          { x: 21, y: 12, type: 3 },
-          // Spike section
-          { x: 28, y: 21, type: 2 }, { x: 29, y: 21, type: 2 }, { x: 30, y: 21, type: 2 },
-          // Static landing zone
-          { x: 46, y: 14, type: 1 }, { x: 47, y: 14, type: 1 }, { x: 48, y: 14, type: 1 },
-          // Upper challenge
-          { x: 50, y: 5, type: 1 }, { x: 51, y: 5, type: 1 }, { x: 52, y: 5, type: 1 },
-          { x: 51, y: 4, type: 3 },
-          { x: 52, y: 4, type: 3 },
-          // Boost section
-          { x: 52, y: 4, type: 4 },
-          // Final platform
-          { x: 56, y: 10, type: 1 }, { x: 57, y: 10, type: 1 }, { x: 58, y: 10, type: 1 },
-          { x: 57, y: 10, type: 2 },
-          // Goal
-          { x: 60, y: 8, type: 1 }, { x: 61, y: 8, type: 1 },
-          { x: 61, y: 7, type: 5 },
+          // Starting ground - long and safe
+          ...Array(12).fill().map((_, i) => ({ x: i, y: 17, type: 1 })),
+
+          // Jump section - stepping stones
+          { x: 14, y: 15, type: 1 }, { x: 15, y: 15, type: 1 },
+          { x: 18, y: 14, type: 1 }, { x: 19, y: 14, type: 1 },
+          { x: 22, y: 13, type: 1 }, { x: 23, y: 13, type: 1 },
+
+          // Enemy
+          { x: 19, y: 13, type: 3 },
+
+          // Mid section
+          { x: 26, y: 12, type: 1 }, { x: 27, y: 12, type: 1 }, { x: 28, y: 12, type: 1 },
+
+          // Small spike - easy jump
+          { x: 29, y: 12, type: 2 },
+
+          // Continue platforms
+          { x: 30, y: 12, type: 1 }, { x: 31, y: 12, type: 1 },
+
+          // Upper section
+          { x: 34, y: 10, type: 1 }, { x: 35, y: 10, type: 1 }, { x: 36, y: 10, type: 1 },
+
+          // Highest platform
+          { x: 39, y: 8, type: 1 }, { x: 40, y: 8, type: 1 }, { x: 41, y: 8, type: 1 },
+
+          // Enemy on upper platform
+          { x: 40, y: 7, type: 3 },
+
+          // Descent platforms
+          { x: 44, y: 10, type: 1 }, { x: 45, y: 10, type: 1 },
+          { x: 48, y: 12, type: 1 }, { x: 49, y: 12, type: 1 },
+          { x: 52, y: 14, type: 1 }, { x: 53, y: 14, type: 1 },
+
+          // Final ground
+          ...Array(6).fill().map((_, i) => ({ x: 54 + i, y: 17, type: 1 })),
+
+          // Goal!
+          { x: 57, y: 14, type: 1 }, { x: 58, y: 14, type: 1 }, { x: 59, y: 14, type: 1 },
+          { x: 59, y: 13, type: 5 },
         ],
-        movingPlatforms: [
-          { x: 8, y: 18, width: 2, moveX: 0, moveY: -8, speed: 0.015 },
-          { x: 15, y: 18, width: 2, moveX: 0, moveY: -8, speed: 0.015 },
-          { x: 25, y: 16, width: 2, moveX: 4, moveY: -5, speed: 0.018 },
-          { x: 32, y: 11, width: 2, moveX: -3, moveY: -4, speed: 0.020 },
-          { x: 38, y: 14, width: 3, moveX: 6, moveY: 0, speed: 0.028 },
-          { x: 42, y: 8, width: 2, moveX: 0, moveY: -4, speed: 0.016 }
-        ]
+        movingPlatforms: []
       },
-      // Level 10 - The Ultimate Challenge
+      // Level 10 - BOSS ARENA
       {
-        width: 85,
-        height: 25,
-        playerStart: { x: 2, y: 22 },
+        width: 40,
+        height: 22,
+        playerStart: { x: 5, y: 19 },
         tiles: [
-          // PHASE 1: Spike Field Ascent
-          // Starting ground
-          ...Array(6).fill().map((_, i) => ({ x: i, y: 24, type: 1 })),
-          // Spike field
-          ...Array(15).fill().map((_, i) => ({ x: 6 + i, y: 24, type: 2 })),
-          // Ascending platforms over spikes
-          { x: 7, y: 21, type: 1 },
-          { x: 10, y: 18, type: 1 },
-          { x: 13, y: 15, type: 1 }, { x: 14, y: 15, type: 1 },
-          { x: 14, y: 14, type: 3 }, // Enemy 1
-          { x: 16, y: 12, type: 1 },
-          { x: 19, y: 9, type: 1 }, { x: 20, y: 9, type: 1 },
-          // Spike ceiling
-          { x: 15, y: 6, type: 2 }, { x: 16, y: 6, type: 2 }, { x: 17, y: 6, type: 2 },
+          // Floor of the arena
+          ...Array(40).fill().map((_, i) => ({ x: i, y: 21, type: 1 })),
 
-          // PHASE 2: Enemy Gauntlet
-          // Platform zone
-          ...Array(15).fill().map((_, i) => ({ x: 26 + i, y: 15, type: 1 })),
-          // Enemy swarm (6 enemies)
-          { x: 27, y: 14, type: 3 }, // Enemy 2
-          { x: 30, y: 14, type: 3 }, // Enemy 3
-          { x: 33, y: 14, type: 3 }, // Enemy 4
-          { x: 36, y: 14, type: 3 }, // Enemy 5
-          { x: 38, y: 14, type: 3 }, // Enemy 6
-          { x: 40, y: 14, type: 3 }, // Enemy 7
-          // Spike traps
-          { x: 28, y: 15, type: 2 },
-          { x: 32, y: 15, type: 2 },
-          { x: 35, y: 15, type: 2 },
-          { x: 39, y: 15, type: 2 },
-          // Boost escape
-          { x: 41, y: 14, type: 4 },
+          // Left platform (lower)
+          { x: 4, y: 18, type: 1 }, { x: 5, y: 18, type: 1 }, { x: 6, y: 18, type: 1 }, { x: 7, y: 18, type: 1 },
 
-          // PHASE 3: Precision Spike Corridor
-          // Upper platform
-          { x: 46, y: 8, type: 1 }, { x: 47, y: 8, type: 1 }, { x: 48, y: 8, type: 1 },
-          // Spike maze floor
-          ...Array(15).fill().map((_, i) => ({ x: 49 + i, y: 24, type: 2 })),
-          // Spike walls (vertical barriers)
-          { x: 50, y: 8, type: 2 }, { x: 50, y: 9, type: 2 }, { x: 50, y: 10, type: 2 }, { x: 50, y: 11, type: 2 }, { x: 50, y: 12, type: 2 },
-          { x: 55, y: 8, type: 2 }, { x: 55, y: 9, type: 2 }, { x: 55, y: 10, type: 2 }, { x: 55, y: 11, type: 2 }, { x: 55, y: 12, type: 2 },
-          { x: 60, y: 8, type: 2 }, { x: 60, y: 9, type: 2 }, { x: 60, y: 10, type: 2 }, { x: 60, y: 11, type: 2 }, { x: 60, y: 12, type: 2 },
-          // Narrow platform path
-          { x: 51, y: 12, type: 1 },
-          { x: 53, y: 9, type: 1 },
-          { x: 53, y: 8, type: 3 }, // Enemy 8
-          { x: 56, y: 11, type: 1 },
-          { x: 58, y: 7, type: 1 }, { x: 59, y: 7, type: 1 },
-          { x: 58, y: 6, type: 4 }, // Boost 1
-          { x: 58, y: 6, type: 3 }, // Enemy 9
-          { x: 61, y: 10, type: 1 },
-          { x: 61, y: 9, type: 4 }, // Boost 2
+          // Mid-left platform
+          { x: 11, y: 15, type: 1 }, { x: 12, y: 15, type: 1 }, { x: 13, y: 15, type: 1 }, { x: 14, y: 15, type: 1 },
 
-          // PHASE 4: Final Ascent
-          // Descent to ground
-          { x: 66, y: 14, type: 1 },
-          { x: 69, y: 18, type: 1 },
-          { x: 72, y: 21, type: 1 },
-          // Ground sprint
-          ...Array(8).fill().map((_, i) => ({ x: 73 + i, y: 24, type: 1 })),
-          { x: 74, y: 23, type: 3 }, // Enemy 10
-          { x: 77, y: 23, type: 3 }, // Enemy 11
-          { x: 80, y: 23, type: 3 }, // Enemy 12
-          { x: 75, y: 24, type: 2 },
-          { x: 78, y: 24, type: 2 },
-          // Boost
-          { x: 79, y: 23, type: 4 },
-          // Victory platform
-          { x: 82, y: 12, type: 1 }, { x: 83, y: 12, type: 1 }, { x: 84, y: 12, type: 1 },
-          { x: 84, y: 11, type: 5 },
+          // Center high platform
+          { x: 18, y: 12, type: 1 }, { x: 19, y: 12, type: 1 }, { x: 20, y: 12, type: 1 }, { x: 21, y: 12, type: 1 },
+
+          // Mid-right platform
+          { x: 25, y: 15, type: 1 }, { x: 26, y: 15, type: 1 }, { x: 27, y: 15, type: 1 }, { x: 28, y: 15, type: 1 },
+
+          // Right platform (lower)
+          { x: 32, y: 18, type: 1 }, { x: 33, y: 18, type: 1 }, { x: 34, y: 18, type: 1 }, { x: 35, y: 18, type: 1 },
+
+          // No goal tile - boss defeat triggers level complete
         ],
-        movingPlatforms: [
-          { x: 22, y: 20, width: 2, moveX: 0, moveY: -12, speed: 0.012 },
-          { x: 30, y: 18, width: 2, moveX: 5, moveY: 0, speed: 0.024 },
-          { x: 38, y: 18, width: 2, moveX: -5, moveY: 0, speed: 0.024 },
-          { x: 54, y: 15, width: 2, moveX: 3, moveY: -4, speed: 0.020 },
-          { x: 78, y: 20, width: 3, moveX: 0, moveY: -10, speed: 0.015 }
-        ]
+        movingPlatforms: []
       }
     ];
-    
+
+    // Boss Fight System
+    function createBoss() {
+      boss = {
+        x: 800,
+        y: 300,
+        width: 64,
+        height: 64,
+        hp: 30,
+        maxHP: 30,
+        vx: 0,
+        vy: 0,
+        phase: 0,
+        attackTimer: 0,
+        attackCooldown: 2000,
+        movePattern: 0,
+        moveTimer: 0,
+        smashing: false,
+        smashVelocity: 0,
+        smashStartY: 300
+      };
+      playerHP = 10;
+      bossActive = true;
+      bullets = [];
+      bossAttacks = [];
+      showShootTip = true;
+      shootTipTimer = 0;
+    }
+
+    function updateBoss() {
+      if (!boss || !bossActive) return;
+
+      boss.attackTimer += 16;
+      boss.moveTimer += 16;
+
+      // Update shoot tip timer
+      if (showShootTip) {
+        shootTipTimer += 16;
+        if (shootTipTimer > 5000) { // Show for 5 seconds
+          showShootTip = false;
+        }
+      }
+
+      // Boss movement patterns
+      if (boss.moveTimer > 1000) {
+        boss.movePattern = Math.floor(Math.random() * 3);
+        boss.moveTimer = 0;
+      }
+
+      // Smashing attack movement
+      if (boss.smashing) {
+        boss.vy = boss.smashVelocity;
+        boss.y += boss.vy;
+        boss.vx = 0;
+
+        // Check if boss hit the ground (y > 500)
+        if (boss.y >= 500) {
+          boss.y = 500;
+          boss.smashing = false;
+          boss.smashVelocity = 0;
+
+          // Create shockwave on impact
+          for (let i = -3; i <= 3; i++) {
+            bossAttacks.push({
+              x: boss.x + boss.width / 2 + (i * 80),
+              y: boss.y + boss.height,
+              vx: i * 3,
+              vy: -8,
+              size: 16,
+              type: 'shockwave',
+              lifetime: 60
+            });
+          }
+
+          // Sound effect
+          AudioManager.playSound('death');
+
+          // Boss bounces back up
+          setTimeout(() => {
+            boss.y = boss.smashStartY || 300;
+          }, 500);
+        }
+      } else {
+        // Normal movement
+        if (boss.movePattern === 0) {
+          // Hover side to side
+          boss.vx = Math.sin(Date.now() / 1000) * 3;
+          boss.vy = Math.sin(Date.now() / 800) * 2;
+        } else if (boss.movePattern === 1) {
+          // Chase player horizontally
+          if (player.x < boss.x) boss.vx = -2;
+          else boss.vx = 2;
+          boss.vy = Math.sin(Date.now() / 600) * 2;
+        } else {
+          // Circle pattern
+          boss.vx = Math.cos(Date.now() / 800) * 4;
+          boss.vy = Math.sin(Date.now() / 800) * 4;
+        }
+
+        boss.x += boss.vx;
+        boss.y += boss.vy;
+
+        // Keep boss in bounds
+        if (boss.x < 400) boss.x = 400;
+        if (boss.x > 900) boss.x = 900;
+        if (boss.y < 100) boss.y = 100;
+        if (boss.y > 400) boss.y = 400;
+      }
+
+      // Boss attacks based on HP phase
+      if (boss.hp > 20) {
+        // Phase 1: Slow attacks
+        boss.attackCooldown = 2000;
+      } else if (boss.hp > 10) {
+        // Phase 2: Faster attacks
+        boss.attackCooldown = 1500;
+      } else {
+        // Phase 3: Rapid attacks
+        boss.attackCooldown = 1000;
+      }
+
+      // Trigger attacks
+      if (boss.attackTimer > boss.attackCooldown) {
+        boss.attackTimer = 0;
+        const attackType = Math.floor(Math.random() * 5); // Now 5 attack types
+
+        if (attackType === 0) {
+          // Spiral attack
+          for (let i = 0; i < 8; i++) {
+            const angle = (i / 8) * Math.PI * 2;
+            bossAttacks.push({
+              x: boss.x + boss.width / 2,
+              y: boss.y + boss.height / 2,
+              vx: Math.cos(angle) * 4,
+              vy: Math.sin(angle) * 4,
+              size: 8,
+              type: 'projectile'
+            });
+          }
+        } else if (attackType === 1) {
+          // Aimed shot at player
+          const dx = player.x - boss.x;
+          const dy = player.y - boss.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          bossAttacks.push({
+            x: boss.x + boss.width / 2,
+            y: boss.y + boss.height / 2,
+            vx: (dx / dist) * 5,
+            vy: (dy / dist) * 5,
+            size: 12,
+            type: 'projectile'
+          });
+        } else if (attackType === 2) {
+          // Wave attack
+          for (let i = 0; i < 5; i++) {
+            bossAttacks.push({
+              x: boss.x + boss.width / 2,
+              y: boss.y + boss.height / 2 + (i - 2) * 20,
+              vx: -6,
+              vy: 0,
+              size: 10,
+              type: 'projectile'
+            });
+          }
+        } else if (attackType === 3) {
+          // Rain attack
+          for (let i = 0; i < 3; i++) {
+            bossAttacks.push({
+              x: 400 + Math.random() * 600,
+              y: 50,
+              vx: 0,
+              vy: 6,
+              size: 10,
+              type: 'projectile'
+            });
+          }
+        } else {
+          // SMASH ATTACK - Boss slams down
+          boss.smashing = true;
+          boss.smashStartY = boss.y;
+          boss.smashVelocity = 15;
+        }
+      }
+
+      // Update boss attacks
+      for (let i = bossAttacks.length - 1; i >= 0; i--) {
+        const attack = bossAttacks[i];
+        attack.x += attack.vx;
+        attack.y += attack.vy;
+
+        // Handle shockwave lifetime
+        if (attack.type === 'shockwave') {
+          attack.lifetime--;
+          if (attack.lifetime <= 0) {
+            bossAttacks.splice(i, 1);
+            continue;
+          }
+          // Shockwaves apply gravity
+          attack.vy += 0.5;
+        }
+
+        // Remove off-screen attacks (except shockwaves)
+        if (attack.type !== 'shockwave' && (attack.x < 0 || attack.x > 1200 || attack.y < 0 || attack.y > 700)) {
+          bossAttacks.splice(i, 1);
+          continue;
+        }
+
+        // Check collision with player
+        if (!flyMode &&
+            attack.x < player.x + player.width &&
+            attack.x + attack.size > player.x &&
+            attack.y < player.y + player.height &&
+            attack.y + attack.size > player.y) {
+          playerHP--;
+          bossAttacks.splice(i, 1);
+          AudioManager.playSound('death');
+
+          if (playerHP <= 0) {
+            // Respawn player in boss fight
+            deaths++;
+            updateHUD();
+            playerHP = 10;
+
+            // Reset boss health
+            boss.hp = boss.maxHP;
+
+            const level = levels[currentLevel];
+            player.x = level.playerStart.x * TILE_SIZE;
+            player.y = level.playerStart.y * TILE_SIZE;
+            player.vx = 0;
+            player.vy = 0;
+            player.onGround = false;
+            player.onPlatform = null;
+            bullets = [];
+            bossAttacks = [];
+
+            // Death animation
+            const container = document.getElementById('game-container');
+            container.classList.add('death-animation');
+            setTimeout(() => container.classList.remove('death-animation'), 300);
+          }
+        }
+      }
+
+      // Check if boss defeated
+      if (boss.hp <= 0 && bossActive) {
+        bossActive = false;
+
+        // Play victory sound
+        AudioManager.playSound('levelComplete');
+
+        // Spawn goal tile in the center of the arena (only if it doesn't exist)
+        const level = levels[currentLevel];
+        const goalExists = level.tiles.some(t => t.type === 5);
+        if (!goalExists) {
+          level.tiles.push({
+            x: 19,
+            y: 19,
+            type: 5
+          });
+        }
+      }
+    }
+
+    function updateBullets() {
+      // Update player bullets
+      for (let i = bullets.length - 1; i >= 0; i--) {
+        const bullet = bullets[i];
+        bullet.x += bullet.vx;
+        bullet.y += bullet.vy;
+
+        // Remove off-screen bullets
+        if (bullet.x < 0 || bullet.x > 1200 || bullet.y < 0 || bullet.y > 700) {
+          bullets.splice(i, 1);
+          continue;
+        }
+
+        // Check collision with boss
+        if (boss && bossActive &&
+            bullet.x < boss.x + boss.width &&
+            bullet.x + 8 > boss.x &&
+            bullet.y < boss.y + boss.height &&
+            bullet.y + 8 > boss.y) {
+          boss.hp--;
+          bullets.splice(i, 1);
+          AudioManager.playSound('boost');
+        }
+      }
+    }
+
+    function shootBullet() {
+      const now = Date.now();
+      if (now - lastShootTime < SHOOT_COOLDOWN) return;
+
+      lastShootTime = now;
+
+      // Shoot in the direction player is facing
+      const bulletVX = playerFacingRight ? BULLET_SPEED : -BULLET_SPEED;
+      const bulletX = playerFacingRight ? player.x + player.width : player.x;
+
+      bullets.push({
+        x: bulletX,
+        y: player.y + player.height / 2,
+        vx: bulletVX,
+        vy: 0
+      });
+      AudioManager.playSound('jump');
+    }
+
+    function renderBoss() {
+      if (!boss || !bossActive) return;
+
+      ctx.save();
+      ctx.translate(-cameraX, 0);
+
+      // Draw boss
+      ctx.fillStyle = '#ff00ff';
+      ctx.fillRect(boss.x, boss.y, boss.width, boss.height);
+
+      // Boss eyes
+      ctx.fillStyle = '#ff0000';
+      ctx.fillRect(boss.x + 15, boss.y + 15, 12, 12);
+      ctx.fillRect(boss.x + 37, boss.y + 15, 12, 12);
+
+      // Boss HP bar
+      const hpWidth = (boss.hp / boss.maxHP) * boss.width;
+      ctx.fillStyle = '#ff0000';
+      ctx.fillRect(boss.x, boss.y - 10, boss.width, 6);
+      ctx.fillStyle = '#00ff00';
+      ctx.fillRect(boss.x, boss.y - 10, hpWidth, 6);
+
+      // Draw boss attacks
+      bossAttacks.forEach(attack => {
+        if (attack.type === 'shockwave') {
+          // Shockwave - explosive yellow/orange wave
+          ctx.fillStyle = '#ffaa00';
+          ctx.shadowColor = '#ffaa00';
+          ctx.shadowBlur = 20;
+          ctx.beginPath();
+          ctx.arc(attack.x, attack.y, attack.size, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.shadowBlur = 0;
+        } else {
+          // Normal projectile
+          ctx.fillStyle = '#ff6600';
+          ctx.beginPath();
+          ctx.arc(attack.x, attack.y, attack.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      });
+
+      // Draw player bullets
+      ctx.fillStyle = '#00ffff';
+      bullets.forEach(bullet => {
+        ctx.fillRect(bullet.x, bullet.y, 8, 4);
+      });
+
+      ctx.restore();
+    }
+
+    function renderBossUI() {
+      if (!bossActive && !showShootTip) return;
+
+      // Player HP bar
+      if (bossActive) {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.fillRect(20, 60, 220, 30);
+        ctx.fillStyle = '#fff';
+        ctx.font = '12px "Press Start 2P"';
+        ctx.fillText('PLAYER HP', 30, 78);
+
+        ctx.fillStyle = '#333';
+        ctx.fillRect(130, 68, 100, 12);
+        ctx.fillStyle = playerHP > 3 ? '#00ff00' : '#ff0000';
+        ctx.fillRect(130, 68, playerHP * 10, 12);
+
+        // Boss HP bar
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.fillRect(canvas.width - 240, 60, 220, 30);
+        ctx.fillStyle = '#fff';
+        ctx.fillText('BOSS HP', canvas.width - 230, 78);
+
+        ctx.fillStyle = '#333';
+        ctx.fillRect(canvas.width - 130, 68, 120, 12);
+        ctx.fillStyle = '#ff00ff';
+        ctx.fillRect(canvas.width - 130, 68, (boss.hp / boss.maxHP) * 120, 12);
+      }
+
+      // Tutorial text - PRESS SPACE TO SHOOT
+      if (showShootTip) {
+        const opacity = Math.max(0, 1 - (shootTipTimer / 5000));
+        ctx.save();
+        ctx.globalAlpha = opacity;
+        ctx.fillStyle = '#ffff00';
+        ctx.font = '16px "Press Start 2P"';
+        ctx.textAlign = 'center';
+        ctx.shadowColor = '#000';
+        ctx.shadowBlur = 10;
+        ctx.fillText('PRESS SPACE TO SHOOT', canvas.width / 2, canvas.height / 2 + 100);
+        ctx.shadowBlur = 0;
+        ctx.restore();
+        ctx.textAlign = 'left';
+      }
+    }
+
     // Initialize Game
     function init() {
       canvas = document.getElementById('game-canvas');
@@ -868,6 +1434,93 @@
       document.getElementById('start-btn').addEventListener('click', startGame);
       document.getElementById('next-level-btn').addEventListener('click', nextLevel);
       document.getElementById('restart-btn').addEventListener('click', restartGame);
+
+      // Leaderboard handlers
+      document.getElementById('submit-score-btn').addEventListener('click', async () => {
+        const playerName = document.getElementById('player-name-input').value.trim() || 'Anonymous';
+        const submitBtn = document.getElementById('submit-score-btn');
+
+        // Disable button and show loading state
+        submitBtn.textContent = 'SUBMITTING...';
+        submitBtn.disabled = true;
+
+        // Submit score to API
+        const result = await LeaderboardAPI.submitScore(deaths, playerName);
+
+        // Re-enable button
+        submitBtn.textContent = 'SUBMIT SCORE';
+        submitBtn.disabled = false;
+
+        // Hide name input modal
+        document.getElementById('name-input-modal').classList.add('hidden');
+        document.getElementById('name-input-modal').classList.remove('flex');
+
+        // Show game complete screen
+        document.getElementById('game-complete').classList.remove('hidden');
+        document.getElementById('game-complete').classList.add('flex');
+
+        // Display rank if available
+        const rankDisplay = document.getElementById('rank-display');
+        if (result.error) {
+          rankDisplay.textContent = 'Failed to submit score';
+          rankDisplay.className = 'game-font text-xs text-red-400 mb-8';
+        } else if (result.rank) {
+          const isTopTen = result.rank <= 10;
+          rankDisplay.textContent = `Global Rank: #${result.rank}${isTopTen ? ' - Top 10!' : ''}`;
+          rankDisplay.className = isTopTen ?
+            'game-font text-xs text-green-400 mb-8' :
+            'game-font text-xs text-yellow-400 mb-8';
+        }
+
+        // Clear input for next time
+        document.getElementById('player-name-input').value = '';
+      });
+
+      document.getElementById('skip-score-btn').addEventListener('click', () => {
+        // Hide name input modal
+        document.getElementById('name-input-modal').classList.add('hidden');
+        document.getElementById('name-input-modal').classList.remove('flex');
+
+        // Show game complete screen
+        document.getElementById('game-complete').classList.remove('hidden');
+        document.getElementById('game-complete').classList.add('flex');
+
+        // Clear rank display
+        document.getElementById('rank-display').textContent = '';
+
+        // Clear input for next time
+        document.getElementById('player-name-input').value = '';
+      });
+
+      document.getElementById('view-leaderboard-btn').addEventListener('click', () => {
+        // Hide game complete screen
+        document.getElementById('game-complete').classList.add('hidden');
+        document.getElementById('game-complete').classList.remove('flex');
+
+        // Show leaderboard screen
+        document.getElementById('leaderboard-screen').classList.remove('hidden');
+        document.getElementById('leaderboard-screen').classList.add('flex');
+
+        // Fetch and render leaderboard
+        LeaderboardAPI.render();
+      });
+
+      document.getElementById('close-leaderboard-btn').addEventListener('click', () => {
+        // Hide leaderboard screen
+        document.getElementById('leaderboard-screen').classList.add('hidden');
+        document.getElementById('leaderboard-screen').classList.remove('flex');
+
+        // Show game complete screen
+        document.getElementById('game-complete').classList.remove('hidden');
+        document.getElementById('game-complete').classList.add('flex');
+      });
+
+      // Allow Enter key to submit score
+      document.getElementById('player-name-input').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          document.getElementById('submit-score-btn').click();
+        }
+      });
 
       // Initialize audio
       AudioManager.init();
@@ -903,6 +1556,12 @@
           if (secretCode.includes(SECRET_TRIGGER)) {
             secretCode = '';
             toggleLevelSelect();
+          }
+
+          // Check for fly mode hack
+          if (secretCode.includes('fly')) {
+            secretCode = '';
+            toggleFlyMode();
           }
         }
 
@@ -959,22 +1618,40 @@
       // Set current level
       currentLevel = levelIndex;
 
-      // Load the level
-      loadLevel(currentLevel);
-
       // Start game
       gameRunning = true;
 
-      // Start BGM if not already playing
+      // Unlock audio on user interaction
       if (AudioManager.ctx && AudioManager.ctx.state === 'suspended') {
         AudioManager.ctx.resume();
       }
-      if (!AudioManager.muted) {
-        AudioManager.startBGM();
-      }
+
+      // Load the level (this will start appropriate music)
+      loadLevel(currentLevel);
 
       // Start game loop
       gameLoop();
+    }
+
+    function toggleFlyMode() {
+      flyMode = !flyMode;
+
+      // Visual feedback
+      const hud = document.getElementById('hud');
+      if (flyMode) {
+        // Add fly indicator to HUD
+        const flyIndicator = document.createElement('div');
+        flyIndicator.id = 'fly-indicator';
+        flyIndicator.className = 'absolute top-16 right-4 bg-cyan-500/90 px-4 py-2 rounded-lg game-font text-xs';
+        flyIndicator.innerHTML = '<span class="text-white">✈ FLY MODE</span>';
+        document.getElementById('game-container').appendChild(flyIndicator);
+      } else {
+        // Remove fly indicator
+        const flyIndicator = document.getElementById('fly-indicator');
+        if (flyIndicator) {
+          flyIndicator.remove();
+        }
+      }
     }
     
     function startGame() {
@@ -982,14 +1659,14 @@
       document.getElementById('hud').classList.remove('hidden');
       currentLevel = 0;
       deaths = 0;
-      loadLevel(currentLevel);
       gameRunning = true;
 
-      // Start background music (unlock audio on user interaction)
+      // Unlock audio on user interaction
       if (AudioManager.ctx && AudioManager.ctx.state === 'suspended') {
         AudioManager.ctx.resume();
       }
-      AudioManager.startBGM();
+
+      loadLevel(currentLevel);
 
       gameLoop();
     }
@@ -1007,7 +1684,7 @@
         onPlatform: null
       };
       cameraX = 0;
-      
+
       // Initialize moving platforms
       level.movingPlatforms.forEach(p => {
         p.startX = p.x * TILE_SIZE;
@@ -1016,7 +1693,7 @@
         p.currentY = p.startY;
         p.phase = 0;
       });
-      
+
       // Initialize enemies
       level.tiles.filter(t => t.type === 3).forEach(e => {
         e.startX = e.x * TILE_SIZE;
@@ -1024,7 +1701,31 @@
         e.direction = 1;
         e.moveRange = TILE_SIZE * 1.5;
       });
-      
+
+      // Level 10: Spawn boss
+      if (levelIndex === 9) {
+        // Remove any existing goal tiles from Level 10
+        level.tiles = level.tiles.filter(t => t.type !== 5);
+
+        createBoss();
+        // Start boss music
+        if (!AudioManager.muted) {
+          AudioManager.stopBGM();
+          AudioManager.startBossBGM();
+        }
+      } else {
+        // Reset boss state for other levels
+        bossActive = false;
+        boss = null;
+        bullets = [];
+        bossAttacks = [];
+        // Return to normal music
+        if (!AudioManager.muted && gameRunning) {
+          AudioManager.stopBGM();
+          AudioManager.startBGM();
+        }
+      }
+
       updateHUD();
     }
     
@@ -1067,8 +1768,15 @@
         // Game complete
         AudioManager.playSound('victory');
         document.getElementById('final-deaths').textContent = deaths;
-        document.getElementById('game-complete').classList.remove('hidden');
-        document.getElementById('game-complete').classList.add('flex');
+
+        // Show name input modal
+        document.getElementById('name-input-modal').classList.remove('hidden');
+        document.getElementById('name-input-modal').classList.add('flex');
+
+        // Focus on input field
+        setTimeout(() => {
+          document.getElementById('player-name-input').focus();
+        }, 100);
       } else {
         AudioManager.playSound('levelComplete');
         document.getElementById('level-complete').classList.remove('hidden');
@@ -1105,21 +1813,49 @@
       
       // Player movement
       let moveX = 0;
-      if (keys['ArrowLeft'] || keys['KeyA']) moveX = -MOVE_SPEED;
-      if (keys['ArrowRight'] || keys['KeyD']) moveX = MOVE_SPEED;
-      
-      player.vx = moveX;
-      
-      // Jump
-      if ((keys['Space'] || keys['ArrowUp'] || keys['KeyW']) && player.onGround) {
-        player.vy = JUMP_FORCE;
-        player.onGround = false;
-        AudioManager.playSound('jump');
+      if (keys['ArrowLeft'] || keys['KeyA']) {
+        moveX = -MOVE_SPEED;
+        playerFacingRight = false;
       }
-      
-      // Apply gravity
-      player.vy += GRAVITY;
-      if (player.vy > 15) player.vy = 15;
+      if (keys['ArrowRight'] || keys['KeyD']) {
+        moveX = MOVE_SPEED;
+        playerFacingRight = true;
+      }
+
+      player.vx = moveX;
+
+      // Fly mode controls
+      if (flyMode) {
+        let moveY = 0;
+        if (keys['ArrowUp'] || keys['KeyW']) moveY = -FLY_SPEED;
+        if (keys['ArrowDown'] || keys['KeyS']) moveY = FLY_SPEED;
+        if (keys['Space']) moveY = -FLY_SPEED;
+        player.vy = moveY;
+      } else {
+        // Boss fight shooting
+        if (bossActive) {
+          if (keys['Space']) {
+            shootBullet();
+          }
+          // Jump with W/Up only during boss fight
+          if ((keys['ArrowUp'] || keys['KeyW']) && player.onGround) {
+            player.vy = JUMP_FORCE;
+            player.onGround = false;
+            AudioManager.playSound('jump');
+          }
+        } else {
+          // Normal jump
+          if ((keys['Space'] || keys['ArrowUp'] || keys['KeyW']) && player.onGround) {
+            player.vy = JUMP_FORCE;
+            player.onGround = false;
+            AudioManager.playSound('jump');
+          }
+        }
+
+        // Apply gravity (only when not flying)
+        player.vy += GRAVITY;
+        if (player.vy > 15) player.vy = 15;
+      }
       
       // Move with platform
       if (player.onPlatform) {
@@ -1148,7 +1884,17 @@
       // Vertical collision
       player.y += player.vy;
       player.onGround = false;
-      player.onPlatform = null;
+
+      // Only reset platform if player walked off horizontally
+      if (player.onPlatform) {
+        const plat = player.onPlatform;
+        const platX = plat.currentX;
+        const platWidth = plat.width * TILE_SIZE;
+        // Check if player is still horizontally over the platform
+        if (player.x + player.width < platX || player.x > platX + platWidth) {
+          player.onPlatform = null;
+        }
+      }
       
       const vTiles = getCollidingTiles(player, level);
       vTiles.forEach(tile => {
@@ -1172,9 +1918,19 @@
           width: plat.width * TILE_SIZE,
           height: TILE_SIZE
         };
-        
-        if (rectIntersect(player, platRect)) {
-          if (player.vy > 0 && player.y + player.height - player.vy <= platRect.y) {
+
+        // Check if player is on or near the platform
+        const playerBottom = player.y + player.height;
+        const playerPrevBottom = playerBottom - player.vy;
+
+        // Horizontal overlap check
+        const horizontalOverlap = player.x < platRect.x + platRect.width &&
+                                   player.x + player.width > platRect.x;
+
+        // Check if player is landing on platform from above
+        if (horizontalOverlap && player.vy >= 0) {
+          // More forgiving collision - check if player's bottom is near platform top
+          if (playerBottom >= platRect.y && playerPrevBottom <= platRect.y + 8) {
             player.y = platRect.y - player.height;
             player.vy = 0;
             player.onGround = true;
@@ -1185,20 +1941,21 @@
       
       // Check hazards
       vTiles.concat(hTiles).forEach(tile => {
-        if (tile.type === 2) die(); // Spike
-        if (tile.type === 4) { // Boost
+        if (tile.type === 2 && !flyMode) die(); // Spike (disabled in fly mode)
+        if (tile.type === 4 && !flyMode) { // Boost (disabled in fly mode)
           player.vy = BOOST_FORCE;
           player.onGround = false;
           AudioManager.playSound('boost');
         }
-        if (tile.type === 5) completeLevel(); // Goal
+        if (tile.type === 5) completeLevel(); // Goal (always works)
       });
-      
-      // Enemy collision
-      level.tiles.filter(t => t.type === 3).forEach(e => {
-        const enemyRect = {
-          x: e.currentX + 4,
-          y: e.y * TILE_SIZE + 4,
+
+      // Enemy collision (disabled in fly mode)
+      if (!flyMode) {
+        level.tiles.filter(t => t.type === 3).forEach(e => {
+          const enemyRect = {
+            x: e.currentX + 4,
+            y: e.y * TILE_SIZE + 4,
           width: TILE_SIZE - 8,
           height: TILE_SIZE - 8
         };
@@ -1206,12 +1963,19 @@
           die();
         }
       });
-      
-      // Fall death
-      if (player.y > level.height * TILE_SIZE) {
+      }
+
+      // Fall death (disabled in fly mode)
+      if (!flyMode && player.y > level.height * TILE_SIZE) {
         die();
       }
-      
+
+      // Update boss fight
+      if (bossActive) {
+        updateBoss();
+        updateBullets();
+      }
+
       // Camera follow
       const targetCameraX = player.x - canvas.width / 2;
       cameraX += (targetCameraX - cameraX) * 0.1;
@@ -1374,8 +2138,14 @@
       ctx.fillStyle = '#000';
       ctx.fillRect(player.x + 6, player.y + 8, 3, 3);
       ctx.fillRect(player.x + player.width - 8, player.y + 8, 3, 3);
-      
+
+      // Draw boss and bullets
+      renderBoss();
+
       ctx.restore();
+
+      // Draw boss UI (outside camera transform)
+      renderBossUI();
     }
     
     // Start initialization

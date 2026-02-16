@@ -4,8 +4,11 @@
   "description": "A browser-based spike run game",
   "main": "index.html",
   "scripts": {
-    "dev": "npx serve .",
+    "dev": "vercel dev",
     "start": "npx serve ."
+  },
+  "dependencies": {
+    "@vercel/kv": "^1.0.0"
   },
   "keywords": [
     "game",
