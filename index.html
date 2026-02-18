@@ -56,30 +56,59 @@
  <body class="h-full bg-gray-900 overflow-hidden">
   <div id="game-container" class="h-full w-full relative flex items-center justify-center"><!-- Start Screen -->
    <div id="start-screen" class="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-gray-900 via-purple-900 to-gray-900 z-50">
-    <h1 id="game-title" class="game-font text-3xl md:text-5xl text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-yellow-500 to-red-500 mb-8 text-center px-4" style="animation: pulse-glow 2s ease-in-out infinite;">SPIKE RUNNER</h1>
-    <p class="game-font text-xs md:text-sm text-gray-400 mb-8 text-center px-4">Super Hard Platformer</p><button id="start-btn" class="game-font text-sm bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white px-8 py-4 rounded-lg transition-all transform hover:scale-105">START GAME</button>
-    <div class="mt-8 game-font text-xs text-gray-500 text-center px-4">
+    <h1 id="game-title" class="game-font text-3xl md:text-5xl text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-yellow-500 to-red-500 mb-6 text-center px-4" style="animation: pulse-glow 2s ease-in-out infinite;">SPIKE RUNNER</h1>
+    <p class="game-font text-xs md:text-sm text-gray-400 mb-5 text-center px-4">Super Hard Platformer</p>
+    <p class="game-font text-xs text-gray-500 mb-2">CHOOSE YOUR RUNNER</p>
+    <div id="skin-selector" class="flex gap-2 justify-center mb-1">
+     <button class="skin-btn w-9 h-9 rounded-lg border-2 border-white transition-transform hover:scale-110" style="background:#10b981" data-skin="0"></button>
+     <button class="skin-btn w-9 h-9 rounded-lg border-2 border-transparent transition-transform hover:scale-110" style="background:#ef4444" data-skin="1"></button>
+     <button class="skin-btn w-9 h-9 rounded-lg border-2 border-transparent transition-transform hover:scale-110" style="background:#3b82f6" data-skin="2"></button>
+     <button class="skin-btn w-9 h-9 rounded-lg border-2 border-transparent transition-transform hover:scale-110" style="background:#f59e0b" data-skin="3"></button>
+     <button class="skin-btn w-9 h-9 rounded-lg border-2 border-transparent transition-transform hover:scale-110" style="background:#374151" data-skin="4"></button>
+     <button class="skin-btn w-9 h-9 rounded-lg border-2 border-transparent transition-transform hover:scale-110" style="background:#a855f7" data-skin="5"></button>
+    </div>
+    <p id="skin-name-label" class="game-font text-xs text-green-400 mb-4">NEON</p>
+    <button id="practice-toggle" class="game-font text-xs text-gray-500 hover:text-yellow-400 border border-gray-700 hover:border-yellow-600 px-4 py-2 rounded-lg transition-colors mb-5">PRACTICE MODE: OFF</button>
+    <button id="start-btn" class="game-font text-sm bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white px-8 py-4 rounded-lg transition-all transform hover:scale-105">START GAME</button>
+    <div class="mt-6 game-font text-xs text-gray-500 text-center px-4">
      <p>ARROW KEYS / WASD to move</p>
      <p class="mt-2">SPACE / W / UP to jump</p>
     </div>
-   </div><!-- Game Canvas -->
+   </div>
+   <!-- Story Intro -->
+   <div id="story-screen" class="absolute inset-0 flex-col items-center justify-center bg-black z-50 hidden">
+    <div class="max-w-lg px-8 text-center">
+     <p id="story-line-1" class="game-font text-xs text-gray-400 mb-6" style="opacity:0;transition:opacity 0.8s">THE MACHINES HAVE TAKEN OVER.</p>
+     <p id="story-line-2" class="game-font text-xs text-red-400 mb-6" style="opacity:0;transition:opacity 0.8s">SPIKE-FILLED RUINS ARE ALL THAT REMAIN.</p>
+     <p id="story-line-3" class="game-font text-xs text-green-400 mb-12" style="opacity:0;transition:opacity 0.8s">ONE RUNNER DARES TO REACH THE END.</p>
+     <button id="begin-btn" class="game-font text-sm bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white px-8 py-4 rounded-lg" style="opacity:0;transition:opacity 0.6s">BEGIN MISSION</button>
+    </div>
+   </div>
+   <!-- Game Canvas -->
    <canvas id="game-canvas" class="bg-gray-900"></canvas><!-- HUD -->
    <div id="hud" class="absolute top-4 left-4 right-4 flex justify-between items-start game-font text-xs hidden">
     <div class="bg-black/70 px-4 py-2 rounded-lg"><span class="text-gray-400">LEVEL</span> <span id="level-display" class="text-yellow-400 ml-2">1</span>
     </div>
+    <div class="bg-black/70 px-4 py-2 rounded-lg"><span class="text-gray-400">TIME</span> <span id="timer-display" class="text-cyan-400 ml-2">0:00.0</span>
+    </div>
     <div class="bg-black/70 px-4 py-2 rounded-lg"><span class="text-gray-400">DEATHS</span> <span id="death-display" class="text-red-400 ml-2">0</span>
+    </div>
+    <div id="practice-hud" class="bg-yellow-500/20 border border-yellow-500/50 px-4 py-2 rounded-lg hidden"><span class="text-yellow-400">PRACTICE</span>
     </div>
     <div id="mute-btn" class="bg-black/70 px-4 py-2 rounded-lg cursor-pointer hover:bg-black/80 transition-colors"><span class="text-gray-400">SOUND</span> <span id="mute-indicator" class="text-green-400 ml-2">ON</span>
     </div>
    </div><!-- Level Complete -->
    <div id="level-complete" class="absolute inset-0 flex-col items-center justify-center bg-black/90 z-40 hidden">
     <h2 class="game-font text-2xl text-green-400 mb-4">LEVEL COMPLETE!</h2>
-    <p class="game-font text-sm text-gray-400 mb-8">Get ready for the next challenge...</p><button id="next-level-btn" class="game-font text-sm bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white px-8 py-4 rounded-lg">NEXT LEVEL</button>
+    <p class="game-font text-xs text-cyan-400 mb-2">TIME <span id="level-time-display" class="text-white ml-2">0:00.0</span></p>
+    <p class="game-font text-xs text-gray-500 mb-8">TOTAL <span id="total-time-interim-display" class="text-gray-300 ml-2">0:00.0</span></p>
+    <button id="next-level-btn" class="game-font text-sm bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white px-8 py-4 rounded-lg">NEXT LEVEL</button>
    </div><!-- Game Complete -->
    <div id="game-complete" class="absolute inset-0 flex-col items-center justify-center bg-gradient-to-b from-gray-900 via-green-900 to-gray-900 z-40 hidden">
     <h2 class="game-font text-3xl text-yellow-400 mb-4">🏆 YOU WIN! 🏆</h2>
     <p class="game-font text-sm text-gray-300 mb-2">All levels completed!</p>
     <p class="game-font text-xs text-gray-500 mb-2">Total Deaths: <span id="final-deaths" class="text-red-400">0</span></p>
+    <p class="game-font text-xs text-gray-500 mb-2">Total Time: <span id="final-time" class="text-cyan-400">0:00.0</span></p>
     <p id="rank-display" class="game-font text-xs text-gray-500 mb-8"></p>
     <button id="view-leaderboard-btn" class="game-font text-sm bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white px-8 py-4 rounded-lg mb-4">VIEW LEADERBOARD</button>
     <button id="restart-btn" class="game-font text-sm bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white px-8 py-4 rounded-lg">PLAY AGAIN</button>
@@ -140,6 +169,68 @@
     // Fly mode hack
     let flyMode = false;
     const FLY_SPEED = 8;
+
+    // Character skins
+    const SKINS = [
+      { name: 'NEON',    color: '#10b981', highlight: '#34d399' },
+      { name: 'CRIMSON', color: '#ef4444', highlight: '#f87171' },
+      { name: 'COBALT',  color: '#3b82f6', highlight: '#60a5fa' },
+      { name: 'GOLD',    color: '#f59e0b', highlight: '#fbbf24' },
+      { name: 'SHADOW',  color: '#374151', highlight: '#9ca3af' },
+      { name: 'AURORA',  color: '#a855f7', highlight: '#c084fc' },
+    ];
+    let selectedSkin = parseInt(localStorage.getItem('spikeRunnerSkin') || '0');
+
+    // Practice mode
+    let practiceMode = false;
+    let lastSafePos = { x: 0, y: 0 };
+
+    // Checkpoints
+    let checkpointPos = null; // {x, y} in pixels, set when player touches a checkpoint tile
+
+    // Timer state
+    let levelStartTime = 0;
+    let levelElapsed = 0;
+    let totalTime = 0;
+    let levelTimes = [];
+
+    // Screen shake
+    let screenShake = { intensity: 0, duration: 0 };
+    function triggerShake(intensity, duration) {
+      screenShake.intensity = Math.max(screenShake.intensity, intensity);
+      screenShake.duration  = Math.max(screenShake.duration,  duration);
+    }
+
+    // Particles
+    let particles = [];
+    function spawnDeathParticles(px, py, color) {
+      for (let i = 0; i < 14; i++) {
+        const angle = (i / 14) * Math.PI * 2;
+        const speed = 1.5 + Math.random() * 5;
+        particles.push({
+          x: px + (TILE_SIZE - 8) / 2,
+          y: py + (TILE_SIZE - 4) / 2,
+          vx: Math.cos(angle) * speed + (Math.random() - 0.5),
+          vy: Math.sin(angle) * speed - 2,
+          size: 2 + Math.random() * 4,
+          life: 1.0,
+          decay: 0.025 + Math.random() * 0.03,
+          color
+        });
+      }
+    }
+
+    // Player squish/stretch
+    let playerSquish = { x: 1, y: 1 };
+    let wasOnGround = false;
+
+    function formatTime(ms) {
+      const totalSec = ms / 1000;
+      const minutes = Math.floor(totalSec / 60);
+      const seconds = Math.floor(totalSec % 60);
+      const tenths = Math.floor((ms % 1000) / 100);
+      return `${minutes}:${String(seconds).padStart(2, '0')}.${tenths}`;
+    }
 
     // Boss fight state
     let bossActive = false;
@@ -646,9 +737,7 @@
           { x: 42, y: 8, type: 1 }, { x: 43, y: 8, type: 1 }, { x: 44, y: 8, type: 1 },
           { x: 44, y: 7, type: 5 },
         ],
-        movingPlatforms: [
-          { x: 15, y: 12, width: 2, moveX: 0, moveY: 3, speed: 0.02 }
-        ]
+        movingPlatforms: []
       },
       // Level 2 - Vertical Challenge
       {
@@ -678,9 +767,7 @@
           { x: 35, y: 6, type: 1 }, { x: 36, y: 6, type: 1 },
           { x: 36, y: 5, type: 5 },
         ],
-        movingPlatforms: [
-          { x: 12, y: 19, width: 2, moveX: 0, moveY: -5, speed: 0.015 }
-        ]
+        movingPlatforms: []
       },
       // Level 3 - Enemy Gauntlet
       {
@@ -696,6 +783,7 @@
           // Spike jump
           { x: 16, y: 14, type: 2 }, { x: 17, y: 14, type: 2 },
           { x: 18, y: 14, type: 1 }, { x: 19, y: 14, type: 1 },
+          { x: 19, y: 13, type: 7 }, // Checkpoint
           // Multi-enemy section
           ...Array(12).fill().map((_, i) => ({ x: 22 + i, y: 14, type: 1 })),
           { x: 24, y: 13, type: 3 },
@@ -709,10 +797,7 @@
           { x: 45, y: 10, type: 1 }, { x: 46, y: 10, type: 1 },
           { x: 46, y: 9, type: 5 },
         ],
-        movingPlatforms: [
-          { x: 10, y: 12, width: 2, moveX: 2, moveY: 0, speed: 0.025 },
-          { x: 20, y: 10, width: 2, moveX: 0, moveY: 4, speed: 0.02 }
-        ]
+        movingPlatforms: []
       },
       // Level 4 - Precision Platforming
       {
@@ -731,6 +816,7 @@
           // Enemy on small platform
           { x: 18, y: 13, type: 1 }, { x: 18, y: 12, type: 3 },
           { x: 21, y: 10, type: 1 },
+          { x: 21, y: 9, type: 7 }, // Checkpoint
           // Boost chain
           { x: 24, y: 14, type: 1 }, { x: 24, y: 13, type: 4 },
           { x: 28, y: 8, type: 1 },
@@ -774,20 +860,20 @@
           { x: 38, y: 13, type: 1 },
           // Ground section
           ...Array(15).fill().map((_, i) => ({ x: 40 + i, y: 19, type: 1 })),
+          { x: 41, y: 18, type: 7 }, // Checkpoint
           { x: 42, y: 18, type: 2 }, { x: 43, y: 18, type: 2 },
           { x: 45, y: 18, type: 3 },
           { x: 48, y: 18, type: 2 },
           { x: 50, y: 18, type: 3 },
           // Final boost
           { x: 52, y: 18, type: 4 },
+          // Stepping stone between ground and victory (safety net for boost arc)
+          { x: 55, y: 15, type: 1 }, { x: 56, y: 15, type: 1 },
           // Victory platform
           { x: 58, y: 12, type: 1 }, { x: 59, y: 12, type: 1 }, { x: 60, y: 12, type: 1 },
           { x: 60, y: 11, type: 5 },
         ],
-        movingPlatforms: [
-          { x: 31, y: 19, width: 2, moveX: 0, moveY: -8, speed: 0.012 },
-          { x: 55, y: 16, width: 3, moveX: 0, moveY: -4, speed: 0.018 }
-        ]
+        movingPlatforms: []
       },
       // Level 6 - Platform Climb (Completely Redesigned)
       {
@@ -839,10 +925,7 @@
           // Goal!
           { x: 48, y: 18, type: 5 },
         ],
-        movingPlatforms: [
-          // One easy moving platform
-          { x: 30, y: 14, width: 3, moveX: 0, moveY: -4, speed: 0.010 }
-        ]
+        movingPlatforms: []
       },
       // Level 7 - Enemy Swarm (Easier)
       {
@@ -868,6 +951,7 @@
           { x: 34, y: 13, type: 4 },
           // Upper path
           ...Array(8).fill().map((_, i) => ({ x: 38 + i, y: 10, type: 1 })),
+          { x: 41, y: 9, type: 7 }, // Checkpoint
           // No spike corridor
           // Moving platform area
           ...Array(6).fill().map((_, i) => ({ x: 48 + i, y: 14, type: 1 })),
@@ -879,11 +963,7 @@
           { x: 66, y: 14, type: 1 }, { x: 67, y: 14, type: 1 },
           { x: 67, y: 13, type: 5 },
         ],
-        movingPlatforms: [
-          { x: 22, y: 15, width: 2, moveX: 3, moveY: 0, speed: 0.018 },
-          { x: 36, y: 17, width: 2, moveX: 0, moveY: -4, speed: 0.016 },
-          { x: 50, y: 12, width: 3, moveX: 2, moveY: 0, speed: 0.020 }
-        ]
+        movingPlatforms: []
       },
       // Level 8 - Spike Labyrinth
       {
@@ -908,6 +988,7 @@
           { x: 26, y: 8, type: 1 }, { x: 27, y: 8, type: 1 },
           { x: 26, y: 7, type: 4 }, // Boost 2
           { x: 29, y: 11, type: 1 },
+          { x: 29, y: 10, type: 7 }, // Checkpoint
           { x: 32, y: 14, type: 1 },
           { x: 35, y: 10, type: 1 },
           { x: 35, y: 9, type: 3 }, // Enemy 2
@@ -950,6 +1031,7 @@
 
           // Mid section
           { x: 26, y: 12, type: 1 }, { x: 27, y: 12, type: 1 }, { x: 28, y: 12, type: 1 },
+          { x: 27, y: 11, type: 7 }, // Checkpoint
 
           // Small spike - easy jump
           { x: 29, y: 12, type: 2 },
@@ -1028,7 +1110,8 @@
         moveTimer: 0,
         smashing: false,
         smashVelocity: 0,
-        smashStartY: 300
+        smashStartY: 300,
+        flashTimer: 0
       };
       playerHP = 10;
       bossActive = true;
@@ -1083,8 +1166,9 @@
             });
           }
 
-          // Sound effect
+          // Sound effect + screen shake
           AudioManager.playSound('death');
+          triggerShake(18, 25);
 
           // Boss bounces back up
           setTimeout(() => {
@@ -1231,9 +1315,10 @@
             deaths++;
             updateHUD();
             playerHP = 10;
-
-            // Reset boss health
             boss.hp = boss.maxHP;
+
+            spawnDeathParticles(player.x, player.y, SKINS[selectedSkin].color);
+            triggerShake(12, 20);
 
             const level = levels[currentLevel];
             player.x = level.playerStart.x * TILE_SIZE;
@@ -1243,12 +1328,10 @@
             player.onGround = false;
             player.onPlatform = null;
             bullets = [];
-            bossAttacks = [];
-
-            // Death animation
-            const container = document.getElementById('game-container');
-            container.classList.add('death-animation');
-            setTimeout(() => container.classList.remove('death-animation'), 300);
+            bossAttacks = []; // reassign THEN break to avoid iterating stale reference
+            boss.smashing = false;      // cancel any in-progress smash to prevent cascading setTimeouts
+            boss.smashVelocity = 0;
+            break;
           }
         }
       }
@@ -1293,6 +1376,7 @@
             bullet.y < boss.y + boss.height &&
             bullet.y + 8 > boss.y) {
           boss.hp--;
+          boss.flashTimer = 7;
           bullets.splice(i, 1);
           AudioManager.playSound('boost');
         }
@@ -1322,14 +1406,24 @@
       if (!boss || !bossActive) return;
 
       ctx.save();
-      ctx.translate(-cameraX, 0);
+      // NOTE: render() already applied ctx.translate(-cameraX, 0) before calling renderBoss()
+      // so we do NOT add another translate here — that was causing the double-offset freeze bug.
 
-      // Draw boss
-      ctx.fillStyle = '#ff00ff';
+      // Draw boss (flash white on hit)
+      if (boss.flashTimer > 0) {
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowColor = '#ffffff';
+        ctx.shadowBlur = 20;
+        boss.flashTimer--;
+      } else {
+        ctx.fillStyle = '#ff00ff';
+        ctx.shadowBlur = 0;
+      }
       ctx.fillRect(boss.x, boss.y, boss.width, boss.height);
+      ctx.shadowBlur = 0;
 
       // Boss eyes
-      ctx.fillStyle = '#ff0000';
+      ctx.fillStyle = boss.flashTimer > 0 ? '#ff00ff' : '#ff0000';
       ctx.fillRect(boss.x + 15, boss.y + 15, 12, 12);
       ctx.fillRect(boss.x + 37, boss.y + 15, 12, 12);
 
@@ -1431,9 +1525,38 @@
       window.addEventListener('keyup', (e) => keys[e.code] = false);
       
       // Button handlers
-      document.getElementById('start-btn').addEventListener('click', startGame);
+      document.getElementById('start-btn').addEventListener('click', showStoryIntro);
+      document.getElementById('begin-btn').addEventListener('click', beginGame);
       document.getElementById('next-level-btn').addEventListener('click', nextLevel);
       document.getElementById('restart-btn').addEventListener('click', restartGame);
+
+      // Skin selector
+      document.querySelectorAll('.skin-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          selectedSkin = parseInt(btn.dataset.skin);
+          localStorage.setItem('spikeRunnerSkin', selectedSkin);
+          document.querySelectorAll('.skin-btn').forEach(b =>
+            b.style.borderColor = b.dataset.skin == selectedSkin ? '#fff' : 'transparent'
+          );
+          document.getElementById('skin-name-label').textContent = SKINS[selectedSkin].name;
+          document.getElementById('skin-name-label').style.color = SKINS[selectedSkin].color;
+        });
+      });
+
+      // Restore saved skin
+      document.querySelector(`.skin-btn[data-skin="${selectedSkin}"]`).style.borderColor = '#fff';
+      document.getElementById('skin-name-label').textContent = SKINS[selectedSkin].name;
+      document.getElementById('skin-name-label').style.color = SKINS[selectedSkin].color;
+
+      // Practice mode toggle
+      document.getElementById('practice-toggle').addEventListener('click', () => {
+        practiceMode = !practiceMode;
+        const btn = document.getElementById('practice-toggle');
+        btn.textContent = `PRACTICE MODE: ${practiceMode ? 'ON' : 'OFF'}`;
+        btn.className = practiceMode
+          ? 'game-font text-xs text-yellow-400 border border-yellow-500 px-4 py-2 rounded-lg transition-colors mb-5'
+          : 'game-font text-xs text-gray-500 hover:text-yellow-400 border border-gray-700 hover:border-yellow-600 px-4 py-2 rounded-lg transition-colors mb-5';
+      });
 
       // Leaderboard handlers
       document.getElementById('submit-score-btn').addEventListener('click', async () => {
@@ -1654,11 +1777,39 @@
       }
     }
     
-    function startGame() {
+    function showStoryIntro() {
       document.getElementById('start-screen').classList.add('hidden');
+      const story = document.getElementById('story-screen');
+      story.classList.remove('hidden');
+      story.classList.add('flex');
+      // Fade lines in one by one
+      setTimeout(() => document.getElementById('story-line-1').style.opacity = '1', 400);
+      setTimeout(() => document.getElementById('story-line-2').style.opacity = '1', 1200);
+      setTimeout(() => document.getElementById('story-line-3').style.opacity = '1', 2000);
+      setTimeout(() => document.getElementById('begin-btn').style.opacity = '1', 2900);
+    }
+
+    function beginGame() {
+      document.getElementById('story-screen').classList.remove('flex');
+      document.getElementById('story-screen').classList.add('hidden');
+      startGame();
+    }
+
+    function startGame() {
       document.getElementById('hud').classList.remove('hidden');
+
+      // Show practice indicator in HUD if active
+      const practiceHud = document.getElementById('practice-hud');
+      if (practiceMode) {
+        practiceHud.classList.remove('hidden');
+      } else {
+        practiceHud.classList.add('hidden');
+      }
+
       currentLevel = 0;
       deaths = 0;
+      totalTime = 0;
+      levelTimes = [];
       gameRunning = true;
 
       // Unlock audio on user interaction
@@ -1667,7 +1818,6 @@
       }
 
       loadLevel(currentLevel);
-
       gameLoop();
     }
     
@@ -1726,12 +1876,28 @@
         }
       }
 
+      // Reset checkpoint and safe position
+      checkpointPos = null;
+      lastSafePos = {
+        x: level.playerStart.x * TILE_SIZE,
+        y: level.playerStart.y * TILE_SIZE
+      };
+
+      // Start level timer
+      levelStartTime = Date.now();
+
       updateHUD();
     }
-    
+
     function updateHUD() {
       document.getElementById('level-display').textContent = currentLevel + 1;
       document.getElementById('death-display').textContent = deaths;
+    }
+
+    function updateTimer() {
+      if (!gameRunning) return;
+      levelElapsed = Date.now() - levelStartTime;
+      document.getElementById('timer-display').textContent = formatTime(levelElapsed);
     }
     
     function nextLevel() {
@@ -1750,6 +1916,21 @@
     }
     
     function die() {
+      spawnDeathParticles(player.x, player.y, SKINS[selectedSkin].color);
+      triggerShake(10, 15);
+
+      if (practiceMode) {
+        // Instant respawn at last safe spot — no death count, no reload
+        player.x = lastSafePos.x;
+        player.y = lastSafePos.y;
+        player.vx = 0;
+        player.vy = 0;
+        player.onGround = false;
+        player.onPlatform = null;
+        playerSquish = { x: 1.5, y: 0.5 };
+        return;
+      }
+
       deaths++;
       updateHUD();
       AudioManager.playSound('death');
@@ -1759,15 +1940,39 @@
       container.classList.add('death-animation');
       setTimeout(() => container.classList.remove('death-animation'), 300);
 
+      // Save checkpoint BEFORE loadLevel() resets it to null
+      const savedCheckpoint = checkpointPos;
+
       loadLevel(currentLevel);
+
+      // Respawn at checkpoint if one was activated
+      if (savedCheckpoint) {
+        player.x = savedCheckpoint.x;
+        player.y = savedCheckpoint.y;
+        player.vx = 0;
+        player.vy = 0;
+        // Re-apply checkpoint so it stays active for next death
+        checkpointPos = savedCheckpoint;
+        cameraX = Math.max(0, Math.min(
+          savedCheckpoint.x - canvas.width / 2,
+          levels[currentLevel].width * TILE_SIZE - canvas.width
+        ));
+      }
     }
     
     function completeLevel() {
       gameRunning = false;
+
+      // Record level time
+      const finishTime = Date.now() - levelStartTime;
+      levelTimes[currentLevel] = finishTime;
+      totalTime += finishTime;
+
       if (currentLevel >= levels.length - 1) {
         // Game complete
         AudioManager.playSound('victory');
         document.getElementById('final-deaths').textContent = deaths;
+        document.getElementById('final-time').textContent = formatTime(totalTime);
 
         // Show name input modal
         document.getElementById('name-input-modal').classList.remove('hidden');
@@ -1779,6 +1984,8 @@
         }, 100);
       } else {
         AudioManager.playSound('levelComplete');
+        document.getElementById('level-time-display').textContent = formatTime(finishTime);
+        document.getElementById('total-time-interim-display').textContent = formatTime(totalTime);
         document.getElementById('level-complete').classList.remove('hidden');
         document.getElementById('level-complete').classList.add('flex');
       }
@@ -1786,9 +1993,13 @@
     
     function gameLoop() {
       if (!gameRunning) return;
-      
-      update();
-      render();
+      try {
+        update();
+        render();
+        updateTimer();
+      } catch(e) {
+        console.error('[SpikeRunner] frame error:', e);
+      }
       requestAnimationFrame(gameLoop);
     }
     
@@ -1811,6 +2022,27 @@
         }
       });
       
+      // Update particles
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.25;
+        p.vx *= 0.95;
+        p.life -= p.decay;
+        if (p.life <= 0) particles.splice(i, 1);
+      }
+
+      // Lerp squish back to normal
+      playerSquish.x += (1 - playerSquish.x) * 0.2;
+      playerSquish.y += (1 - playerSquish.y) * 0.2;
+
+      // Detect landing (was in air, now on ground)
+      if (player.onGround && !wasOnGround) {
+        playerSquish = { x: 1.5, y: 0.6 };
+      }
+      wasOnGround = player.onGround;
+
       // Player movement
       let moveX = 0;
       if (keys['ArrowLeft'] || keys['KeyA']) {
@@ -1841,6 +2073,7 @@
           if ((keys['ArrowUp'] || keys['KeyW']) && player.onGround) {
             player.vy = JUMP_FORCE;
             player.onGround = false;
+            playerSquish = { x: 0.65, y: 1.4 };
             AudioManager.playSound('jump');
           }
         } else {
@@ -1848,6 +2081,7 @@
           if ((keys['Space'] || keys['ArrowUp'] || keys['KeyW']) && player.onGround) {
             player.vy = JUMP_FORCE;
             player.onGround = false;
+            playerSquish = { x: 0.65, y: 1.4 };
             AudioManager.playSound('jump');
           }
         }
@@ -1939,15 +2173,26 @@
         }
       });
       
+      // Track last safe position when standing on ground
+      if (player.onGround) {
+        lastSafePos = { x: player.x, y: player.y };
+      }
+
       // Check hazards
       vTiles.concat(hTiles).forEach(tile => {
-        if (tile.type === 2 && !flyMode) die(); // Spike (disabled in fly mode)
-        if (tile.type === 4 && !flyMode) { // Boost (disabled in fly mode)
+        if (tile.type === 2 && !flyMode) die(); // Spike
+        if (tile.type === 4 && !flyMode) { // Boost
           player.vy = BOOST_FORCE;
           player.onGround = false;
           AudioManager.playSound('boost');
         }
-        if (tile.type === 5) completeLevel(); // Goal (always works)
+        if (tile.type === 5) completeLevel(); // Goal
+        if (tile.type === 7 && !tile.activated) { // Checkpoint
+          tile.activated = true;
+          checkpointPos = { x: player.x, y: player.y };
+          lastSafePos = { x: player.x, y: player.y };
+          AudioManager.playSound('levelComplete');
+        }
       });
 
       // Enemy collision (disabled in fly mode)
@@ -2007,14 +2252,24 @@
     
     function render() {
       const level = levels[currentLevel];
-      
+
+      // Screen shake
+      ctx.save();
+      if (screenShake.duration > 0) {
+        const dx = (Math.random() - 0.5) * screenShake.intensity;
+        const dy = (Math.random() - 0.5) * screenShake.intensity;
+        ctx.translate(dx, dy);
+        screenShake.intensity *= 0.85;
+        screenShake.duration--;
+      }
+
       // Clear with gradient background
       const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
       gradient.addColorStop(0, '#1a1a2e');
       gradient.addColorStop(1, '#16213e');
       ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      
+      ctx.fillRect(-20, -20, canvas.width + 40, canvas.height + 40); // slightly oversized to cover shake edges
+
       // Draw grid (subtle)
       ctx.strokeStyle = 'rgba(255,255,255,0.03)';
       ctx.lineWidth = 1;
@@ -2114,6 +2369,27 @@
             ctx.closePath();
             ctx.fill();
             break;
+
+          case 7: // Checkpoint flag
+            // Pole
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillRect(x + TILE_SIZE / 2 - 2, y + 4, 4, TILE_SIZE - 4);
+            // Flag (green if not activated, gold if activated)
+            if (tile.activated) {
+              ctx.fillStyle = '#fbbf24';
+              ctx.shadowColor = '#fbbf24';
+              ctx.shadowBlur = 10;
+            } else {
+              ctx.fillStyle = '#22c55e';
+            }
+            ctx.beginPath();
+            ctx.moveTo(x + TILE_SIZE / 2 + 2, y + 6);
+            ctx.lineTo(x + TILE_SIZE - 4, y + 12);
+            ctx.lineTo(x + TILE_SIZE / 2 + 2, y + 18);
+            ctx.closePath();
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            break;
         }
       });
       
@@ -2125,27 +2401,53 @@
         ctx.fillRect(plat.currentX, plat.currentY, plat.width * TILE_SIZE, 4);
       });
       
-      // Draw player
-      ctx.fillStyle = '#10b981';
-      ctx.fillRect(player.x, player.y, player.width, player.height);
-      // Player highlight
-      ctx.fillStyle = '#34d399';
-      ctx.fillRect(player.x, player.y, player.width, 4);
-      // Player eyes
+      // Draw player (with selected skin + squish/stretch)
+      const skin = SKINS[selectedSkin];
+      ctx.save();
+      // Anchor squish at feet: translate to foot-center, scale, translate back
+      const footCX = player.x + player.width / 2;
+      const footY  = player.y + player.height;
+      ctx.translate(footCX, footY);
+      ctx.scale(playerSquish.x, playerSquish.y);
+      ctx.translate(-player.width / 2, -player.height);
+      // Body
+      ctx.fillStyle = skin.color;
+      ctx.fillRect(0, 0, player.width, player.height);
+      // Highlight stripe
+      ctx.fillStyle = skin.highlight;
+      ctx.fillRect(0, 0, player.width, 4);
+      // Practice glow
+      if (practiceMode) {
+        ctx.strokeStyle = '#fbbf24';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(-1, -1, player.width + 2, player.height + 2);
+      }
+      // Eyes
       ctx.fillStyle = '#fff';
-      ctx.fillRect(player.x + 4, player.y + 6, 6, 6);
-      ctx.fillRect(player.x + player.width - 10, player.y + 6, 6, 6);
+      ctx.fillRect(4, 6, 6, 6);
+      ctx.fillRect(player.width - 10, 6, 6, 6);
       ctx.fillStyle = '#000';
-      ctx.fillRect(player.x + 6, player.y + 8, 3, 3);
-      ctx.fillRect(player.x + player.width - 8, player.y + 8, 3, 3);
+      ctx.fillRect(6, 8, 3, 3);
+      ctx.fillRect(player.width - 8, 8, 3, 3);
+      ctx.restore();
+
+      // Draw particles (world space, inside camera transform)
+      particles.forEach(p => {
+        ctx.globalAlpha = Math.max(0, p.life);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x, p.y, p.size, p.size);
+      });
+      ctx.globalAlpha = 1;
 
       // Draw boss and bullets
       renderBoss();
 
-      ctx.restore();
+      ctx.restore(); // end camera transform
 
       // Draw boss UI (outside camera transform)
       renderBossUI();
+
+      ctx.restore(); // end screen shake transform
     }
     
     // Start initialization
