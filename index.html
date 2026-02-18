@@ -150,6 +150,7 @@
     const JUMP_FORCE = -14;
     const MOVE_SPEED = 5;
     const BOOST_FORCE = -20;
+    const SPRING_FORCE = -22; // slightly stronger than boost
     
     // Game State
     let canvas, ctx;
@@ -180,6 +181,16 @@
       { name: 'AURORA',  color: '#a855f7', highlight: '#c084fc' },
     ];
     let selectedSkin = parseInt(localStorage.getItem('spikeRunnerSkin') || '0');
+
+    // Parallax background: pre-generate star fields (normalized x in [0,1], tiled at render time)
+    const STARS_FAR = Array.from({ length: 60 }, () => ({
+      tx: Math.random(), ty: Math.random() * 0.85,
+      r: Math.random() * 0.8 + 0.2, phase: Math.random() * Math.PI * 2
+    }));
+    const STARS_NEAR = Array.from({ length: 35 }, () => ({
+      tx: Math.random(), ty: Math.random() * 0.8,
+      r: Math.random() * 1.2 + 0.5, phase: Math.random() * Math.PI * 2
+    }));
 
     // Practice mode
     let practiceMode = false;
@@ -231,6 +242,11 @@
       const tenths = Math.floor((ms % 1000) / 100);
       return `${minutes}:${String(seconds).padStart(2, '0')}.${tenths}`;
     }
+
+    // Shooter enemy state (tile type 8)
+    let shooterProjectiles = [];
+    const SHOOTER_FIRE_INTERVAL = 180; // frames (~3 sec at 60fps)
+    const SHOOTER_PROJ_SPEED = 2.5;
 
     // Boss fight state
     let bossActive = false;
@@ -906,6 +922,8 @@
 
           // Boost pad to reach upper area
           { x: 28, y: 8, type: 4 },
+          // Shooter guards the boost — fires down at player approaching
+          { x: 29, y: 8, type: 8 },
 
           // Upper platform
           { x: 32, y: 5, type: 1 }, { x: 33, y: 5, type: 1 }, { x: 34, y: 5, type: 1 }, { x: 35, y: 5, type: 1 },
@@ -916,6 +934,8 @@
           // Descent begins - stepping down
           { x: 37, y: 7, type: 1 }, { x: 38, y: 7, type: 1 },
           { x: 39, y: 10, type: 1 }, { x: 40, y: 10, type: 1 },
+          // Shooter on descent platform fires at player below
+          { x: 40, y: 9, type: 8 },
           { x: 41, y: 13, type: 1 }, { x: 42, y: 13, type: 1 },
           { x: 43, y: 16, type: 1 }, { x: 44, y: 16, type: 1 },
 
@@ -941,8 +961,8 @@
           { x: 16, y: 16, type: 3 },
           // Small spike gap
           { x: 20, y: 17, type: 2 }, { x: 21, y: 17, type: 2 },
-          // Bridge over gap
-          { x: 22, y: 17, type: 1 }, { x: 23, y: 17, type: 1 },
+          // Crumble bridge — land and move fast or fall into spikes
+          { x: 22, y: 17, type: 9 }, { x: 23, y: 17, type: 9 },
           // Elevated enemy zone - reduced to 2 enemies
           ...Array(12).fill().map((_, i) => ({ x: 24 + i, y: 14, type: 1 })),
           { x: 27, y: 13, type: 3 },
@@ -953,8 +973,11 @@
           ...Array(8).fill().map((_, i) => ({ x: 38 + i, y: 10, type: 1 })),
           { x: 41, y: 9, type: 7 }, // Checkpoint
           // No spike corridor
-          // Moving platform area
-          ...Array(6).fill().map((_, i) => ({ x: 48 + i, y: 14, type: 1 })),
+          // Crumble platform section — keep moving or fall
+          { x: 48, y: 14, type: 1 },
+          { x: 49, y: 14, type: 9 }, { x: 50, y: 14, type: 9 },
+          { x: 51, y: 14, type: 9 }, { x: 52, y: 14, type: 9 },
+          { x: 53, y: 14, type: 1 },
           // Final stretch - only 1 enemy
           ...Array(12).fill().map((_, i) => ({ x: 56 + i, y: 17, type: 1 })),
           { x: 60, y: 16, type: 3 },
@@ -983,6 +1006,8 @@
           { x: 14, y: 11, type: 4 }, // Boost 1
           { x: 17, y: 14, type: 1 },
           { x: 20, y: 10, type: 1 },
+          // Shooter on isolated platform fires across the spike floor
+          { x: 20, y: 9, type: 8 },
           { x: 23, y: 13, type: 1 },
           { x: 23, y: 12, type: 3 }, // Enemy 1
           { x: 26, y: 8, type: 1 }, { x: 27, y: 8, type: 1 },
@@ -998,6 +1023,8 @@
           { x: 44, y: 12, type: 1 },
           { x: 44, y: 11, type: 3 }, // Enemy 3
           { x: 47, y: 15, type: 1 }, { x: 48, y: 15, type: 1 },
+          // Shooter guards the final approach
+          { x: 48, y: 14, type: 8 },
           // Spike walls (ceiling hazards)
           { x: 10, y: 6, type: 2 },
           { x: 20, y: 6, type: 2 },
@@ -1021,10 +1048,10 @@
           // Starting ground - long and safe
           ...Array(12).fill().map((_, i) => ({ x: i, y: 17, type: 1 })),
 
-          // Jump section - stepping stones
-          { x: 14, y: 15, type: 1 }, { x: 15, y: 15, type: 1 },
+          // Jump section - mix of solid and crumble stepping stones
+          { x: 14, y: 15, type: 9 }, { x: 15, y: 15, type: 9 },
           { x: 18, y: 14, type: 1 }, { x: 19, y: 14, type: 1 },
-          { x: 22, y: 13, type: 1 }, { x: 23, y: 13, type: 1 },
+          { x: 22, y: 13, type: 9 }, { x: 23, y: 13, type: 9 },
 
           // Enemy
           { x: 19, y: 13, type: 3 },
@@ -1041,6 +1068,8 @@
 
           // Upper section
           { x: 34, y: 10, type: 1 }, { x: 35, y: 10, type: 1 }, { x: 36, y: 10, type: 1 },
+          // Shooter on upper section fires down at player climbing
+          { x: 34, y: 9, type: 8 },
 
           // Highest platform
           { x: 39, y: 8, type: 1 }, { x: 40, y: 8, type: 1 }, { x: 41, y: 8, type: 1 },
@@ -1048,10 +1077,12 @@
           // Enemy on upper platform
           { x: 40, y: 7, type: 3 },
 
-          // Descent platforms
-          { x: 44, y: 10, type: 1 }, { x: 45, y: 10, type: 1 },
-          { x: 48, y: 12, type: 1 }, { x: 49, y: 12, type: 1 },
-          { x: 52, y: 14, type: 1 }, { x: 53, y: 14, type: 1 },
+          // Descent platforms — crumble forces quick hops
+          { x: 44, y: 10, type: 9 }, { x: 45, y: 10, type: 9 },
+          { x: 48, y: 12, type: 9 }, { x: 49, y: 12, type: 1 },
+          // Shooter covers the descent — fires at player jumping between platforms
+          { x: 49, y: 11, type: 8 },
+          { x: 52, y: 14, type: 1 }, { x: 53, y: 14, type: 9 },
 
           // Final ground
           ...Array(6).fill().map((_, i) => ({ x: 54 + i, y: 17, type: 1 })),
@@ -1062,7 +1093,76 @@
         ],
         movingPlatforms: []
       },
-      // Level 10 - BOSS ARENA
+      // Level 11 - LAVA LAND
+      {
+        bgTheme: 'volcano',
+        width: 56,
+        height: 22,
+        playerStart: { x: 2, y: 19 },
+        tiles: [
+          // Safe starting ground
+          ...Array(6).fill().map((_, i) => ({ x: i, y: 21, type: 1 })),
+
+          // Lava river 1 (x=6..17)
+          ...Array(12).fill().map((_, i) => ({ x: 6 + i, y: 21, type: 13 })),
+
+          // Island 1: platforms over lava
+          { x: 8,  y: 18, type: 1 }, { x: 9,  y: 18, type: 1 },
+          { x: 13, y: 16, type: 1 }, { x: 14, y: 16, type: 1 },
+
+          // Lava geyser on island 1 — forces timing on approach
+          { x: 13, y: 15, type: 15 },
+
+          // Lava hopper on island 1
+          { x: 9,  y: 17, type: 14 },
+
+          // Safe ground between rivers
+          ...Array(5).fill().map((_, i) => ({ x: 18 + i, y: 21, type: 1 })),
+
+          // Lava river 2 (x=23..36)
+          ...Array(14).fill().map((_, i) => ({ x: 23 + i, y: 21, type: 13 })),
+
+          // Island 2: three floating platforms
+          { x: 24, y: 19, type: 1 }, { x: 25, y: 19, type: 1 },
+          { x: 28, y: 17, type: 1 }, { x: 29, y: 17, type: 1 },
+          { x: 32, y: 15, type: 1 }, { x: 33, y: 15, type: 1 },
+
+          // Geysers guarding the upper platforms
+          { x: 28, y: 16, type: 15 },
+          { x: 32, y: 14, type: 15 },
+
+          // Two lava hoppers patrolling islands
+          { x: 25, y: 18, type: 14 },
+          { x: 29, y: 16, type: 14 },
+
+          // Spikes on the high island
+          { x: 33, y: 14, type: 2 },
+
+          // Checkpoint before the final stretch
+          { x: 30, y: 16, type: 7 },
+
+          // Safe end ground
+          ...Array(8).fill().map((_, i) => ({ x: 37 + i, y: 21, type: 1 })),
+
+          // Lava river 3 (x=45..51) — short sprint to goal
+          ...Array(7).fill().map((_, i) => ({ x: 45 + i, y: 21, type: 13 })),
+
+          // Final platforms
+          { x: 46, y: 18, type: 1 }, { x: 47, y: 18, type: 4 }, // boost pad
+          { x: 50, y: 15, type: 1 }, { x: 51, y: 15, type: 1 },
+
+          // Geyser guarding goal approach
+          { x: 50, y: 14, type: 15 },
+
+          // Final safe ground + goal
+          ...Array(4).fill().map((_, i) => ({ x: 52 + i, y: 21, type: 1 })),
+          { x: 54, y: 20, type: 1 },
+          { x: 54, y: 19, type: 5 }, // GOAL
+        ],
+        movingPlatforms: []
+      },
+
+      // Level 12 - BOSS ARENA (was Level 10)
       {
         width: 40,
         height: 22,
@@ -1422,6 +1522,17 @@
       ctx.fillRect(boss.x, boss.y, boss.width, boss.height);
       ctx.shadowBlur = 0;
 
+      // Boss name floating above
+      ctx.save();
+      ctx.font = '10px "Press Start 2P"';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#ff00ff';
+      ctx.shadowColor = '#ff00ff';
+      ctx.shadowBlur = 10 + 6 * Math.sin(Date.now() / 300);
+      ctx.fillText('VOID EMPEROR', boss.x + boss.width / 2, boss.y - 14);
+      ctx.shadowBlur = 0;
+      ctx.restore();
+
       // Boss eyes
       ctx.fillStyle = boss.flashTimer > 0 ? '#ff00ff' : '#ff0000';
       ctx.fillRect(boss.x + 15, boss.y + 15, 12, 12);
@@ -1483,7 +1594,7 @@
         ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
         ctx.fillRect(canvas.width - 240, 60, 220, 30);
         ctx.fillStyle = '#fff';
-        ctx.fillText('BOSS HP', canvas.width - 230, 78);
+        ctx.fillText('VOID EMPEROR', canvas.width - 230, 78);
 
         ctx.fillStyle = '#333';
         ctx.fillRect(canvas.width - 130, 68, 120, 12);
@@ -1852,8 +1963,57 @@
         e.moveRange = TILE_SIZE * 1.5;
       });
 
+      // Initialize fast walkers (type 10)
+      level.tiles.filter(t => t.type === 10).forEach(e => {
+        e.startX = e.x * TILE_SIZE;
+        e.currentX = e.startX;
+        e.direction = 1;
+        e.moveRange = TILE_SIZE * 2;
+      });
+
+      // Initialize bouncers (type 11) — oscillate X and Y
+      level.tiles.filter(t => t.type === 11).forEach(e => {
+        e.startX = e.x * TILE_SIZE;
+        e.startY = e.y * TILE_SIZE;
+        e.currentX = e.startX;
+        e.currentY = e.startY;
+        e.phase = Math.random() * Math.PI * 2;
+      });
+
+      // Initialize crumble platforms
+      level.tiles.filter(t => t.type === 9).forEach(t => {
+        t.crumbleState = 'idle';
+        t.crumbleTimer = 0;
+        t.shakeX = 0;
+      });
+
+      // Initialize shooters (stagger timers so they don't all fire at once)
+      level.tiles.filter(t => t.type === 8).forEach((s, i) => {
+        s.px = s.x * TILE_SIZE + TILE_SIZE / 2;
+        s.py = s.y * TILE_SIZE + TILE_SIZE / 2;
+        s.shootTimer = Math.floor((SHOOTER_FIRE_INTERVAL / level.tiles.filter(t => t.type === 8).length) * i);
+      });
+      shooterProjectiles = [];
+
+      // Initialize lava hoppers (type 14) — vertical hop enemy
+      level.tiles.filter(t => t.type === 14).forEach(e => {
+        e.startX = e.x * TILE_SIZE;
+        e.startY = e.y * TILE_SIZE;
+        e.currentX = e.startX;
+        e.currentY = e.startY;
+        e.hopPhase = Math.random() * Math.PI * 2;
+        e.direction = 1;
+        e.moveRange = TILE_SIZE * 2;
+      });
+
+      // Initialize lava geysers (type 15) — periodic fire column
+      level.tiles.filter(t => t.type === 15).forEach((g, i) => {
+        g.geyserTimer = Math.floor((120 / Math.max(1, level.tiles.filter(t => t.type === 15).length)) * i);
+        g.geyserActive = false;
+      });
+
       // Level 10: Spawn boss
-      if (levelIndex === 9) {
+      if (levelIndex === levels.length - 1) {
         // Remove any existing goal tiles from Level 10
         level.tiles = level.tiles.filter(t => t.type !== 5);
 
@@ -2014,13 +2174,105 @@
         p.currentY = p.startY + offset * p.moveY * TILE_SIZE;
       });
       
-      // Update enemies
+      // Update crumble platforms
+      level.tiles.filter(t => t.type === 9).forEach(tile => {
+        if (tile.crumbleState === 'crumbling') {
+          tile.crumbleTimer++;
+          // Shake intensifies as it gets closer to falling
+          tile.shakeX = (tile.crumbleTimer % 4 < 2 ? 1 : -1) * Math.min(tile.crumbleTimer / 12, 4);
+          if (tile.crumbleTimer >= 55) { // ~0.9s then falls
+            tile.crumbleState = 'fallen';
+            tile.crumbleTimer = 0;
+            tile.shakeX = 0;
+          }
+        } else if (tile.crumbleState === 'fallen') {
+          tile.crumbleTimer++;
+          if (tile.crumbleTimer >= 120) { // 2s to respawn
+            tile.crumbleState = 'idle';
+            tile.crumbleTimer = 0;
+          }
+        }
+      });
+
+      // Update enemies (type 3 — walker)
       level.tiles.filter(t => t.type === 3).forEach(e => {
         e.currentX += e.direction * 1;
         if (Math.abs(e.currentX - e.startX) > e.moveRange) {
           e.direction *= -1;
         }
       });
+
+      // Update fast walkers (type 10 — 3× speed)
+      level.tiles.filter(t => t.type === 10).forEach(e => {
+        e.currentX += e.direction * 3;
+        if (Math.abs(e.currentX - e.startX) > e.moveRange) {
+          e.direction *= -1;
+        }
+      });
+
+      // Update bouncers (type 11 — figure-8 oscillation)
+      level.tiles.filter(t => t.type === 11).forEach(e => {
+        e.phase += 0.025;
+        e.currentX = e.startX + Math.sin(e.phase) * TILE_SIZE * 2;
+        e.currentY = e.startY + Math.sin(e.phase * 1.7) * TILE_SIZE * 1.5;
+      });
+
+      // Update lava hoppers (type 14 — patrol + hop up/down)
+      level.tiles.filter(t => t.type === 14).forEach(e => {
+        e.hopPhase += 0.07;
+        e.currentX += e.direction * 1.5;
+        if (Math.abs(e.currentX - e.startX) > e.moveRange) e.direction *= -1;
+        // Hop: bob up to 1.2 tiles above start position
+        e.currentY = e.startY - Math.max(0, Math.sin(e.hopPhase)) * TILE_SIZE * 1.2;
+      });
+
+      // Update lava geysers (type 15 — fire every 150 frames for 40 frames)
+      level.tiles.filter(t => t.type === 15).forEach(g => {
+        g.geyserTimer++;
+        const phase15 = g.geyserTimer % 150;
+        g.geyserActive = phase15 < 40;
+      });
+
+      // Update shooters — fire toward player on interval
+      if (!flyMode) {
+        level.tiles.filter(t => t.type === 8).forEach(s => {
+          s.shootTimer++;
+          if (s.shootTimer >= SHOOTER_FIRE_INTERVAL) {
+            s.shootTimer = 0;
+            const dx = (player.x + player.width / 2) - s.px;
+            const dy = (player.y + player.height / 2) - s.py;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist > 0) {
+              shooterProjectiles.push({
+                x: s.px, y: s.py,
+                vx: (dx / dist) * SHOOTER_PROJ_SPEED,
+                vy: (dy / dist) * SHOOTER_PROJ_SPEED,
+              });
+            }
+          }
+        });
+      }
+
+      // Update shooter projectiles
+      for (let i = shooterProjectiles.length - 1; i >= 0; i--) {
+        const sp = shooterProjectiles[i];
+        sp.x += sp.vx;
+        sp.y += sp.vy;
+        // Remove if off-level
+        if (sp.x < -64 || sp.x > level.width * TILE_SIZE + 64 ||
+            sp.y < -64 || sp.y > level.height * TILE_SIZE + 64) {
+          shooterProjectiles.splice(i, 1);
+          continue;
+        }
+        // Hit player
+        if (!flyMode &&
+            sp.x > player.x && sp.x < player.x + player.width &&
+            sp.y > player.y && sp.y < player.y + player.height) {
+          shooterProjectiles.splice(i, 1);
+          die();
+          break;
+        }
+      }
       
       // Update particles
       for (let i = particles.length - 1; i >= 0; i--) {
@@ -2106,7 +2358,7 @@
       player.x += player.vx;
       const hTiles = getCollidingTiles(player, level);
       hTiles.forEach(tile => {
-        if (tile.type === 1) {
+        if (tile.type === 1 || tile.type === 9 || tile.type === 12) {
           if (player.vx > 0) {
             player.x = tile.x * TILE_SIZE - player.width;
           } else if (player.vx < 0) {
@@ -2132,11 +2384,22 @@
       
       const vTiles = getCollidingTiles(player, level);
       vTiles.forEach(tile => {
-        if (tile.type === 1) {
+        if (tile.type === 1 || tile.type === 9 || tile.type === 12) {
           if (player.vy > 0) {
             player.y = tile.y * TILE_SIZE - player.height;
-            player.vy = 0;
-            player.onGround = true;
+            if (tile.type === 12) {
+              // Spring — launch upward, don't set onGround
+              player.vy = SPRING_FORCE;
+              playerSquish = { x: 0.55, y: 1.5 };
+              AudioManager.playSound('boost');
+            } else {
+              player.vy = 0;
+              player.onGround = true;
+              if (tile.type === 9 && tile.crumbleState === 'idle') {
+                tile.crumbleState = 'crumbling';
+                tile.crumbleTimer = 0;
+              }
+            }
           } else if (player.vy < 0) {
             player.y = (tile.y + 1) * TILE_SIZE;
             player.vy = 0;
@@ -2181,6 +2444,7 @@
       // Check hazards
       vTiles.concat(hTiles).forEach(tile => {
         if (tile.type === 2 && !flyMode) die(); // Spike
+        if (tile.type === 13 && !flyMode) die(); // Lava
         if (tile.type === 4 && !flyMode) { // Boost
           player.vy = BOOST_FORCE;
           player.onGround = false;
@@ -2197,17 +2461,31 @@
 
       // Enemy collision (disabled in fly mode)
       if (!flyMode) {
-        level.tiles.filter(t => t.type === 3).forEach(e => {
-          const enemyRect = {
-            x: e.currentX + 4,
-            y: e.y * TILE_SIZE + 4,
-          width: TILE_SIZE - 8,
-          height: TILE_SIZE - 8
-        };
-        if (rectIntersect(player, enemyRect)) {
-          die();
-        }
-      });
+        // Walker (3) and fast walker (10)
+        level.tiles.filter(t => t.type === 3 || t.type === 10).forEach(e => {
+          const enemyRect = { x: e.currentX + 4, y: e.y * TILE_SIZE + 4, width: TILE_SIZE - 8, height: TILE_SIZE - 8 };
+          if (rectIntersect(player, enemyRect)) die();
+        });
+        // Bouncer (11) — uses currentY too
+        level.tiles.filter(t => t.type === 11).forEach(e => {
+          const enemyRect = { x: e.currentX + 4, y: e.currentY + 4, width: TILE_SIZE - 8, height: TILE_SIZE - 8 };
+          if (rectIntersect(player, enemyRect)) die();
+        });
+        // Lava hopper (14) — uses currentX/currentY
+        level.tiles.filter(t => t.type === 14).forEach(e => {
+          const enemyRect = { x: e.currentX + 4, y: e.currentY + 4, width: TILE_SIZE - 8, height: TILE_SIZE - 8 };
+          if (rectIntersect(player, enemyRect)) die();
+        });
+        // Lava geyser (15) — fire column when active (3 tiles tall above tile)
+        level.tiles.filter(t => t.type === 15 && t.geyserActive).forEach(g => {
+          const fireRect = {
+            x: g.x * TILE_SIZE + 6,
+            y: (g.y - 3) * TILE_SIZE,
+            width: TILE_SIZE - 12,
+            height: TILE_SIZE * 3
+          };
+          if (rectIntersect(player, fireRect)) die();
+        });
       }
 
       // Fall death (disabled in fly mode)
@@ -2230,6 +2508,7 @@
     function getCollidingTiles(rect, level) {
       const colliding = [];
       level.tiles.forEach(tile => {
+        if (tile.type === 9 && tile.crumbleState === 'fallen') return; // no collision when fallen
         const tileRect = {
           x: tile.x * TILE_SIZE,
           y: tile.y * TILE_SIZE,
@@ -2263,21 +2542,123 @@
         screenShake.duration--;
       }
 
-      // Clear with gradient background
-      const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-      gradient.addColorStop(0, '#1a1a2e');
-      gradient.addColorStop(1, '#16213e');
-      ctx.fillStyle = gradient;
-      ctx.fillRect(-20, -20, canvas.width + 40, canvas.height + 40); // slightly oversized to cover shake edges
+      const now = Date.now();
+      const bgTheme = levels[currentLevel].bgTheme || 'space';
 
-      // Draw grid (subtle)
-      ctx.strokeStyle = 'rgba(255,255,255,0.03)';
-      ctx.lineWidth = 1;
-      for (let x = -cameraX % TILE_SIZE; x < canvas.width; x += TILE_SIZE) {
-        ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, canvas.height);
-        ctx.stroke();
+      // --- Sky gradient (theme-aware) ---
+      const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      if (bgTheme === 'volcano') {
+        gradient.addColorStop(0, '#1c0300'); gradient.addColorStop(1, '#3d0a00');
+      } else if (bgTheme === 'cave') {
+        gradient.addColorStop(0, '#0c0a04'); gradient.addColorStop(1, '#1a1208');
+      } else if (bgTheme === 'cyber') {
+        gradient.addColorStop(0, '#001212'); gradient.addColorStop(1, '#001a22');
+      } else if (bgTheme === 'void') {
+        gradient.addColorStop(0, '#03010f'); gradient.addColorStop(1, '#0a0520');
+      } else { // space (default)
+        gradient.addColorStop(0, '#060818'); gradient.addColorStop(0.6, '#0f172a'); gradient.addColorStop(1, '#1a1a3e');
+      }
+      ctx.fillStyle = gradient;
+      ctx.fillRect(-20, -20, canvas.width + 40, canvas.height + 40);
+
+      // --- Stars (only for space/void themes) ---
+      if (bgTheme === 'space' || bgTheme === 'void') {
+        const starColor = bgTheme === 'void' ? '#9f7aea' : '#c7d2fe';
+        STARS_FAR.forEach(s => {
+          const sx = ((s.tx * canvas.width - cameraX * 0.05) % canvas.width + canvas.width) % canvas.width;
+          ctx.globalAlpha = 0.3 + 0.25 * Math.sin(now / 2500 + s.phase);
+          ctx.fillStyle = starColor;
+          ctx.beginPath(); ctx.arc(sx, s.ty * canvas.height, s.r, 0, Math.PI * 2); ctx.fill();
+        });
+        STARS_NEAR.forEach(s => {
+          const sx = ((s.tx * canvas.width - cameraX * 0.15) % canvas.width + canvas.width) % canvas.width;
+          ctx.globalAlpha = 0.5 + 0.5 * Math.sin(now / 900 + s.phase);
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath(); ctx.arc(sx, s.ty * canvas.height, s.r, 0, Math.PI * 2); ctx.fill();
+        });
+        ctx.globalAlpha = 1;
+      }
+
+      // --- Background layers (parallax mountains / cave walls / lava glow) ---
+      if (bgTheme === 'space') {
+        ctx.fillStyle = '#0c1a2e';
+        ctx.beginPath(); ctx.moveTo(0, canvas.height);
+        for (let px = 0; px <= canvas.width; px += 8) {
+          const wx = px + cameraX * 0.12;
+          ctx.lineTo(px, canvas.height * 0.55 + Math.sin(wx * 0.0025) * 80 + Math.sin(wx * 0.006) * 35);
+        }
+        ctx.lineTo(canvas.width, canvas.height); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#0f1f3d';
+        ctx.beginPath(); ctx.moveTo(0, canvas.height);
+        for (let px = 0; px <= canvas.width; px += 8) {
+          const wx = px + cameraX * 0.28;
+          ctx.lineTo(px, canvas.height * 0.68 + Math.sin(wx * 0.004 + 2.1) * 55 + Math.sin(wx * 0.009 + 0.7) * 22);
+        }
+        ctx.lineTo(canvas.width, canvas.height); ctx.closePath(); ctx.fill();
+
+      } else if (bgTheme === 'volcano') {
+        // Jagged volcanic peaks
+        ctx.fillStyle = '#2d0800';
+        ctx.beginPath(); ctx.moveTo(0, canvas.height);
+        for (let px = 0; px <= canvas.width; px += 6) {
+          const wx = px + cameraX * 0.1;
+          ctx.lineTo(px, canvas.height * 0.5 + Math.sin(wx * 0.005) * 70 + Math.abs(Math.sin(wx * 0.013)) * 40);
+        }
+        ctx.lineTo(canvas.width, canvas.height); ctx.closePath(); ctx.fill();
+        // Lava glow at the bottom
+        const lavGrad = ctx.createLinearGradient(0, canvas.height * 0.8, 0, canvas.height);
+        lavGrad.addColorStop(0, 'rgba(180,30,0,0)');
+        lavGrad.addColorStop(1, 'rgba(255,80,0,0.25)');
+        ctx.fillStyle = lavGrad;
+        ctx.fillRect(0, canvas.height * 0.8, canvas.width, canvas.height * 0.2);
+
+      } else if (bgTheme === 'cave') {
+        // Stalactites hanging from ceiling
+        ctx.fillStyle = '#1a1208';
+        for (let px = 0; px < canvas.width; px += 40) {
+          const wx = px + cameraX * 0.2;
+          const h = 30 + Math.sin(wx * 0.04) * 20 + Math.sin(wx * 0.09) * 10;
+          ctx.beginPath();
+          ctx.moveTo(px, 0); ctx.lineTo(px + 20, h); ctx.lineTo(px + 40, 0);
+          ctx.closePath(); ctx.fill();
+        }
+        // Rock floor hint
+        ctx.fillStyle = '#120e04';
+        ctx.beginPath(); ctx.moveTo(0, canvas.height);
+        for (let px = 0; px <= canvas.width; px += 8) {
+          const wx = px + cameraX * 0.3;
+          ctx.lineTo(px, canvas.height * 0.75 + Math.sin(wx * 0.007) * 30);
+        }
+        ctx.lineTo(canvas.width, canvas.height); ctx.closePath(); ctx.fill();
+
+      } else if (bgTheme === 'cyber') {
+        // Scanline grid
+        ctx.strokeStyle = 'rgba(0,255,200,0.04)';
+        ctx.lineWidth = 1;
+        for (let px = -cameraX * 0.1 % 48; px < canvas.width; px += 48) {
+          ctx.beginPath(); ctx.moveTo(px, 0); ctx.lineTo(px, canvas.height); ctx.stroke();
+        }
+        for (let py = 0; py < canvas.height; py += 48) {
+          ctx.beginPath(); ctx.moveTo(0, py); ctx.lineTo(canvas.width, py); ctx.stroke();
+        }
+        // Neon horizon
+        ctx.fillStyle = '#002a2a';
+        ctx.beginPath(); ctx.moveTo(0, canvas.height);
+        for (let px = 0; px <= canvas.width; px += 8) {
+          const wx = px + cameraX * 0.15;
+          ctx.lineTo(px, canvas.height * 0.65 + Math.sin(wx * 0.003) * 45 + Math.sin(wx * 0.008) * 20);
+        }
+        ctx.lineTo(canvas.width, canvas.height); ctx.closePath(); ctx.fill();
+
+      } else if (bgTheme === 'void') {
+        // Floating void wisps
+        ctx.fillStyle = '#120630';
+        ctx.beginPath(); ctx.moveTo(0, canvas.height);
+        for (let px = 0; px <= canvas.width; px += 8) {
+          const wx = px + cameraX * 0.08;
+          ctx.lineTo(px, canvas.height * 0.6 + Math.sin(wx * 0.003) * 60 + Math.sin(wx * 0.007 + 1) * 25);
+        }
+        ctx.lineTo(canvas.width, canvas.height); ctx.closePath(); ctx.fill();
       }
       
       ctx.save();
@@ -2298,17 +2679,16 @@
             ctx.fillRect(x, y + TILE_SIZE - 4, TILE_SIZE, 4);
             break;
             
-          case 2: // Spike
+          case 2: // Spike — pulsing glow, staggered per column
+            const spikeGlow = 6 + 8 * Math.sin(Date.now() / 350 + tile.x * 0.7);
+            ctx.shadowColor = '#ef4444';
+            ctx.shadowBlur = spikeGlow;
             ctx.fillStyle = '#ef4444';
             ctx.beginPath();
             ctx.moveTo(x + TILE_SIZE/2, y);
             ctx.lineTo(x + TILE_SIZE, y + TILE_SIZE);
             ctx.lineTo(x, y + TILE_SIZE);
             ctx.closePath();
-            ctx.fill();
-            // Glow
-            ctx.shadowColor = '#ef4444';
-            ctx.shadowBlur = 10;
             ctx.fill();
             ctx.shadowBlur = 0;
             break;
@@ -2350,25 +2730,38 @@
             ctx.shadowBlur = 0;
             break;
             
-          case 5: // Goal
+          case 5: { // Goal — spinning star with pulsing glow
+            const goalT = Date.now();
+            const goalAngle = goalT / 400;
+            const goalGlow = 12 + 8 * Math.sin(goalT / 200);
+            // Glowing box background
+            ctx.shadowColor = '#fbbf24';
+            ctx.shadowBlur = goalGlow;
             ctx.fillStyle = '#fbbf24';
             ctx.fillRect(x + 4, y + 4, TILE_SIZE - 8, TILE_SIZE - 8);
+            ctx.shadowBlur = 0;
             ctx.fillStyle = '#fef3c7';
             ctx.fillRect(x + 8, y + 8, TILE_SIZE - 16, TILE_SIZE - 16);
-            // Star
+            // Spinning 5-pointed star
+            ctx.save();
+            ctx.translate(x + TILE_SIZE / 2, y + TILE_SIZE / 2);
+            ctx.rotate(goalAngle);
+            ctx.shadowColor = '#f59e0b';
+            ctx.shadowBlur = goalGlow;
             ctx.fillStyle = '#f59e0b';
             ctx.beginPath();
-            const cx = x + TILE_SIZE/2;
-            const cy = y + TILE_SIZE/2;
-            for (let i = 0; i < 5; i++) {
-              const angle = (i * 4 * Math.PI / 5) - Math.PI/2;
-              const r = i % 2 === 0 ? 8 : 4;
-              if (i === 0) ctx.moveTo(cx + r * Math.cos(angle), cy + r * Math.sin(angle));
-              else ctx.lineTo(cx + r * Math.cos(angle), cy + r * Math.sin(angle));
+            for (let i = 0; i < 10; i++) {
+              const a = (i * Math.PI / 5) - Math.PI / 2;
+              const r = i % 2 === 0 ? 9 : 4;
+              if (i === 0) ctx.moveTo(r * Math.cos(a), r * Math.sin(a));
+              else ctx.lineTo(r * Math.cos(a), r * Math.sin(a));
             }
             ctx.closePath();
             ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.restore();
             break;
+          }
 
           case 7: // Checkpoint flag
             // Pole
@@ -2390,9 +2783,271 @@
             ctx.fill();
             ctx.shadowBlur = 0;
             break;
+
+          case 10: { // Fast walker — hot red, spiky look
+            const fx = tile.currentX || x;
+            ctx.fillStyle = '#dc2626';
+            ctx.shadowColor = '#ff4444';
+            ctx.shadowBlur = 6;
+            ctx.beginPath();
+            ctx.arc(fx + TILE_SIZE/2, y + TILE_SIZE/2, TILE_SIZE/2 - 3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            // Spiky outline (4 spikes)
+            ctx.fillStyle = '#ff6666';
+            for (let sp = 0; sp < 4; sp++) {
+              const sa = (sp * Math.PI / 2) + Date.now() / 300;
+              ctx.beginPath();
+              ctx.moveTo(fx + TILE_SIZE/2 + Math.cos(sa) * 10, y + TILE_SIZE/2 + Math.sin(sa) * 10);
+              ctx.lineTo(fx + TILE_SIZE/2 + Math.cos(sa) * 15, y + TILE_SIZE/2 + Math.sin(sa) * 15);
+              ctx.lineTo(fx + TILE_SIZE/2 + Math.cos(sa + 0.3) * 10, y + TILE_SIZE/2 + Math.sin(sa + 0.3) * 10);
+              ctx.closePath(); ctx.fill();
+            }
+            // Eyes (angry)
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(fx + 7, y + 9, 7, 5);
+            ctx.fillRect(fx + 18, y + 9, 7, 5);
+            ctx.fillStyle = '#000';
+            ctx.fillRect(fx + 10, y + 10, 3, 3);
+            ctx.fillRect(fx + 21, y + 10, 3, 3);
+            break;
+          }
+
+          case 11: { // Bouncer — cyan, floats and oscillates
+            const bx = tile.currentX !== undefined ? tile.currentX : x;
+            const by = tile.currentY !== undefined ? tile.currentY : y;
+            ctx.fillStyle = '#06b6d4';
+            ctx.shadowColor = '#22d3ee';
+            ctx.shadowBlur = 10;
+            ctx.beginPath();
+            ctx.arc(bx + TILE_SIZE/2, by + TILE_SIZE/2, TILE_SIZE/2 - 3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            // Inner ring
+            ctx.strokeStyle = '#a5f3fc';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(bx + TILE_SIZE/2, by + TILE_SIZE/2, TILE_SIZE/2 - 8, 0, Math.PI * 2);
+            ctx.stroke();
+            // Eyes
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(bx + TILE_SIZE/3, by + TILE_SIZE/3, 4, 0, Math.PI * 2);
+            ctx.arc(bx + TILE_SIZE*2/3, by + TILE_SIZE/3, 4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#000';
+            ctx.beginPath();
+            ctx.arc(bx + TILE_SIZE/3, by + TILE_SIZE/3, 2, 0, Math.PI * 2);
+            ctx.arc(bx + TILE_SIZE*2/3, by + TILE_SIZE/3, 2, 0, Math.PI * 2);
+            ctx.fill();
+            break;
+          }
+
+          case 12: { // Spring platform — green coil
+            ctx.fillStyle = '#166534';
+            ctx.fillRect(x, y + TILE_SIZE - 8, TILE_SIZE, 8);
+            // Spring coils
+            ctx.strokeStyle = '#22c55e';
+            ctx.lineWidth = 3;
+            const coilCount = 4;
+            for (let ci = 0; ci < coilCount; ci++) {
+              const cy12 = y + TILE_SIZE - 8 - (ci + 1) * (TILE_SIZE - 8) / coilCount;
+              ctx.beginPath();
+              ctx.moveTo(x + 4, cy12);
+              ctx.bezierCurveTo(x + 4, cy12 - 4, x + TILE_SIZE - 4, cy12 - 4, x + TILE_SIZE - 4, cy12);
+              ctx.stroke();
+            }
+            // Glow
+            ctx.shadowColor = '#4ade80';
+            ctx.shadowBlur = 8;
+            ctx.strokeStyle = '#4ade80';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(x + 2, y + 2, TILE_SIZE - 4, TILE_SIZE - 4);
+            ctx.shadowBlur = 0;
+            break;
+          }
+
+          case 13: { // Lava — glowing orange-red flat block
+            const lavT = Date.now();
+            const lavPulse = 0.6 + 0.4 * Math.sin(lavT / 400 + tile.x * 0.3);
+            ctx.fillStyle = `rgb(${Math.floor(200 + 55 * lavPulse)},${Math.floor(40 * lavPulse)},0)`;
+            ctx.shadowColor = '#ff4500';
+            ctx.shadowBlur = 10 + 8 * lavPulse;
+            ctx.fillRect(x, y, TILE_SIZE, TILE_SIZE);
+            ctx.shadowBlur = 0;
+            // Bright top surface
+            ctx.fillStyle = `rgba(255,180,0,${0.4 + 0.3 * lavPulse})`;
+            ctx.fillRect(x, y, TILE_SIZE, 5);
+            // Bubbles
+            if (Math.floor(lavT / 200 + tile.x) % 5 === 0) {
+              ctx.fillStyle = 'rgba(255,200,50,0.7)';
+              ctx.beginPath();
+              ctx.arc(x + TILE_SIZE/2, y + 8, 3, 0, Math.PI * 2);
+              ctx.fill();
+            }
+            break;
+          }
+
+          case 9: { // Crumble platform
+            if (tile.crumbleState === 'fallen') break;
+            const crumbRatio = tile.crumbleState === 'crumbling' ? tile.crumbleTimer / 55 : 0;
+            const cx9 = x + (tile.shakeX || 0);
+            // Body: amber → red as it crumbles
+            const rr = Math.floor(180 + crumbRatio * 70);
+            const gg = Math.floor(95 - crumbRatio * 75);
+            ctx.fillStyle = `rgb(${rr},${gg},20)`;
+            ctx.fillRect(cx9, y, TILE_SIZE, TILE_SIZE);
+            // Top highlight
+            ctx.fillStyle = crumbRatio > 0 ? `rgba(255,120,0,${0.4 + crumbRatio * 0.6})` : '#d97706';
+            ctx.fillRect(cx9, y, TILE_SIZE, 4);
+            ctx.fillStyle = '#78350f';
+            ctx.fillRect(cx9, y + TILE_SIZE - 4, TILE_SIZE, 4);
+            // Crack lines appear as it crumbles
+            if (crumbRatio > 0.25) {
+              ctx.strokeStyle = `rgba(0,0,0,${crumbRatio * 0.9})`;
+              ctx.lineWidth = 1;
+              ctx.beginPath();
+              ctx.moveTo(cx9 + 6,  y + 6);  ctx.lineTo(cx9 + 13, y + 22);
+              ctx.moveTo(cx9 + 20, y + 4);  ctx.lineTo(cx9 + 17, y + 28);
+              ctx.stroke();
+            }
+            break;
+          }
+
+          case 8: { // Shooter — stationary turret that tracks the player
+            const chargeRatio = (tile.shootTimer || 0) / SHOOTER_FIRE_INTERVAL;
+            const charging = chargeRatio > 0.65;
+            const chargeGlow = charging ? ((chargeRatio - 0.65) / 0.35) * 18 : 0;
+            // Body
+            ctx.fillStyle = '#7c3aed';
+            ctx.shadowColor = '#ff8800';
+            ctx.shadowBlur = chargeGlow;
+            ctx.beginPath();
+            ctx.arc(x + TILE_SIZE / 2, y + TILE_SIZE / 2, TILE_SIZE / 2 - 3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            // Ring
+            ctx.strokeStyle = '#4c1d95';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(x + TILE_SIZE / 2, y + TILE_SIZE / 2, TILE_SIZE / 2 - 7, 0, Math.PI * 2);
+            ctx.stroke();
+            // Orange barrel-eye aimed at player
+            const bAngle = Math.atan2(
+              (player.y + player.height / 2) - (y + TILE_SIZE / 2),
+              (player.x + player.width / 2) - (x + TILE_SIZE / 2)
+            );
+            const bR = 7;
+            ctx.fillStyle = charging ? '#ff4400' : '#ff8800';
+            ctx.shadowColor = '#ff8800';
+            ctx.shadowBlur = 6 + chargeGlow;
+            ctx.beginPath();
+            ctx.arc(
+              x + TILE_SIZE / 2 + Math.cos(bAngle) * bR,
+              y + TILE_SIZE / 2 + Math.sin(bAngle) * bR,
+              charging ? 5 : 3, 0, Math.PI * 2
+            );
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            break;
+          }
+
+          case 14: { // Lava Hopper — orange frog-like enemy, hops up and down
+            const hx = tile.currentX !== undefined ? tile.currentX : x;
+            const hy = tile.currentY !== undefined ? tile.currentY : y;
+            const hopT = Date.now();
+            const hopGlow = 6 + 4 * Math.sin(hopT / 150);
+            // Body
+            ctx.fillStyle = '#f97316';
+            ctx.shadowColor = '#ff4500';
+            ctx.shadowBlur = hopGlow;
+            ctx.beginPath();
+            ctx.arc(hx + TILE_SIZE / 2, hy + TILE_SIZE / 2 + 2, TILE_SIZE / 2 - 3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            // Lava drip pattern on body
+            ctx.fillStyle = '#dc2626';
+            ctx.beginPath();
+            ctx.arc(hx + TILE_SIZE / 2, hy + TILE_SIZE / 2 + 4, TILE_SIZE / 2 - 8, 0, Math.PI * 2);
+            ctx.fill();
+            // Eyes (wide apart, bulging)
+            ctx.fillStyle = '#fef08a';
+            ctx.beginPath();
+            ctx.arc(hx + 9,  hy + 10, 5, 0, Math.PI * 2);
+            ctx.arc(hx + 23, hy + 10, 5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#000';
+            ctx.beginPath();
+            ctx.arc(hx + 9,  hy + 10, 2, 0, Math.PI * 2);
+            ctx.arc(hx + 23, hy + 10, 2, 0, Math.PI * 2);
+            ctx.fill();
+            // Legs (stubby, extended when hopping)
+            const legExtend = tile.currentY !== undefined ? (tile.startY - tile.currentY) / (TILE_SIZE * 1.2) : 0;
+            ctx.fillStyle = '#ea580c';
+            ctx.fillRect(hx + 4,  hy + TILE_SIZE - 8 + legExtend * 4, 7, 8 - legExtend * 4);
+            ctx.fillRect(hx + 21, hy + TILE_SIZE - 8 + legExtend * 4, 7, 8 - legExtend * 4);
+            break;
+          }
+
+          case 15: { // Lava Geyser — solid base, shoots fire column upward
+            const gT = Date.now();
+            const gPulse = 0.5 + 0.5 * Math.sin(gT / 300 + tile.x * 0.5);
+            // Base (dark volcanic rock with lava cracks)
+            ctx.fillStyle = '#292524';
+            ctx.fillRect(x, y, TILE_SIZE, TILE_SIZE);
+            // Lava cracks in base
+            ctx.fillStyle = `rgba(251,146,60,${0.5 + 0.4 * gPulse})`;
+            ctx.fillRect(x + 6,  y + 4,  4, TILE_SIZE - 8);
+            ctx.fillRect(x + 18, y + 6,  3, TILE_SIZE - 10);
+            ctx.fillRect(x + 12, y + 10, 3, TILE_SIZE - 12);
+            // Vent opening at top
+            ctx.fillStyle = tile.geyserActive ? '#fbbf24' : '#7c2d12';
+            ctx.shadowColor = '#ff4500';
+            ctx.shadowBlur = tile.geyserActive ? 14 : 4;
+            ctx.beginPath();
+            ctx.ellipse(x + TILE_SIZE / 2, y + 4, 8, 5, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            // Fire column when active
+            if (tile.geyserActive) {
+              const phaseVal = (tile.geyserTimer || 0) % 150;
+              for (let fi = 0; fi < 3; fi++) {
+                const fY = y - fi * TILE_SIZE;
+                const fAlpha = 0.9 - fi * 0.25;
+                const fWidth = TILE_SIZE - fi * 6 - (tile.x % 3) * 2;
+                ctx.shadowColor = '#ff6600';
+                ctx.shadowBlur = 18 - fi * 4;
+                ctx.fillStyle = fi === 0
+                  ? `rgba(255,200,0,${fAlpha})`
+                  : fi === 1
+                  ? `rgba(255,100,0,${fAlpha})`
+                  : `rgba(200,30,0,${fAlpha})`;
+                // Tapered flame shape
+                ctx.beginPath();
+                const fw = fWidth / 2;
+                ctx.moveTo(x + TILE_SIZE / 2 - fw, fY + TILE_SIZE);
+                ctx.quadraticCurveTo(
+                  x + TILE_SIZE / 2 + 4 * Math.sin(gT / 80 + fi),
+                  fY + TILE_SIZE / 2,
+                  x + TILE_SIZE / 2,
+                  fY
+                );
+                ctx.quadraticCurveTo(
+                  x + TILE_SIZE / 2 + 4 * Math.sin(gT / 60 + fi),
+                  fY + TILE_SIZE / 2,
+                  x + TILE_SIZE / 2 + fw,
+                  fY + TILE_SIZE
+                );
+                ctx.closePath();
+                ctx.fill();
+              }
+              ctx.shadowBlur = 0;
+            }
+            break;
+          }
         }
       });
-      
+
       // Draw moving platforms
       level.movingPlatforms.forEach(plat => {
         ctx.fillStyle = '#60a5fa';
@@ -2438,6 +3093,17 @@
         ctx.fillRect(p.x, p.y, p.size, p.size);
       });
       ctx.globalAlpha = 1;
+
+      // Draw shooter projectiles
+      shooterProjectiles.forEach(sp => {
+        ctx.fillStyle = '#ff8800';
+        ctx.shadowColor = '#ff8800';
+        ctx.shadowBlur = 8;
+        ctx.beginPath();
+        ctx.arc(sp.x, sp.y, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      });
 
       // Draw boss and bullets
       renderBoss();
