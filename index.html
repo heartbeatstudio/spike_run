@@ -3,15 +3,15 @@
  <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Spike Runner — Free Online Platformer</title>
+  <title>Spike Runner — Free Online 2D Platformer</title>
 
   <!-- SEO -->
-  <meta name="description" content="Spike Runner — a fast-paced browser platformer. Dodge spikes, beat bosses, and race through 12 levels of pixel mayhem. Play free online!">
+  <meta name="description" content="Spike Runner — a fast-paced browser 2D platformer. Dodge spikes, beat bosses, and race through 10+ levels of pixel mayhem. Play free online!">
   <link rel="canonical" href="https://spikerun.vercel.app/">
 
   <!-- Open Graph -->
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Spike Runner — Free Online Platformer">
+  <meta property="og:title" content="Spike Runner — Free Online 2D Platformer">
   <meta property="og:description" content="Dodge spikes, beat bosses, and race through 12 levels of pixel mayhem. Play free in your browser!">
   <meta property="og:url" content="https://spikerun.vercel.app/">
 
@@ -664,6 +664,102 @@
         this.playBossBGMLoop();
       },
 
+      // Lava boss music — slow, heavy, ominous (for Cinder Doppelganger)
+      playLavaBGMLoop() {
+        if (!this.ctx || this.muted) return;
+
+        const now = this.ctx.currentTime;
+        const bpm = 95; // Slower and more threatening than main boss
+        const beatDuration = 60 / bpm;
+
+        // Dark melody in A minor — low register, slow, inevitable
+        const melody = [
+          { note: 220.00, duration: 0.5 },  // A3
+          { note: 261.63, duration: 0.25 }, // C4
+          { note: 220.00, duration: 0.25 }, // A3
+          { note: 246.94, duration: 0.5 },  // B3
+          { note: 220.00, duration: 0.5 },  // A3
+          { note: 196.00, duration: 0.5 },  // G3
+          { note: 174.61, duration: 0.5 },  // F3
+          { note: 196.00, duration: 0.25 }, // G3
+          { note: 220.00, duration: 0.25 }, // A3
+          { note: 164.81, duration: 1.0 },  // E3 — long, ominous hold
+          { note: 220.00, duration: 0.5 },  // A3
+          { note: 261.63, duration: 0.25 }, // C4
+          { note: 277.18, duration: 0.25 }, // C#4 — dissonant clash
+          { note: 261.63, duration: 0.5 },  // C4
+          { note: 233.08, duration: 0.5 },  // Bb3
+          { note: 220.00, duration: 1.0 },  // A3 — resolve
+        ];
+
+        // Deep rumbling bass — slow, heavy pulses
+        const bass = [
+          { note: 55.00, duration: 1.0 },  // A1
+          { note: 55.00, duration: 1.0 },  // A1
+          { note: 65.41, duration: 1.0 },  // C2
+          { note: 82.41, duration: 1.0 },  // E2
+          { note: 55.00, duration: 1.0 },  // A1
+          { note: 65.41, duration: 0.5 },  // C2
+          { note: 87.31, duration: 0.5 },  // F2
+          { note: 73.42, duration: 1.0 },  // D2
+        ];
+
+        let time = 0;
+        this.bgmOscillators = [];
+
+        // Sawtooth melody — harsh and fiery
+        melody.forEach(note => {
+          const osc = this.ctx.createOscillator();
+          const oscGain = this.ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.value = note.note;
+          osc.connect(oscGain);
+          oscGain.connect(this.bgmGain);
+
+          const startTime = now + time;
+          const endTime = startTime + (note.duration * beatDuration);
+          oscGain.gain.setValueAtTime(0.10, startTime);
+          oscGain.gain.exponentialRampToValueAtTime(0.01, endTime);
+
+          osc.start(startTime);
+          osc.stop(endTime);
+          this.bgmOscillators.push(osc);
+          time += note.duration * beatDuration;
+        });
+
+        // Square bass — heavy low rumble
+        let bassTime = 0;
+        bass.forEach(note => {
+          const osc = this.ctx.createOscillator();
+          const oscGain = this.ctx.createGain();
+          osc.type = 'square';
+          osc.frequency.value = note.note;
+          osc.connect(oscGain);
+          oscGain.connect(this.bgmGain);
+
+          const startTime = now + bassTime;
+          const endTime = startTime + (note.duration * beatDuration);
+          oscGain.gain.setValueAtTime(0.18, startTime);
+          oscGain.gain.setValueAtTime(0.18, endTime - 0.05);
+          oscGain.gain.exponentialRampToValueAtTime(0.01, endTime);
+
+          osc.start(startTime);
+          osc.stop(endTime);
+          this.bgmOscillators.push(osc);
+          bassTime += note.duration * beatDuration;
+        });
+
+        const loopDuration = time * 1000;
+        this.bgmTimeout = setTimeout(() => this.playLavaBGMLoop(), loopDuration);
+      },
+
+      startLavaBGM() {
+        if (!this.ctx || this.muted) return;
+        if (this.ctx.state === 'suspended') this.ctx.resume();
+        this.stopBGM();
+        this.playLavaBGMLoop();
+      },
+
       // Stop background music
       stopBGM() {
         if (this.bgmTimeout) {
@@ -1130,7 +1226,36 @@
         ],
         movingPlatforms: []
       },
-      // Level 10 - CYBER NEXUS
+      // Level 10 - BOSS ARENA
+      {
+        isBoss: true,
+        width: 40,
+        height: 22,
+        playerStart: { x: 5, y: 19 },
+        tiles: [
+          // Floor of the arena
+          ...Array(40).fill().map((_, i) => ({ x: i, y: 21, type: 1 })),
+
+          // Left platform (lower)
+          { x: 4, y: 18, type: 1 }, { x: 5, y: 18, type: 1 }, { x: 6, y: 18, type: 1 }, { x: 7, y: 18, type: 1 },
+
+          // Mid-left platform
+          { x: 11, y: 15, type: 1 }, { x: 12, y: 15, type: 1 }, { x: 13, y: 15, type: 1 }, { x: 14, y: 15, type: 1 },
+
+          // Center high platform
+          { x: 18, y: 12, type: 1 }, { x: 19, y: 12, type: 1 }, { x: 20, y: 12, type: 1 }, { x: 21, y: 12, type: 1 },
+
+          // Mid-right platform
+          { x: 25, y: 15, type: 1 }, { x: 26, y: 15, type: 1 }, { x: 27, y: 15, type: 1 }, { x: 28, y: 15, type: 1 },
+
+          // Right platform (lower)
+          { x: 32, y: 18, type: 1 }, { x: 33, y: 18, type: 1 }, { x: 34, y: 18, type: 1 }, { x: 35, y: 18, type: 1 },
+
+          // No goal tile - boss defeat triggers level complete
+        ],
+        movingPlatforms: []
+      },
+      // Level 11 - CYBER NEXUS
       {
         bgTheme: 'cyber',
         width: 52,
@@ -1158,65 +1283,23 @@
           { x: 32, y: 17, type: 4 },
           { x: 45, y: 17, type: 4 },
 
-          // Fast walkers patrolling ground
-          { x: 2,  y: 16, type: 10 },
-          { x: 15, y: 16, type: 10 },
-          { x: 30, y: 16, type: 10 },
-          { x: 44, y: 16, type: 10 },
+          // Fast walkers patrolling ground (reduced to 2)
+          { x: 12, y: 16, type: 10 },
+          { x: 28, y: 16, type: 10 },
 
-          // Enemies on corridors (y = corridor_y - 1)
+          // Enemies on corridors — one per corridor
           { x: 9,  y: 11, type: 3 },
           { x: 23, y: 9,  type: 3 },
           { x: 37, y: 11, type: 3 },
 
-          // Shooters at end of each corridor
-          { x: 14, y: 11, type: 8 },
-          { x: 28, y: 9,  type: 8 },
+          // Shooter only at the very end (corridor 3)
           { x: 42, y: 11, type: 8 },
-
-          // Spikes mid-corridor — must jump over
-          { x: 11, y: 11, type: 2 },
-          { x: 25, y: 9,  type: 2 },
-          { x: 39, y: 11, type: 2 },
-
-          // Bouncers floating between corridors
-          { x: 16, y: 14, type: 11 },
-          { x: 31, y: 14, type: 11 },
 
           // Checkpoint on corridor 2
           { x: 21, y: 9, type: 7 },
 
           // Goal on final approach
           { x: 50, y: 13, type: 5 },
-        ],
-        movingPlatforms: []
-      },
-      // Level 11 - BOSS ARENA
-      {
-        isBoss: true,
-        width: 40,
-        height: 22,
-        playerStart: { x: 5, y: 19 },
-        tiles: [
-          // Floor of the arena
-          ...Array(40).fill().map((_, i) => ({ x: i, y: 21, type: 1 })),
-
-          // Left platform (lower)
-          { x: 4, y: 18, type: 1 }, { x: 5, y: 18, type: 1 }, { x: 6, y: 18, type: 1 }, { x: 7, y: 18, type: 1 },
-
-          // Mid-left platform
-          { x: 11, y: 15, type: 1 }, { x: 12, y: 15, type: 1 }, { x: 13, y: 15, type: 1 }, { x: 14, y: 15, type: 1 },
-
-          // Center high platform
-          { x: 18, y: 12, type: 1 }, { x: 19, y: 12, type: 1 }, { x: 20, y: 12, type: 1 }, { x: 21, y: 12, type: 1 },
-
-          // Mid-right platform
-          { x: 25, y: 15, type: 1 }, { x: 26, y: 15, type: 1 }, { x: 27, y: 15, type: 1 }, { x: 28, y: 15, type: 1 },
-
-          // Right platform (lower)
-          { x: 32, y: 18, type: 1 }, { x: 33, y: 18, type: 1 }, { x: 34, y: 18, type: 1 }, { x: 35, y: 18, type: 1 },
-
-          // No goal tile - boss defeat triggers level complete
         ],
         movingPlatforms: []
       },
@@ -1267,60 +1350,48 @@
         movingPlatforms: []
       },
 
-      // Level 13 - LAVA LAND (Cinder Doppelganger fight)
+      // Level 13 - LAVA ARENA (Cinder Doppelganger fight)
       {
         bgTheme: 'volcano',
         isMinionBoss: true,
-        width: 56,
+        width: 40,
         height: 22,
-        playerStart: { x: 2, y: 19 },
+        playerStart: { x: 2, y: 18 },
         tiles: [
-          // Safe starting ground
-          ...Array(6).fill().map((_, i) => ({ x: i, y: 21, type: 1 })),
+          // Full lava floor — no safe ground
+          ...Array(40).fill().map((_, i) => ({ x: i, y: 21, type: 13 })),
 
-          // Lava river 1 (x=6..15) — 10 tiles
-          ...Array(10).fill().map((_, i) => ({ x: 6 + i, y: 21, type: 13 })),
+          // Left entry ledge (player starts here)
+          { x: 0, y: 20, type: 1 }, { x: 1, y: 20, type: 1 }, { x: 2, y: 20, type: 1 },
+          { x: 3, y: 20, type: 1 }, { x: 4, y: 20, type: 1 },
 
-          // Island 1: two wider platforms (3 tiles each), closer together
-          { x: 7, y: 18, type: 1 }, { x: 8, y: 18, type: 1 }, { x: 9, y: 18, type: 1 },
-          { x: 12, y: 16, type: 1 }, { x: 13, y: 16, type: 1 }, { x: 14, y: 16, type: 1 },
+          // Low-left platform
+          { x: 7, y: 18, type: 1 }, { x: 8, y: 18, type: 1 },
+          { x: 9, y: 18, type: 1 }, { x: 10, y: 18, type: 1 },
 
-          // One lava hopper — only threat on island 1
-          { x: 8, y: 17, type: 14 },
+          // Mid-left platform
+          { x: 12, y: 15, type: 1 }, { x: 13, y: 15, type: 1 },
+          { x: 14, y: 15, type: 1 }, { x: 15, y: 15, type: 1 },
 
-          // Safe ground between rivers
-          ...Array(6).fill().map((_, i) => ({ x: 16 + i, y: 21, type: 1 })),
+          // Center high platform
+          { x: 18, y: 12, type: 1 }, { x: 19, y: 12, type: 1 },
+          { x: 20, y: 12, type: 1 }, { x: 21, y: 12, type: 1 },
 
-          // Lava river 2 (x=22..34) — 13 tiles
-          ...Array(13).fill().map((_, i) => ({ x: 22 + i, y: 21, type: 13 })),
+          // Mid-right platform
+          { x: 24, y: 15, type: 1 }, { x: 25, y: 15, type: 1 },
+          { x: 26, y: 15, type: 1 }, { x: 27, y: 15, type: 1 },
 
-          // Island 2: three wider platforms stepping up
-          { x: 23, y: 19, type: 1 }, { x: 24, y: 19, type: 1 }, { x: 25, y: 19, type: 1 },
-          { x: 27, y: 17, type: 1 }, { x: 28, y: 17, type: 1 }, { x: 29, y: 17, type: 1 },
-          { x: 31, y: 15, type: 1 }, { x: 32, y: 15, type: 1 }, { x: 33, y: 15, type: 1 },
+          // Low-right platform
+          { x: 29, y: 18, type: 1 }, { x: 30, y: 18, type: 1 },
+          { x: 31, y: 18, type: 1 }, { x: 32, y: 18, type: 1 },
 
-          // One geyser on the middle platform
-          { x: 28, y: 16, type: 15 },
+          // Right entry ledge
+          { x: 35, y: 20, type: 1 }, { x: 36, y: 20, type: 1 }, { x: 37, y: 20, type: 1 },
+          { x: 38, y: 20, type: 1 }, { x: 39, y: 20, type: 1 },
 
-          // One lava hopper on the lowest platform
-          { x: 24, y: 18, type: 14 },
-
-          // Checkpoint at top platform
-          { x: 32, y: 14, type: 7 },
-
-          // Safe end ground
-          ...Array(8).fill().map((_, i) => ({ x: 35 + i, y: 21, type: 1 })),
-
-          // Lava river 3 (x=43..49) — 7 tiles
-          ...Array(7).fill().map((_, i) => ({ x: 43 + i, y: 21, type: 13 })),
-
-          // Final platforms — boost clears river 3
-          { x: 44, y: 18, type: 1 }, { x: 45, y: 18, type: 4 }, { x: 46, y: 18, type: 1 },
-          { x: 49, y: 16, type: 1 }, { x: 50, y: 16, type: 1 }, { x: 51, y: 16, type: 1 },
-
-          // Final safe arena — Cinder Doppelganger spawns here; no goal tile
-          ...Array(4).fill().map((_, i) => ({ x: 52 + i, y: 21, type: 1 })),
-          { x: 54, y: 20, type: 1 },
+          // Geysers on floating platforms — punish standing still
+          { x: 9, y: 17, type: 15 },
+          { x: 31, y: 17, type: 15 },
         ],
         movingPlatforms: []
       }
@@ -1752,6 +1823,18 @@
 
       // Cinder boss HP bar
       if (cinderBossActive && cinderBoss) {
+        // Player HP bar (left side)
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.fillRect(20, 60, 220, 30);
+        ctx.fillStyle = '#fff';
+        ctx.font = '12px "Press Start 2P"';
+        ctx.fillText('PLAYER HP', 30, 78);
+        ctx.fillStyle = '#333';
+        ctx.fillRect(130, 68, 120, 12);
+        ctx.fillStyle = playerHP > 4 ? '#00ff00' : '#ff0000';
+        ctx.fillRect(130, 68, (playerHP / 12) * 120, 12);
+
+        // Cinder boss bar (center top)
         ctx.font = '9px "Press Start 2P"';
         ctx.fillStyle = 'rgba(0,0,0,0.75)';
         ctx.fillRect(canvas.width / 2 - 160, 18, 320, 28);
@@ -1787,17 +1870,18 @@
         x: (level.width - 7) * TILE_SIZE,
         y: (level.height - 11) * TILE_SIZE,
         width: 20, height: 28,
-        hp: 15, maxHP: 15,
+        hp: 22, maxHP: 22,
         vx: -2, vy: 0,
         attackTimer: 0, attackCooldown: 120,
         attackMode: 0,
         flashTimer: 0,
         nameTimer: 220,
-        poolWarningX: 0, poolWarningTimer: 0,
+        poolWarnings: [],
       };
       cinderBossActive = true;
       cinderAttacks = []; cinderPools = [];
       bullets = [];
+      playerHP = 12;
       showShootTip = true; shootTipTimer = 0;
     }
 
@@ -1810,7 +1894,7 @@
 
       // Horizontal float
       cinderBoss.x += cinderBoss.vx;
-      const arenaLeft  = 34 * TILE_SIZE;
+      const arenaLeft  = 4 * TILE_SIZE;
       const arenaRight = (level.width - 4) * TILE_SIZE - cinderBoss.width;
       if (cinderBoss.x <= arenaLeft)  cinderBoss.vx =  speed;
       if (cinderBoss.x >= arenaRight) cinderBoss.vx = -speed;
@@ -1823,14 +1907,15 @@
       if (cinderBoss.flashTimer > 0) cinderBoss.flashTimer--;
       if (cinderBoss.nameTimer   > 0) cinderBoss.nameTimer--;
 
-      // Pool warning countdown → spawn pool
-      if (cinderBoss.poolWarningTimer > 0) {
-        if (--cinderBoss.poolWarningTimer === 0) {
+      // Pool warning countdowns → spawn pools when timer hits 0
+      for (let i = cinderBoss.poolWarnings.length - 1; i >= 0; i--) {
+        if (--cinderBoss.poolWarnings[i].timer <= 0) {
           cinderPools.push({
-            x: cinderBoss.poolWarningX,
+            x: cinderBoss.poolWarnings[i].x,
             y: (level.height - 1) * TILE_SIZE - 6,
             radius: 26, timer: 210,
           });
+          cinderBoss.poolWarnings.splice(i, 1);
         }
       }
 
@@ -1841,7 +1926,7 @@
       // Attacks
       if (++cinderBoss.attackTimer >= cinderBoss.attackCooldown) {
         cinderBoss.attackTimer = 0;
-        const modes = isPhase2 ? 3 : 2;
+        const modes = isPhase2 ? 5 : 4;
         cinderBoss.attackMode = (cinderBoss.attackMode + 1) % modes;
         const bx = cinderBoss.x + cinderBoss.width / 2;
         const by = cinderBoss.y + cinderBoss.height / 2;
@@ -1849,17 +1934,26 @@
         const py = player.y + player.height / 2;
         const dist = Math.sqrt((px - bx) ** 2 + (py - by) ** 2) || 1;
 
-        if (cinderBoss.attackMode === 1) {
-          // Lava pool drop — warning first
-          cinderBoss.poolWarningX = px;
-          cinderBoss.poolWarningTimer = 60;
+        if (cinderBoss.attackMode === 0) {
+          // Single aimed fireball
+          cinderAttacks.push({ x: bx, y: by, vx: (px - bx) / dist * 4, vy: (py - by) / dist * 4 });
+        } else if (cinderBoss.attackMode === 1) {
+          // Lava pool drop — warning at player position
+          cinderBoss.poolWarnings.push({ x: px, timer: 60 });
         } else if (cinderBoss.attackMode === 2) {
-          // Phase 2: triple spread
+          // Triple spread — 3 aimed fireballs in a fan
           for (let a = -1; a <= 1; a++)
             cinderAttacks.push({ x: bx, y: by, vx: (px - bx) / dist * 4 + a * 2, vy: (py - by) / dist * 4 });
-        } else {
-          // Single aimed fire shot
-          cinderAttacks.push({ x: bx, y: by, vx: (px - bx) / dist * 4, vy: (py - by) / dist * 4 });
+        } else if (cinderBoss.attackMode === 3) {
+          // Lava rain — 3 pools drop at spread positions with staggered warnings
+          const arenaW = level.width * TILE_SIZE;
+          cinderBoss.poolWarnings.push({ x: arenaW * 0.25, timer: 45 });
+          cinderBoss.poolWarnings.push({ x: px,            timer: 55 }); // one under player
+          cinderBoss.poolWarnings.push({ x: arenaW * 0.75, timer: 65 });
+        } else if (cinderBoss.attackMode === 4) {
+          // Phase 2 only: Burst — 5 fireballs in a wide fan
+          for (let a = -2; a <= 2; a++)
+            cinderAttacks.push({ x: bx, y: by, vx: (px - bx) / dist * 4 + a * 2.5, vy: (py - by) / dist * 4 });
         }
       }
 
@@ -1873,7 +1967,24 @@
         }
         if (!flyMode && rectIntersect(player,
             { x: cinderAttacks[i].x - 6, y: cinderAttacks[i].y - 6, width: 12, height: 12 })) {
-          cinderAttacks.splice(i, 1); die(); break;
+          cinderAttacks.splice(i, 1);
+          playerHP--;
+          AudioManager.playSound('death');
+          if (playerHP <= 0) {
+            deaths++; updateHUD();
+            playerHP = 12;
+            cinderBoss.hp = cinderBoss.maxHP;
+            spawnDeathParticles(player.x, player.y, SKINS[selectedSkin].color);
+            triggerShake(12, 20);
+            const lvl = levels[currentLevel];
+            player.x = lvl.playerStart.x * TILE_SIZE;
+            player.y = lvl.playerStart.y * TILE_SIZE;
+            player.vx = 0; player.vy = 0;
+            player.onGround = false; player.onPlatform = null;
+            bullets = []; cinderAttacks = []; cinderPools = [];
+            if (cinderBoss) cinderBoss.poolWarnings = [];
+          }
+          break;
         }
       }
 
@@ -1898,8 +2009,7 @@
     function renderCinderBoss() {
       if (!cinderBoss || !cinderBossActive) return;
       const t   = Date.now();
-      const { x, y, width, height, flashTimer, nameTimer,
-              poolWarningX, poolWarningTimer } = cinderBoss;
+      const { x, y, width, height, flashTimer, nameTimer, poolWarnings } = cinderBoss;
       const level  = levels[currentLevel];
       const floorY = (level.height - 1) * TILE_SIZE;
 
@@ -1918,17 +2028,19 @@
         ctx.shadowBlur = 0;
       });
 
-      // Pool warning — pulsing red ring on floor
-      if (poolWarningTimer > 0) {
-        const pulse = Math.sin((60 - poolWarningTimer) * 0.25) * 0.5 + 0.5;
+      // Pool warnings — pulsing red rings on floor (one per pending drop)
+      poolWarnings.forEach(w => {
+        const maxTimer = w.timer < 45 ? 45 : w.timer < 55 ? 55 : 60;
+        const elapsed = maxTimer - w.timer;
+        const pulse = Math.sin(elapsed * 0.25) * 0.5 + 0.5;
         ctx.strokeStyle = `rgba(255,50,0,${0.5 + pulse * 0.5})`;
         ctx.lineWidth = 2 + pulse * 2;
         ctx.shadowColor = '#ff2200'; ctx.shadowBlur = 12;
         ctx.beginPath();
-        ctx.ellipse(poolWarningX, floorY - 4, 28, 10, 0, 0, Math.PI * 2);
+        ctx.ellipse(w.x, floorY - 4, 28, 10, 0, 0, Math.PI * 2);
         ctx.stroke();
         ctx.shadowBlur = 0;
-      }
+      });
 
       // Fire balls
       cinderAttacks.forEach(atk => {
@@ -2390,7 +2502,7 @@
         g.geyserActive = false;
       });
 
-      // Level 11: Spawn boss
+      // Level 10: Spawn boss
       if (levels[levelIndex].isBoss) {
         // Remove any existing goal tiles from Level 10
         level.tiles = level.tiles.filter(t => t.type !== 5);
@@ -2407,7 +2519,7 @@
         cinderBossActive = false; cinderBoss = null;
         cinderAttacks = []; cinderPools = [];
         createCinderBoss();
-        if (!AudioManager.muted) { AudioManager.stopBGM(); AudioManager.startBossBGM(); }
+        if (!AudioManager.muted) { AudioManager.stopBGM(); AudioManager.startLavaBGM(); }
       } else {
         // Reset all boss state for normal levels
         bossActive = false;
