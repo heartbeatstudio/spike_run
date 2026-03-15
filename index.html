@@ -95,10 +95,25 @@
      <button class="skin-btn w-9 h-9 rounded-lg border-2 border-transparent transition-transform hover:scale-110" style="background:#374151" data-skin="4"></button>
      <button class="skin-btn w-9 h-9 rounded-lg border-2 border-transparent transition-transform hover:scale-110" style="background:#a855f7" data-skin="5"></button>
     </div>
-    <p id="skin-name-label" class="game-font text-xs text-green-400 mb-4">NEON</p>
+    <p id="skin-name-label" class="game-font text-xs text-green-400 mb-3">NEON</p>
+    <!-- 2-player toggle -->
+    <button id="two-player-toggle" class="game-font text-xs text-gray-500 hover:text-cyan-400 border border-gray-700 hover:border-cyan-600 px-4 py-2 rounded-lg transition-colors mb-3">2 PLAYER: OFF</button>
+    <!-- P2 skin section (hidden until 2P enabled) -->
+    <div id="p2-skin-section" class="hidden flex-col items-center mb-3">
+     <p class="game-font text-xs text-gray-500 mb-2">PLAYER 2 SKIN</p>
+     <div id="skin-selector-2" class="flex gap-2 justify-center mb-1">
+      <button class="skin-btn-2 w-9 h-9 rounded-lg border-2 border-transparent transition-transform hover:scale-110" style="background:#10b981" data-skin2="0"></button>
+      <button class="skin-btn-2 w-9 h-9 rounded-lg border-2 border-white transition-transform hover:scale-110" style="background:#ef4444" data-skin2="1"></button>
+      <button class="skin-btn-2 w-9 h-9 rounded-lg border-2 border-transparent transition-transform hover:scale-110" style="background:#3b82f6" data-skin2="2"></button>
+      <button class="skin-btn-2 w-9 h-9 rounded-lg border-2 border-transparent transition-transform hover:scale-110" style="background:#f59e0b" data-skin2="3"></button>
+      <button class="skin-btn-2 w-9 h-9 rounded-lg border-2 border-transparent transition-transform hover:scale-110" style="background:#374151" data-skin2="4"></button>
+      <button class="skin-btn-2 w-9 h-9 rounded-lg border-2 border-transparent transition-transform hover:scale-110" style="background:#a855f7" data-skin2="5"></button>
+     </div>
+     <p id="skin-name-label-2" class="game-font text-xs mb-1" style="color:#ef4444">CRIMSON</p>
+    </div>
     <button id="practice-toggle" class="game-font text-xs text-gray-500 hover:text-yellow-400 border border-gray-700 hover:border-yellow-600 px-4 py-2 rounded-lg transition-colors mb-5">PRACTICE MODE: OFF</button>
     <button id="start-btn" class="game-font text-sm bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white px-8 py-4 rounded-lg transition-all transform hover:scale-105">START GAME</button>
-    <div class="mt-6 game-font text-xs text-gray-500 text-center px-4">
+    <div id="controls-hint" class="mt-6 game-font text-xs text-gray-500 text-center px-4">
      <p>ARROW KEYS / WASD to move</p>
      <p class="mt-2">SPACE / W / UP to jump</p>
     </div>
@@ -131,6 +146,41 @@
     <p class="game-font text-xs text-cyan-400 mb-2">TIME <span id="level-time-display" class="text-white ml-2">0:00.0</span></p>
     <p class="game-font text-xs text-gray-500 mb-8">TOTAL <span id="total-time-interim-display" class="text-gray-300 ml-2">0:00.0</span></p>
     <button id="next-level-btn" class="game-font text-sm bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white px-8 py-4 rounded-lg">NEXT LEVEL</button>
+   </div><!-- Cheat Screen -->
+   <div id="cheat-screen" class="absolute inset-0 flex-col items-center justify-center bg-black z-50 hidden" style="text-align:center;padding:40px;">
+    <h1 style="font-family:'Press Start 2P',monospace;font-size:2.2rem;color:#cc0000;margin-bottom:28px;letter-spacing:4px;">YOU CHEATED</h1>
+    <p style="font-family:Georgia,serif;font-size:1.05rem;color:#fff;margin-bottom:20px;line-height:1.7;">NOT ONLY THE GAME<br>BUT YOURSELF</p>
+    <p style="font-family:Georgia,serif;font-size:1.05rem;color:#fff;margin-bottom:20px;line-height:1.7;">YOU DIDN'T GROW<br>YOU DIDN'T IMPROVE<br>YOU TOOK A SHORTCUT<br>AND GAINED NOTHING</p>
+    <p style="font-family:Georgia,serif;font-size:1.05rem;color:#fff;margin-bottom:20px;line-height:1.7;">YOU EXPERIENCED<br>A HOLLOW VICTORY<br>NOTHING WAS RISKED<br>AND NOTHING WAS GAINED</p>
+    <p style="font-family:Georgia,serif;font-size:1.05rem;color:#fff;margin-bottom:36px;line-height:1.7;">IT'S SAD THAT YOU DON'T<br>KNOW THE DIFFERENCE</p>
+    <button id="cheat-restart-btn" style="font-family:'Press Start 2P',monospace;font-size:0.7rem;background:#333;color:#aaa;border:1px solid #555;padding:12px 28px;cursor:pointer;border-radius:6px;">PLAY AGAIN (FOR REAL)</button>
+   </div><!-- Roast Screen (cheat 2nd time) -->
+   <div id="roast-screen" class="absolute inset-0 flex-col items-center justify-center bg-black z-50 hidden" style="text-align:center;padding:40px;">
+    <h1 style="font-family:'Press Start 2P',monospace;font-size:1.8rem;color:#ff6600;margin-bottom:28px;letter-spacing:2px;">ARE YOU SERIOUS</h1>
+    <p style="font-family:Georgia,serif;font-size:1.1rem;color:#fff;margin-bottom:20px;line-height:1.8;">YOU CAME BACK.<br>AND CHEATED. AGAIN.</p>
+    <p style="font-family:Georgia,serif;font-size:1.1rem;color:#fff;margin-bottom:20px;line-height:1.8;">WE TOLD YOU LAST TIME.<br>YOU NODDED.<br>AND DID IT ANYWAY.</p>
+    <p style="font-family:Georgia,serif;font-size:1.1rem;color:#aaa;margin-bottom:20px;line-height:1.8;">AT THIS POINT IT'S NOT EVEN<br>ABOUT THE GAME.<br>THIS IS A CHARACTER FLAW.</p>
+    <p style="font-family:Georgia,serif;font-size:1.1rem;color:#666;margin-bottom:36px;line-height:1.8;">PLEASE. GO OUTSIDE.</p>
+    <button id="roast-restart-btn" style="font-family:'Press Start 2P',monospace;font-size:0.7rem;background:#1a1a1a;color:#555;border:1px solid #333;padding:12px 28px;cursor:pointer;border-radius:6px;">try again (we both know how this ends)</button>
+   </div><!-- Roast Screen 3 (cheat 3rd time — savage) -->
+   <div id="roast-screen-3" class="absolute inset-0 flex-col items-center justify-center bg-black z-50 hidden" style="text-align:center;padding:40px;overflow-y:auto;">
+    <h1 style="font-family:'Press Start 2P',monospace;font-size:1.5rem;color:#ff0000;margin-bottom:24px;letter-spacing:2px;text-shadow:0 0 20px #ff0000,0 0 40px #ff0000;">OKAY. WE'RE DONE.</h1>
+    <h2 style="font-family:'Press Start 2P',monospace;font-size:0.85rem;color:#ff4400;margin-bottom:28px;letter-spacing:1px;">THREE TIMES. YOU DID THIS THREE TIMES.</h2>
+    <p style="font-family:Georgia,serif;font-size:1.05rem;color:#fff;margin-bottom:18px;line-height:1.8;">YOU DIDN'T LEARN FROM THE FIRST TIME.<br>YOU DIDN'T LEARN FROM THE SECOND TIME.<br>YOU ARE FUNDAMENTALLY UNTEACHABLE.</p>
+    <p style="font-family:Georgia,serif;font-size:1.05rem;color:#ff8800;margin-bottom:18px;line-height:1.8;">THE GAME DIDN'T EVEN CHALLENGE YOU.<br>YOU CHALLENGED THE CONCEPT OF PLAYING A GAME<br>AND LOST.</p>
+    <p style="font-family:Georgia,serif;font-size:1.05rem;color:#aaa;margin-bottom:18px;line-height:1.8;">DO YOU FEEL ANYTHING?<br>ANY SHAME? ANY REMORSE?<br>OR JUST THE EMPTY WARMTH<br>OF A SHORTCUT WELL ABUSED?</p>
+    <p style="font-family:Georgia,serif;font-size:1.05rem;color:#666;margin-bottom:18px;line-height:1.8;">YOUR PARENTS BELIEVE IN YOU.<br>WE DO NOT.</p>
+    <p style="font-family:Georgia,serif;font-size:0.95rem;color:#ff0000;margin-bottom:28px;line-height:1.8;font-style:italic;">AS PUNISHMENT, THE GAME IS NOW BROKEN.<br>PERMANENTLY. ENJOY.</p>
+    <button id="roast3-restart-btn" style="font-family:'Press Start 2P',monospace;font-size:0.6rem;background:#0a0a0a;color:#333;border:1px solid #222;padding:12px 28px;cursor:pointer;border-radius:6px;">sure, play again (glitched forever)</button>
+   </div><!-- Roast Screen 4 (cheat 4th time — permanent) -->
+   <div id="roast-screen-4" class="absolute inset-0 flex-col items-center justify-center bg-black z-50 hidden" style="text-align:center;padding:40px;overflow-y:auto;">
+    <h1 style="font-family:'Press Start 2P',monospace;font-size:1.3rem;color:#ff0000;margin-bottom:20px;letter-spacing:2px;text-shadow:0 0 30px #ff0000,0 0 60px #ff0000,0 0 90px #ff0000;">FOUR TIMES.</h1>
+    <h2 style="font-family:'Press Start 2P',monospace;font-size:0.75rem;color:#ff4400;margin-bottom:24px;">YOU CHEATED. FOUR TIMES.</h2>
+    <p style="font-family:Georgia,serif;font-size:1.05rem;color:#fff;margin-bottom:16px;line-height:1.8;">WE GAVE YOU CHANCES.<br>WE GAVE YOU WARNINGS.<br>WE GAVE YOU GLITCHED LEVELS.<br>YOU CHEATED AGAIN.</p>
+    <p style="font-family:Georgia,serif;font-size:1.05rem;color:#ff8800;margin-bottom:16px;line-height:1.8;">AT THIS POINT YOU ARE NOT<br>A PLAYER. YOU ARE A PROBLEM.<br>A PROBLEM WE ARE SOLVING.<br>RIGHT NOW.</p>
+    <p style="font-family:Georgia,serif;font-size:1.05rem;color:#aaa;margin-bottom:16px;line-height:1.8;">YOU ARE AN IDIOT.<br>A CHEATING, UNREPENTANT,<br>IRREDEEMABLE IDIOT.</p>
+    <p style="font-family:Georgia,serif;font-size:0.9rem;color:#555;margin-bottom:28px;line-height:1.8;font-style:italic;">clicking the button below will not bring the game back.<br>you did this to yourself.</p>
+    <button id="roast4-btn" style="font-family:'Press Start 2P',monospace;font-size:0.6rem;background:#110000;color:#ff0000;border:1px solid #ff0000;padding:12px 28px;cursor:pointer;border-radius:6px;">accept your fate</button>
    </div><!-- Game Complete -->
    <div id="game-complete" class="absolute inset-0 flex-col items-center justify-center bg-gradient-to-b from-gray-900 via-green-900 to-gray-900 z-40 hidden">
     <h2 class="game-font text-3xl text-yellow-400 mb-4">🏆 YOU WIN! 🏆</h2>
@@ -200,6 +250,18 @@
 
     // Fly mode hack
     let flyMode = false;
+    let cheatUsed = false; // set true if fly mode or level skip used
+    let cheatCount = 0;   // how many times beaten the game by cheating
+    let glitchMode = false; // activated after 3rd cheat — permanent chaos
+    let glitchFrame = 0;
+
+    // 2-player mode
+    let twoPlayerMode = false;
+    let player2 = {};
+    let p2FacingRight = true;
+    let p2Squish = { x: 1, y: 1 };
+    let wasOnGround2 = false;
+    let selectedSkin2 = parseInt(localStorage.getItem('spikeRunnerSkin2') || '1');
     const FLY_SPEED = 8;
 
     // Character skins
@@ -664,93 +726,161 @@
         this.playBossBGMLoop();
       },
 
-      // Lava boss music — slow, heavy, ominous (for Cinder Doppelganger)
+      // Lava boss music — intense fire theme, 3 voices (for Cinder Doppelganger)
       playLavaBGMLoop() {
         if (!this.ctx || this.muted) return;
 
         const now = this.ctx.currentTime;
-        const bpm = 95; // Slower and more threatening than main boss
-        const beatDuration = 60 / bpm;
+        const bpm = 145;
+        const b = 60 / bpm; // ~0.414s per beat
 
-        // Dark melody in A minor — low register, slow, inevitable
+        // ── Lead melody ── sawtooth, D minor, dramatic fire phrases
         const melody = [
-          { note: 220.00, duration: 0.5 },  // A3
-          { note: 261.63, duration: 0.25 }, // C4
-          { note: 220.00, duration: 0.25 }, // A3
-          { note: 246.94, duration: 0.5 },  // B3
-          { note: 220.00, duration: 0.5 },  // A3
-          { note: 196.00, duration: 0.5 },  // G3
-          { note: 174.61, duration: 0.5 },  // F3
-          { note: 196.00, duration: 0.25 }, // G3
-          { note: 220.00, duration: 0.25 }, // A3
-          { note: 164.81, duration: 1.0 },  // E3 — long, ominous hold
-          { note: 220.00, duration: 0.5 },  // A3
-          { note: 261.63, duration: 0.25 }, // C4
-          { note: 277.18, duration: 0.25 }, // C#4 — dissonant clash
-          { note: 261.63, duration: 0.5 },  // C4
-          { note: 233.08, duration: 0.5 },  // Bb3
-          { note: 220.00, duration: 1.0 },  // A3 — resolve
+          // Phrase 1: rapid burst upward
+          { note: 587.33, dur: 0.125 }, // D5
+          { note: 659.25, dur: 0.125 }, // E5
+          { note: 698.46, dur: 0.125 }, // F5
+          { note: 880.00, dur: 0.125 }, // A5
+          { note: 783.99, dur: 0.25  }, // G5
+          { note: 698.46, dur: 0.25  }, // F5
+          { note: 659.25, dur: 0.25  }, // E5
+          { note: 587.33, dur: 0.25  }, // D5
+          // Phrase 2: chromatic tension + breathe
+          { note: 587.33, dur: 0.25  }, // D5
+          { note: 523.25, dur: 0.125 }, // C5
+          { note: 466.16, dur: 0.125 }, // Bb4
+          { note: 440.00, dur: 0.5   }, // A4 — hold
+          { note: 466.16, dur: 0.125 }, // Bb4
+          { note: 523.25, dur: 0.125 }, // C5
+          { note: 392.00, dur: 0.5   }, // G4
+          // Phrase 3: dramatic leap to Bb5
+          { note: 587.33, dur: 0.25  }, // D5
+          { note: 698.46, dur: 0.25  }, // F5
+          { note: 932.33, dur: 0.5   }, // Bb5 — big leap!
+          { note: 880.00, dur: 0.25  }, // A5
+          { note: 783.99, dur: 0.25  }, // G5
+          { note: 698.46, dur: 0.25  }, // F5
+          { note: 659.25, dur: 0.25  }, // E5
+          // Phrase 4: climax peak at C6 then resolve
+          { note: 880.00, dur: 0.25  }, // A5
+          { note: 932.33, dur: 0.125 }, // Bb5
+          { note: 1046.50,dur: 0.125 }, // C6 — peak!
+          { note: 932.33, dur: 0.25  }, // Bb5
+          { note: 880.00, dur: 0.25  }, // A5
+          { note: 783.99, dur: 0.25  }, // G5
+          { note: 587.33, dur: 0.5   }, // D5 — resolve
+          { note: 440.00, dur: 0.5   }, // A4 — tail
         ];
 
-        // Deep rumbling bass — slow, heavy pulses
+        // ── Bass ── square wave, arpeggiated D minor driving pulse
         const bass = [
-          { note: 55.00, duration: 1.0 },  // A1
-          { note: 55.00, duration: 1.0 },  // A1
-          { note: 65.41, duration: 1.0 },  // C2
-          { note: 82.41, duration: 1.0 },  // E2
-          { note: 55.00, duration: 1.0 },  // A1
-          { note: 65.41, duration: 0.5 },  // C2
-          { note: 87.31, duration: 0.5 },  // F2
-          { note: 73.42, duration: 1.0 },  // D2
+          { note: 73.42,  dur: 0.25 }, // D2
+          { note: 146.83, dur: 0.25 }, // D3
+          { note: 73.42,  dur: 0.25 }, // D2
+          { note: 146.83, dur: 0.25 }, // D3
+          { note: 87.31,  dur: 0.25 }, // F2
+          { note: 174.61, dur: 0.25 }, // F3
+          { note: 87.31,  dur: 0.25 }, // F2
+          { note: 174.61, dur: 0.25 }, // F3
+          { note: 98.00,  dur: 0.25 }, // G2
+          { note: 196.00, dur: 0.25 }, // G3
+          { note: 98.00,  dur: 0.25 }, // G2
+          { note: 196.00, dur: 0.25 }, // G3
+          { note: 110.00, dur: 0.25 }, // A2
+          { note: 220.00, dur: 0.25 }, // A3
+          { note: 110.00, dur: 0.25 }, // A2
+          { note: 116.54, dur: 0.25 }, // Bb2
+          { note: 116.54, dur: 0.25 }, // Bb2
+          { note: 233.08, dur: 0.25 }, // Bb3
+          { note: 110.00, dur: 0.25 }, // A2
+          { note: 73.42,  dur: 0.5  }, // D2
+          { note: 146.83, dur: 0.5  }, // D3
+        ];
+
+        // ── Arpeggio shimmer ── triangle, high register, fire-spark texture
+        const arp = [
+          { note: 1174.66, dur: 0.125 }, // D6
+          { note: 1396.91, dur: 0.125 }, // F6
+          { note: 1760.00, dur: 0.125 }, // A6
+          { note: 1396.91, dur: 0.125 }, // F6
+          { note: 1174.66, dur: 0.125 }, // D6
+          { note: 1396.91, dur: 0.125 }, // F6
+          { note: 1760.00, dur: 0.125 }, // A6
+          { note: 1396.91, dur: 0.125 }, // F6
+          { note: 1318.51, dur: 0.125 }, // E6
+          { note: 1567.98, dur: 0.125 }, // G6
+          { note: 1760.00, dur: 0.125 }, // A6
+          { note: 1567.98, dur: 0.125 }, // G6
+          { note: 1318.51, dur: 0.125 }, // E6
+          { note: 1567.98, dur: 0.125 }, // G6
+          { note: 1760.00, dur: 0.125 }, // A6
+          { note: 1864.66, dur: 0.125 }, // Bb6
+          { note: 1174.66, dur: 0.125 }, // D6
+          { note: 1396.91, dur: 0.125 }, // F6
+          { note: 1760.00, dur: 0.125 }, // A6
+          { note: 1396.91, dur: 0.125 }, // F6
+          { note: 1174.66, dur: 0.125 }, // D6
+          { note: 1396.91, dur: 0.125 }, // F6
+          { note: 1760.00, dur: 0.125 }, // A6
+          { note: 2093.00, dur: 0.25  }, // C7 — peak sparkle
+          { note: 1864.66, dur: 0.125 }, // Bb6
+          { note: 1760.00, dur: 0.125 }, // A6
+          { note: 1567.98, dur: 0.25  }, // G6
+          { note: 1174.66, dur: 0.5   }, // D6 — settle
         ];
 
         let time = 0;
         this.bgmOscillators = [];
 
-        // Sawtooth melody — harsh and fiery
+        // Schedule melody — sawtooth for harsh fire crackle
         melody.forEach(note => {
           const osc = this.ctx.createOscillator();
-          const oscGain = this.ctx.createGain();
+          const g   = this.ctx.createGain();
           osc.type = 'sawtooth';
           osc.frequency.value = note.note;
-          osc.connect(oscGain);
-          oscGain.connect(this.bgmGain);
-
-          const startTime = now + time;
-          const endTime = startTime + (note.duration * beatDuration);
-          oscGain.gain.setValueAtTime(0.10, startTime);
-          oscGain.gain.exponentialRampToValueAtTime(0.01, endTime);
-
-          osc.start(startTime);
-          osc.stop(endTime);
+          osc.connect(g); g.connect(this.bgmGain);
+          const st = now + time, et = st + note.dur * b;
+          g.gain.setValueAtTime(0.11, st);
+          g.gain.exponentialRampToValueAtTime(0.001, et);
+          osc.start(st); osc.stop(et);
           this.bgmOscillators.push(osc);
-          time += note.duration * beatDuration;
+          time += note.dur * b;
         });
 
-        // Square bass — heavy low rumble
+        // Schedule bass — square for heavy low punch
         let bassTime = 0;
         bass.forEach(note => {
           const osc = this.ctx.createOscillator();
-          const oscGain = this.ctx.createGain();
+          const g   = this.ctx.createGain();
           osc.type = 'square';
           osc.frequency.value = note.note;
-          osc.connect(oscGain);
-          oscGain.connect(this.bgmGain);
-
-          const startTime = now + bassTime;
-          const endTime = startTime + (note.duration * beatDuration);
-          oscGain.gain.setValueAtTime(0.18, startTime);
-          oscGain.gain.setValueAtTime(0.18, endTime - 0.05);
-          oscGain.gain.exponentialRampToValueAtTime(0.01, endTime);
-
-          osc.start(startTime);
-          osc.stop(endTime);
+          osc.connect(g); g.connect(this.bgmGain);
+          const st = now + bassTime, et = st + note.dur * b;
+          g.gain.setValueAtTime(0.16, st);
+          g.gain.setValueAtTime(0.16, et - 0.03);
+          g.gain.exponentialRampToValueAtTime(0.001, et);
+          osc.start(st); osc.stop(et);
           this.bgmOscillators.push(osc);
-          bassTime += note.duration * beatDuration;
+          bassTime += note.dur * b;
         });
 
-        const loopDuration = time * 1000;
-        this.bgmTimeout = setTimeout(() => this.playLavaBGMLoop(), loopDuration);
+        // Schedule arpeggio — triangle for high shimmer
+        let arpTime = 0;
+        arp.forEach(note => {
+          const osc = this.ctx.createOscillator();
+          const g   = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.value = note.note;
+          osc.connect(g); g.connect(this.bgmGain);
+          const st = now + arpTime, et = st + note.dur * b;
+          g.gain.setValueAtTime(0.04, st);
+          g.gain.exponentialRampToValueAtTime(0.001, et);
+          osc.start(st); osc.stop(et);
+          this.bgmOscillators.push(osc);
+          arpTime += note.dur * b;
+        });
+
+        this.bgmTimeout = setTimeout(() => this.playLavaBGMLoop(), time * 1000);
       },
 
       startLavaBGM() {
@@ -1885,6 +2015,24 @@
       showShootTip = true; shootTipTimer = 0;
     }
 
+    // Returns the pixel Y of the topmost solid platform surface at a given pixel X (for pool drops)
+    function cinderPoolSurfaceY(xPixel) {
+      const level = levels[currentLevel];
+      const tileX = Math.round(xPixel / TILE_SIZE);
+      // Search ±3 columns for the nearest solid (type 1) tile, pick topmost
+      for (let range = 0; range <= 3; range++) {
+        for (const dx of (range === 0 ? [0] : [-range, range])) {
+          let topTileY = null;
+          level.tiles.forEach(t => {
+            if (t.type === 1 && t.x === tileX + dx)
+              if (topTileY === null || t.y < topTileY) topTileY = t.y;
+          });
+          if (topTileY !== null) return topTileY * TILE_SIZE - 4;
+        }
+      }
+      return (level.height - 1) * TILE_SIZE - 4; // fallback: lava floor
+    }
+
     function updateCinderBoss() {
       if (!cinderBoss || !cinderBossActive) return;
       const level = levels[currentLevel];
@@ -1912,7 +2060,7 @@
         if (--cinderBoss.poolWarnings[i].timer <= 0) {
           cinderPools.push({
             x: cinderBoss.poolWarnings[i].x,
-            y: (level.height - 1) * TILE_SIZE - 6,
+            y: cinderBoss.poolWarnings[i].y,
             radius: 26, timer: 210,
           });
           cinderBoss.poolWarnings.splice(i, 1);
@@ -1926,34 +2074,63 @@
       // Attacks
       if (++cinderBoss.attackTimer >= cinderBoss.attackCooldown) {
         cinderBoss.attackTimer = 0;
-        const modes = isPhase2 ? 5 : 4;
+        const modes = isPhase2 ? 9 : 7;
         cinderBoss.attackMode = (cinderBoss.attackMode + 1) % modes;
         const bx = cinderBoss.x + cinderBoss.width / 2;
         const by = cinderBoss.y + cinderBoss.height / 2;
         const px = player.x + player.width / 2;
         const py = player.y + player.height / 2;
         const dist = Math.sqrt((px - bx) ** 2 + (py - by) ** 2) || 1;
+        const dir  = px > bx ? 1 : -1; // horizontal direction toward player
+        const arenaW = level.width * TILE_SIZE;
+        const floorY = (level.height - 2) * TILE_SIZE;
 
         if (cinderBoss.attackMode === 0) {
           // Single aimed fireball
           cinderAttacks.push({ x: bx, y: by, vx: (px - bx) / dist * 4, vy: (py - by) / dist * 4 });
+
         } else if (cinderBoss.attackMode === 1) {
-          // Lava pool drop — warning at player position
-          cinderBoss.poolWarnings.push({ x: px, timer: 60 });
+          // Lava pool — warning at player position
+          cinderBoss.poolWarnings.push({ x: px, timer: 60, y: cinderPoolSurfaceY(px) });
+
         } else if (cinderBoss.attackMode === 2) {
-          // Triple spread — 3 aimed fireballs in a fan
+          // Triple spread — 3 fireballs in a fan toward player
           for (let a = -1; a <= 1; a++)
             cinderAttacks.push({ x: bx, y: by, vx: (px - bx) / dist * 4 + a * 2, vy: (py - by) / dist * 4 });
+
         } else if (cinderBoss.attackMode === 3) {
-          // Lava rain — 3 pools drop at spread positions with staggered warnings
-          const arenaW = level.width * TILE_SIZE;
-          cinderBoss.poolWarnings.push({ x: arenaW * 0.25, timer: 45 });
-          cinderBoss.poolWarnings.push({ x: px,            timer: 55 }); // one under player
-          cinderBoss.poolWarnings.push({ x: arenaW * 0.75, timer: 65 });
+          // Lava rain — 3 staggered pool warnings spread across arena
+          cinderBoss.poolWarnings.push({ x: arenaW * 0.25, timer: 45, y: cinderPoolSurfaceY(arenaW * 0.25) });
+          cinderBoss.poolWarnings.push({ x: px,            timer: 55, y: cinderPoolSurfaceY(px) });
+          cinderBoss.poolWarnings.push({ x: arenaW * 0.75, timer: 65, y: cinderPoolSurfaceY(arenaW * 0.75) });
+
         } else if (cinderBoss.attackMode === 4) {
-          // Phase 2 only: Burst — 5 fireballs in a wide fan
-          for (let a = -2; a <= 2; a++)
-            cinderAttacks.push({ x: bx, y: by, vx: (px - bx) / dist * 4 + a * 2.5, vy: (py - by) / dist * 4 });
+          // Ring burst — 8 fireballs in all directions (360°)
+          for (let a = 0; a < 8; a++) {
+            const angle = (a / 8) * Math.PI * 2;
+            cinderAttacks.push({ x: bx, y: by, vx: Math.cos(angle) * 3.5, vy: Math.sin(angle) * 3.5 });
+          }
+
+        } else if (cinderBoss.attackMode === 5) {
+          // Horizontal wall — 4 fireballs flying sideways at different heights, forcing a jump
+          for (let r = -1; r <= 2; r++)
+            cinderAttacks.push({ x: bx, y: py + r * 22, vx: dir * 5, vy: 0 });
+
+        } else if (cinderBoss.attackMode === 6) {
+          // Double pool — two pools flanking the player
+          cinderBoss.poolWarnings.push({ x: px - 48, timer: 55, y: cinderPoolSurfaceY(px - 48) });
+          cinderBoss.poolWarnings.push({ x: px + 48, timer: 55, y: cinderPoolSurfaceY(px + 48) });
+
+        } else if (cinderBoss.attackMode === 7) {
+          // Phase 2: Wide burst — 7 fireballs in a very wide fan
+          for (let a = -3; a <= 3; a++)
+            cinderAttacks.push({ x: bx, y: by, vx: (px - bx) / dist * 4 + a * 2.2, vy: (py - by) / dist * 4 });
+
+        } else if (cinderBoss.attackMode === 8) {
+          // Phase 2: Ground skimmer + aimed — low fireballs sweep the floor + one aimed
+          cinderAttacks.push({ x: bx, y: floorY - 16, vx: dir * 5, vy: 0 });
+          cinderAttacks.push({ x: bx, y: floorY - 16, vx: dir * 3.5, vy: 0 });
+          cinderAttacks.push({ x: bx, y: by, vx: (px - bx) / dist * 4, vy: (py - by) / dist * 4 });
         }
       }
 
@@ -2037,7 +2214,7 @@
         ctx.lineWidth = 2 + pulse * 2;
         ctx.shadowColor = '#ff2200'; ctx.shadowBlur = 12;
         ctx.beginPath();
-        ctx.ellipse(w.x, floorY - 4, 28, 10, 0, 0, Math.PI * 2);
+        ctx.ellipse(w.x, w.y, 28, 10, 0, 0, Math.PI * 2);
         ctx.stroke();
         ctx.shadowBlur = 0;
       });
@@ -2119,8 +2296,8 @@
       // Input handling
       window.addEventListener('keydown', (e) => {
         keys[e.code] = true;
-        if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'KeyW', 'KeyA', 'KeyS', 'KeyD'].includes(e.code)) {
-          e.preventDefault();
+        if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'KeyW', 'KeyA', 'KeyS', 'KeyD', 'Enter'].includes(e.code)) {
+          if (gameRunning) e.preventDefault();
         }
       });
       window.addEventListener('keyup', (e) => keys[e.code] = false);
@@ -2130,6 +2307,10 @@
       document.getElementById('begin-btn').addEventListener('click', beginGame);
       document.getElementById('next-level-btn').addEventListener('click', nextLevel);
       document.getElementById('restart-btn').addEventListener('click', restartGame);
+      document.getElementById('cheat-restart-btn').addEventListener('click', restartGame);
+      document.getElementById('roast-restart-btn').addEventListener('click', restartGame);
+      document.getElementById('roast3-restart-btn').addEventListener('click', restartGame);
+      document.getElementById('roast4-btn').addEventListener('click', permanentCheaterPage);
 
       // Skin selector
       document.querySelectorAll('.skin-btn').forEach(btn => {
@@ -2148,6 +2329,41 @@
       document.querySelector(`.skin-btn[data-skin="${selectedSkin}"]`).style.borderColor = '#fff';
       document.getElementById('skin-name-label').textContent = SKINS[selectedSkin].name;
       document.getElementById('skin-name-label').style.color = SKINS[selectedSkin].color;
+
+      // 2-player toggle
+      document.getElementById('two-player-toggle').addEventListener('click', () => {
+        twoPlayerMode = !twoPlayerMode;
+        const btn = document.getElementById('two-player-toggle');
+        btn.textContent = `2 PLAYER: ${twoPlayerMode ? 'ON' : 'OFF'}`;
+        btn.className = twoPlayerMode
+          ? 'game-font text-xs text-cyan-400 border border-cyan-500 px-4 py-2 rounded-lg transition-colors mb-3'
+          : 'game-font text-xs text-gray-500 hover:text-cyan-400 border border-gray-700 hover:border-cyan-600 px-4 py-2 rounded-lg transition-colors mb-3';
+        const p2sec = document.getElementById('p2-skin-section');
+        p2sec.classList.toggle('hidden', !twoPlayerMode);
+        p2sec.classList.toggle('flex', twoPlayerMode);
+        const hint = document.getElementById('controls-hint');
+        hint.innerHTML = twoPlayerMode
+          ? '<p>P1: WASD move &nbsp;|&nbsp; SPACE/W jump &nbsp;|&nbsp; SPACE shoot</p><p class="mt-2">P2: ARROW KEYS move &nbsp;|&nbsp; UP jump &nbsp;|&nbsp; ENTER shoot</p>'
+          : '<p>ARROW KEYS / WASD to move</p><p class="mt-2">SPACE / W / UP to jump</p>';
+      });
+
+      // P2 skin selector
+      document.querySelectorAll('.skin-btn-2').forEach(btn => {
+        btn.addEventListener('click', () => {
+          selectedSkin2 = parseInt(btn.dataset.skin2);
+          localStorage.setItem('spikeRunnerSkin2', selectedSkin2);
+          document.querySelectorAll('.skin-btn-2').forEach(b =>
+            b.style.borderColor = b.dataset.skin2 == selectedSkin2 ? '#fff' : 'transparent'
+          );
+          document.getElementById('skin-name-label-2').textContent = SKINS[selectedSkin2].name;
+          document.getElementById('skin-name-label-2').style.color = SKINS[selectedSkin2].color;
+        });
+      });
+
+      // Restore saved P2 skin highlight
+      document.querySelector(`.skin-btn-2[data-skin2="${selectedSkin2}"]`).style.borderColor = '#fff';
+      document.getElementById('skin-name-label-2').textContent = SKINS[selectedSkin2].name;
+      document.getElementById('skin-name-label-2').style.color = SKINS[selectedSkin2].color;
 
       // Practice mode toggle
       document.getElementById('practice-toggle').addEventListener('click', () => {
@@ -2334,6 +2550,7 @@
 
     function jumpToLevel(levelIndex) {
       closeLevelSelect();
+      cheatUsed = true;
 
       // Hide start screen if visible
       document.getElementById('start-screen').classList.add('hidden');
@@ -2359,6 +2576,7 @@
 
     function toggleFlyMode() {
       flyMode = !flyMode;
+      if (flyMode) cheatUsed = true;
 
       // Visual feedback
       const hud = document.getElementById('hud');
@@ -2434,6 +2652,21 @@
         onGround: false,
         onPlatform: null
       };
+      if (twoPlayerMode) {
+        player2 = {
+          x: (level.playerStart.x + 1) * TILE_SIZE,
+          y: level.playerStart.y * TILE_SIZE,
+          width: TILE_SIZE - 8,
+          height: TILE_SIZE - 4,
+          vx: 0,
+          vy: 0,
+          onGround: false,
+          onPlatform: null
+        };
+        p2FacingRight = true;
+        p2Squish = { x: 1, y: 1 };
+        wasOnGround2 = false;
+      }
       cameraX = 0;
 
       // Initialize moving platforms
@@ -2574,7 +2807,121 @@
     function restartGame() {
       document.getElementById('game-complete').classList.remove('flex');
       document.getElementById('game-complete').classList.add('hidden');
+      document.getElementById('cheat-screen').classList.remove('flex');
+      document.getElementById('cheat-screen').classList.add('hidden');
+      document.getElementById('roast-screen').classList.remove('flex');
+      document.getElementById('roast-screen').classList.add('hidden');
+      document.getElementById('roast-screen-3').classList.remove('flex');
+      document.getElementById('roast-screen-3').classList.add('hidden');
+      document.getElementById('roast-screen-4').classList.remove('flex');
+      document.getElementById('roast-screen-4').classList.add('hidden');
+      if (cheatCount >= 3) glitchMode = true;
+      cheatUsed = false;
       startGame();
+    }
+
+    function permanentCheaterPage() {
+      document.open();
+      document.write(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CHEATER</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body { width:100%; height:100%; background:#000; overflow:hidden; }
+  body {
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    font-family:'Press Start 2P',monospace;
+    animation: bgflash 2s infinite;
+  }
+  @keyframes bgflash {
+    0%,100% { background:#000; }
+    50% { background:#0d0000; }
+  }
+  h1 {
+    font-size:clamp(2rem,8vw,6rem);
+    color:#ff0000;
+    text-shadow:0 0 30px #ff0000, 0 0 60px #ff0000, 0 0 120px #ff0000;
+    letter-spacing:0.1em;
+    margin-bottom:2rem;
+    animation: pulse 1s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%,100% { text-shadow:0 0 20px #ff0000, 0 0 40px #ff0000; }
+    50% { text-shadow:0 0 60px #ff0000, 0 0 120px #ff0000, 0 0 200px #ff4400; }
+  }
+  h2 {
+    font-size:clamp(0.6rem,3vw,1.4rem);
+    color:#ff4400;
+    margin-bottom:3rem;
+    letter-spacing:0.05em;
+    line-height:2;
+    text-align:center;
+    padding:0 2rem;
+  }
+  p {
+    font-family:Georgia,serif;
+    font-size:clamp(0.8rem,2vw,1.1rem);
+    color:#aaa;
+    text-align:center;
+    line-height:1.9;
+    max-width:600px;
+    padding:0 2rem;
+    margin-bottom:1.5rem;
+  }
+  .idiot {
+    font-family:'Press Start 2P',monospace;
+    font-size:clamp(0.5rem,2vw,0.9rem);
+    color:#333;
+    margin-top:3rem;
+    letter-spacing:0.2em;
+  }
+  canvas#bg { position:fixed; top:0; left:0; z-index:-1; }
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+<h1>CHEATER</h1>
+<h2>YOU ARE AN IDIOT</h2>
+<p>YOU CHEATED FOUR TIMES.<br>THE GAME IS GONE.<br>THIS IS YOUR HOME NOW.</p>
+<p style="color:#555">THERE IS NO BUTTON.<br>THERE IS NO ESCAPE.<br>ONLY THIS.</p>
+<p class="idiot">YOU DID THIS TO YOURSELF.</p>
+<script>
+  const canvas = document.getElementById('bg');
+  const ctx = canvas.getContext('2d');
+  function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+  resize();
+  window.addEventListener('resize', resize);
+  const particles = Array.from({length:80}, () => ({
+    x: Math.random() * window.innerWidth,
+    y: Math.random() * window.innerHeight,
+    vy: 0.5 + Math.random() * 2,
+    size: 2 + Math.random() * 4,
+    alpha: 0.2 + Math.random() * 0.6,
+    color: Math.random() < 0.7 ? '#ff2200' : '#ff8800'
+  }));
+  function frame() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach(p => {
+      p.y += p.vy;
+      if (p.y > canvas.height + 10) { p.y = -10; p.x = Math.random() * canvas.width; }
+      ctx.globalAlpha = p.alpha;
+      ctx.fillStyle = p.color;
+      ctx.fillRect(p.x, p.y, p.size, p.size);
+    });
+    ctx.globalAlpha = 1;
+    requestAnimationFrame(frame);
+  }
+  frame();
+  // Block all attempts to navigate away with keyboard
+  window.addEventListener('keydown', e => e.preventDefault());
+<\/script>
+</body>
+</html>`);
+      document.close();
     }
     
     function die() {
@@ -2632,6 +2979,24 @@
 
       if (currentLevel >= levels.length - 1) {
         // Game complete
+        if (cheatUsed) {
+          cheatCount++;
+          if (cheatCount >= 4) {
+            document.getElementById('roast-screen-4').classList.remove('hidden');
+            document.getElementById('roast-screen-4').classList.add('flex');
+          } else if (cheatCount >= 3) {
+            document.getElementById('roast-screen-3').classList.remove('hidden');
+            document.getElementById('roast-screen-3').classList.add('flex');
+          } else if (cheatCount >= 2) {
+            document.getElementById('roast-screen').classList.remove('hidden');
+            document.getElementById('roast-screen').classList.add('flex');
+          } else {
+            document.getElementById('cheat-screen').classList.remove('hidden');
+            document.getElementById('cheat-screen').classList.add('flex');
+          }
+          return;
+        }
+
         AudioManager.playSound('victory');
         document.getElementById('final-deaths').textContent = deaths;
         document.getElementById('final-time').textContent = formatTime(totalTime);
@@ -2698,7 +3063,7 @@
 
       // Update enemies (type 3 — walker)
       level.tiles.filter(t => t.type === 3).forEach(e => {
-        e.currentX += e.direction * 1;
+        e.currentX += e.direction * (glitchMode ? 2.5 : 1);
         if (Math.abs(e.currentX - e.startX) > e.moveRange) {
           e.direction *= -1;
         }
@@ -2706,11 +3071,17 @@
 
       // Update fast walkers (type 10 — 3× speed)
       level.tiles.filter(t => t.type === 10).forEach(e => {
-        e.currentX += e.direction * 3;
+        e.currentX += e.direction * (glitchMode ? 6 : 3);
         if (Math.abs(e.currentX - e.startX) > e.moveRange) {
           e.direction *= -1;
         }
       });
+
+      // Glitch mode: random screen shakes
+      if (glitchMode) {
+        glitchFrame++;
+        if (Math.random() < 0.008) triggerShake(6, 12);
+      }
 
       // Update bouncers (type 11 — figure-8 oscillation)
       level.tiles.filter(t => t.type === 11).forEach(e => {
@@ -2797,13 +3168,13 @@
       }
       wasOnGround = player.onGround;
 
-      // Player movement
+      // Player movement (P1: WASD always; arrow keys only in single-player)
       let moveX = 0;
-      if (keys['ArrowLeft'] || keys['KeyA']) {
+      if (keys['KeyA'] || (!twoPlayerMode && keys['ArrowLeft'])) {
         moveX = -MOVE_SPEED;
         playerFacingRight = false;
       }
-      if (keys['ArrowRight'] || keys['KeyD']) {
+      if (keys['KeyD'] || (!twoPlayerMode && keys['ArrowRight'])) {
         moveX = MOVE_SPEED;
         playerFacingRight = true;
       }
@@ -2823,8 +3194,8 @@
           if (keys['Space']) {
             shootBullet();
           }
-          // Jump with W/Up during boss fights
-          if ((keys['ArrowUp'] || keys['KeyW']) && player.onGround) {
+          // Jump with W/Up during boss fights (P1 only uses ArrowUp in single-player)
+          if ((keys['KeyW'] || (!twoPlayerMode && keys['ArrowUp'])) && player.onGround) {
             player.vy = JUMP_FORCE;
             player.onGround = false;
             playerSquish = { x: 0.65, y: 1.4 };
@@ -2832,7 +3203,7 @@
           }
         } else {
           // Normal jump
-          if ((keys['Space'] || keys['ArrowUp'] || keys['KeyW']) && player.onGround) {
+          if ((keys['Space'] || keys['KeyW'] || (!twoPlayerMode && keys['ArrowUp'])) && player.onGround) {
             player.vy = JUMP_FORCE;
             player.onGround = false;
             playerSquish = { x: 0.65, y: 1.4 };
@@ -3005,12 +3376,221 @@
         updateBullets();
       }
 
-      // Camera follow
-      const targetCameraX = player.x - canvas.width / 2;
+      // Player 2 update
+      if (twoPlayerMode) updatePlayer2();
+
+      // Camera follow — midpoint in 2P, P1 in solo
+      const focusX = twoPlayerMode
+        ? (player.x + player2.x) / 2
+        : player.x;
+      const targetCameraX = focusX - canvas.width / 2;
       cameraX += (targetCameraX - cameraX) * 0.1;
       cameraX = Math.max(0, Math.min(cameraX, level.width * TILE_SIZE - canvas.width));
     }
     
+    function die2() {
+      spawnDeathParticles(player2.x, player2.y, SKINS[selectedSkin2].color);
+      triggerShake(8, 10);
+      deaths++;
+      updateHUD();
+      AudioManager.playSound('death');
+      // Respawn at checkpoint or level start
+      const lvl = levels[currentLevel];
+      if (checkpointPos) {
+        player2.x = checkpointPos.x + TILE_SIZE;
+        player2.y = checkpointPos.y;
+      } else {
+        player2.x = (lvl.playerStart.x + 1) * TILE_SIZE;
+        player2.y = lvl.playerStart.y * TILE_SIZE;
+      }
+      player2.vx = 0;
+      player2.vy = 0;
+      player2.onGround = false;
+      player2.onPlatform = null;
+    }
+
+    function updatePlayer2() {
+      const level = levels[currentLevel];
+
+      // Lerp squish
+      p2Squish.x += (1 - p2Squish.x) * 0.2;
+      p2Squish.y += (1 - p2Squish.y) * 0.2;
+      if (player2.onGround && !wasOnGround2) {
+        p2Squish = { x: 1.5, y: 0.6 };
+      }
+      wasOnGround2 = player2.onGround;
+
+      // Movement: Arrow keys
+      let moveX = 0;
+      if (keys['ArrowLeft'])  { moveX = -MOVE_SPEED; p2FacingRight = false; }
+      if (keys['ArrowRight']) { moveX =  MOVE_SPEED; p2FacingRight = true;  }
+      player2.vx = moveX;
+
+      // Fly mode (shared global flag — P2 uses ArrowUp/ArrowDown)
+      if (flyMode) {
+        let moveY = 0;
+        if (keys['ArrowUp'])   moveY = -FLY_SPEED;
+        if (keys['ArrowDown']) moveY =  FLY_SPEED;
+        player2.vy = moveY;
+      } else {
+        // Shoot in boss fights (Enter key)
+        if (bossActive || cinderBossActive) {
+          if (keys['Enter']) shootBullet2();
+          if (keys['ArrowUp'] && player2.onGround) {
+            player2.vy = JUMP_FORCE;
+            player2.onGround = false;
+            p2Squish = { x: 0.65, y: 1.4 };
+            AudioManager.playSound('jump');
+          }
+        } else {
+          if (keys['ArrowUp'] && player2.onGround) {
+            player2.vy = JUMP_FORCE;
+            player2.onGround = false;
+            p2Squish = { x: 0.65, y: 1.4 };
+            AudioManager.playSound('jump');
+          }
+        }
+        player2.vy += GRAVITY;
+        if (player2.vy > 15) player2.vy = 15;
+      }
+
+      // Move with platform
+      if (player2.onPlatform) {
+        const plat = player2.onPlatform;
+        const prevX = plat.p2PrevX || plat.currentX;
+        const prevY = plat.p2PrevY || plat.currentY;
+        player2.x += plat.currentX - prevX;
+        player2.y += plat.currentY - prevY;
+        plat.p2PrevX = plat.currentX;
+        plat.p2PrevY = plat.currentY;
+      }
+
+      // Horizontal collision
+      player2.x += player2.vx;
+      const hTiles2 = getCollidingTiles(player2, level);
+      hTiles2.forEach(tile => {
+        if (tile.type === 1 || tile.type === 9 || tile.type === 12) {
+          if (player2.vx > 0) player2.x = tile.x * TILE_SIZE - player2.width;
+          else if (player2.vx < 0) player2.x = (tile.x + 1) * TILE_SIZE;
+        }
+      });
+
+      // Vertical collision
+      player2.y += player2.vy;
+      player2.onGround = false;
+
+      if (player2.onPlatform) {
+        const plat = player2.onPlatform;
+        if (player2.x + player2.width < plat.currentX || player2.x > plat.currentX + plat.width * TILE_SIZE) {
+          player2.onPlatform = null;
+        }
+      }
+
+      const vTiles2 = getCollidingTiles(player2, level);
+      vTiles2.forEach(tile => {
+        if (tile.type === 1 || tile.type === 9 || tile.type === 12) {
+          if (player2.vy > 0) {
+            player2.y = tile.y * TILE_SIZE - player2.height;
+            if (tile.type === 12) {
+              player2.vy = SPRING_FORCE;
+              p2Squish = { x: 0.55, y: 1.5 };
+              AudioManager.playSound('boost');
+            } else {
+              player2.vy = 0;
+              player2.onGround = true;
+              if (tile.type === 9 && tile.crumbleState === 'idle') {
+                tile.crumbleState = 'crumbling';
+                tile.crumbleTimer = 0;
+              }
+            }
+          } else if (player2.vy < 0) {
+            player2.y = (tile.y + 1) * TILE_SIZE;
+            player2.vy = 0;
+          }
+        }
+      });
+
+      // Moving platform collision
+      level.movingPlatforms.forEach(plat => {
+        const platRect = { x: plat.currentX, y: plat.currentY, width: plat.width * TILE_SIZE, height: TILE_SIZE };
+        const p2Bottom = player2.y + player2.height;
+        const p2PrevBottom = p2Bottom - player2.vy;
+        const hOver = player2.x < platRect.x + platRect.width && player2.x + player2.width > platRect.x;
+        if (hOver && player2.vy >= 0 && p2Bottom >= platRect.y && p2PrevBottom <= platRect.y + 8) {
+          player2.y = platRect.y - player2.height;
+          player2.vy = 0;
+          player2.onGround = true;
+          player2.onPlatform = plat;
+        }
+      });
+
+      // Hazard checks
+      vTiles2.concat(hTiles2).forEach(tile => {
+        if (tile.type === 2  && !flyMode) die2(); // Spike
+        if (tile.type === 13 && !flyMode) die2(); // Lava
+        if (tile.type === 4  && !flyMode) { player2.vy = BOOST_FORCE; player2.onGround = false; AudioManager.playSound('boost'); }
+        if (tile.type === 5)  completeLevel(); // Goal
+        if (tile.type === 7 && !tile.activated) {
+          tile.activated = true;
+          checkpointPos = { x: player2.x, y: player2.y };
+          AudioManager.playSound('levelComplete');
+        }
+      });
+
+      // Enemy collision (disabled in fly mode)
+      if (!flyMode) {
+        level.tiles.filter(t => t.type === 3 || t.type === 10).forEach(e => {
+          if (rectIntersect(player2, { x: e.currentX + 4, y: e.y * TILE_SIZE + 4, width: TILE_SIZE - 8, height: TILE_SIZE - 8 })) die2();
+        });
+        level.tiles.filter(t => t.type === 11).forEach(e => {
+          if (rectIntersect(player2, { x: e.currentX + 4, y: e.currentY + 4, width: TILE_SIZE - 8, height: TILE_SIZE - 8 })) die2();
+        });
+        level.tiles.filter(t => t.type === 14).forEach(e => {
+          if (rectIntersect(player2, { x: e.currentX + 4, y: e.currentY + 4, width: TILE_SIZE - 8, height: TILE_SIZE - 8 })) die2();
+        });
+        level.tiles.filter(t => t.type === 15 && t.geyserActive).forEach(g => {
+          if (rectIntersect(player2, { x: g.x * TILE_SIZE + 6, y: (g.y - 3) * TILE_SIZE, width: TILE_SIZE - 12, height: TILE_SIZE * 3 })) die2();
+        });
+
+        // Boss attacks hit P2
+        if (bossActive) {
+          for (let i = bossAttacks.length - 1; i >= 0; i--) {
+            const attack = bossAttacks[i];
+            if (rectIntersect(player2, { x: attack.x, y: attack.y, width: attack.size, height: attack.size })) {
+              bossAttacks.splice(i, 1);
+              die2();
+            }
+          }
+        }
+        if (cinderBossActive) {
+          for (let i = cinderAttacks.length - 1; i >= 0; i--) {
+            if (rectIntersect(player2, { x: cinderAttacks[i].x - 6, y: cinderAttacks[i].y - 6, width: 12, height: 12 })) {
+              cinderAttacks.splice(i, 1);
+              die2();
+            }
+          }
+          cinderPools.forEach(pool => {
+            const dx = (player2.x + player2.width / 2) - pool.x;
+            const dy = (player2.y + player2.height / 2) - pool.y;
+            if (Math.sqrt(dx * dx + dy * dy) < pool.radius + 8) die2();
+          });
+        }
+      }
+
+      // Fall death (disabled in fly mode)
+      if (!flyMode && player2.y > level.height * TILE_SIZE) die2();
+    }
+
+    function shootBullet2() {
+      const now = Date.now();
+      if (now - lastShootTime < SHOOT_COOLDOWN) return;
+      lastShootTime = now;
+      const bulletVX = p2FacingRight ? BULLET_SPEED : -BULLET_SPEED;
+      const bulletX = p2FacingRight ? player2.x + player2.width : player2.x;
+      bullets.push({ x: bulletX, y: player2.y + player2.height / 2 - 2, vx: bulletVX, vy: 0 });
+      AudioManager.playSound('shoot');
+    }
+
     function getCollidingTiles(rect, level) {
       const colliding = [];
       level.tiles.forEach(tile => {
@@ -3183,10 +3763,20 @@
             ctx.fillRect(x, y, TILE_SIZE, 4);
             ctx.fillStyle = '#2d3748';
             ctx.fillRect(x, y + TILE_SIZE - 4, TILE_SIZE, 4);
+            // Glitch mode: angry red flicker
+            if (glitchMode && Math.sin(Date.now() / 120 + tile.x * 1.3 + tile.y * 0.7) > 0.6) {
+              ctx.save();
+              ctx.globalAlpha = 0.35;
+              ctx.fillStyle = '#ff2200';
+              ctx.fillRect(x, y, TILE_SIZE, TILE_SIZE);
+              ctx.restore();
+            }
             break;
-            
+
           case 2: // Spike — pulsing glow, staggered per column
-            const spikeGlow = 6 + 8 * Math.sin(Date.now() / 350 + tile.x * 0.7);
+            const spikeGlow = glitchMode
+              ? 14 + 18 * Math.abs(Math.sin(Date.now() / 150 + tile.x * 0.7))
+              : 6 + 8 * Math.sin(Date.now() / 350 + tile.x * 0.7);
             ctx.shadowColor = '#ef4444';
             ctx.shadowBlur = spikeGlow;
             ctx.fillStyle = '#ef4444';
@@ -3201,12 +3791,14 @@
             
           case 3: // Enemy
             const ex = tile.currentX || x;
-            ctx.fillStyle = '#a855f7';
+            ctx.fillStyle = glitchMode ? '#ff2200' : '#a855f7';
+            if (glitchMode) { ctx.shadowColor = '#ff0000'; ctx.shadowBlur = 8; }
             ctx.beginPath();
             ctx.arc(ex + TILE_SIZE/2, y + TILE_SIZE/2, TILE_SIZE/2 - 4, 0, Math.PI * 2);
             ctx.fill();
+            ctx.shadowBlur = 0;
             // Eyes
-            ctx.fillStyle = '#fff';
+            ctx.fillStyle = glitchMode ? '#ffff00' : '#fff';
             ctx.beginPath();
             ctx.arc(ex + TILE_SIZE/3, y + TILE_SIZE/3, 4, 0, Math.PI * 2);
             ctx.arc(ex + TILE_SIZE*2/3, y + TILE_SIZE/3, 4, 0, Math.PI * 2);
@@ -3562,6 +4154,46 @@
         ctx.fillRect(plat.currentX, plat.currentY, plat.width * TILE_SIZE, 4);
       });
       
+      // Draw Player 2 (behind P1)
+      if (twoPlayerMode && player2.x !== undefined) {
+        const skin2 = SKINS[selectedSkin2];
+        ctx.save();
+        const foot2CX = player2.x + player2.width / 2;
+        const foot2Y  = player2.y + player2.height;
+        ctx.translate(foot2CX, foot2Y);
+        ctx.scale(p2Squish.x, p2Squish.y);
+        ctx.translate(-player2.width / 2, -player2.height);
+        ctx.fillStyle = skin2.color;
+        ctx.fillRect(0, 0, player2.width, player2.height);
+        ctx.fillStyle = skin2.highlight;
+        ctx.fillRect(0, 0, player2.width, 4);
+        // Fly mode glow
+        if (flyMode) {
+          ctx.strokeStyle = '#00ffff';
+          ctx.lineWidth = 2;
+          ctx.shadowColor = '#00ffff';
+          ctx.shadowBlur = 10;
+          ctx.strokeRect(-1, -1, player2.width + 2, player2.height + 2);
+          ctx.shadowBlur = 0;
+        }
+        // P2 label stripe at bottom
+        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        ctx.fillRect(0, player2.height - 6, player2.width, 6);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '5px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('P2', player2.width / 2, player2.height - 1);
+        ctx.textAlign = 'left';
+        // Eyes
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(4, 6, 6, 6);
+        ctx.fillRect(player2.width - 10, 6, 6, 6);
+        ctx.fillStyle = '#000';
+        ctx.fillRect(6, 8, 3, 3);
+        ctx.fillRect(player2.width - 8, 8, 3, 3);
+        ctx.restore();
+      }
+
       // Draw player (with selected skin + squish/stretch)
       const skin = SKINS[selectedSkin];
       ctx.save();
@@ -3590,6 +4222,16 @@
       ctx.fillStyle = '#000';
       ctx.fillRect(6, 8, 3, 3);
       ctx.fillRect(player.width - 8, 8, 3, 3);
+      // P1 label in 2-player mode
+      if (twoPlayerMode) {
+        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        ctx.fillRect(0, player.height - 6, player.width, 6);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '5px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('P1', player.width / 2, player.height - 1);
+        ctx.textAlign = 'left';
+      }
       ctx.restore();
 
       // Draw particles (world space, inside camera transform)
@@ -3621,8 +4263,78 @@
       renderBossUI();
 
       ctx.restore(); // end screen shake transform
+
+      // Glitch overlay — applied after everything else
+      if (glitchMode) renderGlitchOverlay();
     }
-    
+
+    function renderGlitchOverlay() {
+      const w = canvas.width, h = canvas.height;
+      const t = Date.now();
+
+      // Scan-tear lines: random horizontal displacement bands
+      const numTears = 3 + Math.floor(Math.random() * 4);
+      for (let i = 0; i < numTears; i++) {
+        const y = Math.random() * h;
+        const tearH = 2 + Math.random() * 6;
+        const shift = (Math.random() - 0.5) * 28;
+        const imgData = ctx.getImageData(0, y, w, tearH);
+        ctx.putImageData(imgData, shift, y);
+      }
+
+      // RGB channel shift blocks (occasional)
+      if (Math.random() < 0.25) {
+        const blockY = Math.random() * h;
+        const blockH = 8 + Math.random() * 30;
+        const rShift = (Math.random() - 0.5) * 8;
+        const bShift = (Math.random() - 0.5) * 8;
+        try {
+          const rData = ctx.getImageData(rShift, blockY, w, blockH);
+          const bData = ctx.getImageData(-bShift, blockY, w, blockH);
+          // Blend red channel left, blue right by tinting
+          ctx.save();
+          ctx.globalAlpha = 0.25;
+          ctx.fillStyle = '#ff0000';
+          ctx.fillRect(0, blockY, w / 2, blockH);
+          ctx.fillStyle = '#0000ff';
+          ctx.fillRect(w / 2, blockY, w / 2, blockH);
+          ctx.restore();
+        } catch(e) {}
+      }
+
+      // Random red flash every ~3s
+      if (Math.sin(t / 400) > 0.97) {
+        ctx.save();
+        ctx.globalAlpha = 0.08;
+        ctx.fillStyle = '#ff0000';
+        ctx.fillRect(0, 0, w, h);
+        ctx.restore();
+      }
+
+      // "CHEATER" watermark — rotated, red, semi-transparent
+      ctx.save();
+      ctx.globalAlpha = 0.06 + Math.abs(Math.sin(t / 800)) * 0.06;
+      ctx.fillStyle = '#ff0000';
+      ctx.font = "bold 90px 'Press Start 2P', monospace";
+      ctx.textAlign = 'center';
+      ctx.translate(w / 2, h / 2);
+      ctx.rotate(-0.35);
+      ctx.fillText('CHEATER', 0, 0);
+      ctx.restore();
+
+      // Glitchy horizontal static lines (flickering)
+      if (Math.random() < 0.15) {
+        ctx.save();
+        ctx.globalAlpha = 0.5;
+        for (let i = 0; i < 3; i++) {
+          const ly = Math.random() * h;
+          ctx.fillStyle = `hsl(${Math.random() * 360},100%,70%)`;
+          ctx.fillRect(0, ly, w, 1);
+        }
+        ctx.restore();
+      }
+    }
+
     // Start initialization
     init();
   </script>
