@@ -219,7 +219,14 @@
      <button class="level-select-btn game-font text-sm bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105" data-level="9">10</button>
      <button class="level-select-btn game-font text-sm bg-gradient-to-r from-red-800 to-red-700 hover:from-red-700 hover:to-red-600 text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105" data-level="10">11</button>
      <button class="level-select-btn game-font text-sm bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105" data-level="11">12</button>
-     <button class="level-select-btn game-font text-sm bg-gradient-to-r from-orange-800 to-orange-700 hover:from-orange-700 hover:to-orange-600 text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105" data-level="12">13</button>
+     <button class="level-select-btn game-font text-sm bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105" data-level="12">13</button>
+     <button class="level-select-btn game-font text-sm bg-gradient-to-r from-violet-600 to-violet-500 hover:from-violet-500 hover:to-violet-400 text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105" data-level="13">14</button>
+     <button class="level-select-btn game-font text-sm bg-gradient-to-r from-orange-800 to-orange-700 hover:from-orange-700 hover:to-orange-600 text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105" data-level="14">15</button>
+     <button class="level-select-btn game-font text-sm bg-gradient-to-r from-cyan-300 to-cyan-200 hover:from-cyan-200 hover:to-cyan-100 text-gray-800 px-6 py-3 rounded-lg transition-all transform hover:scale-105" data-level="15">16</button>
+     <button class="level-select-btn game-font text-sm bg-gradient-to-r from-cyan-300 to-cyan-200 hover:from-cyan-200 hover:to-cyan-100 text-gray-800 px-6 py-3 rounded-lg transition-all transform hover:scale-105" data-level="16">17</button>
+     <button class="level-select-btn game-font text-sm bg-gradient-to-r from-cyan-300 to-cyan-200 hover:from-cyan-200 hover:to-cyan-100 text-gray-800 px-6 py-3 rounded-lg transition-all transform hover:scale-105" data-level="17">18</button>
+     <button class="level-select-btn game-font text-sm bg-gradient-to-r from-cyan-300 to-cyan-200 hover:from-cyan-200 hover:to-cyan-100 text-gray-800 px-6 py-3 rounded-lg transition-all transform hover:scale-105" data-level="18">19</button>
+     <button class="level-select-btn game-font text-sm bg-gradient-to-r from-cyan-300 to-cyan-200 hover:from-cyan-200 hover:to-cyan-100 text-gray-800 px-6 py-3 rounded-lg transition-all transform hover:scale-105" data-level="19">20</button>
     </div>
     <button id="close-level-select" class="game-font text-xs text-gray-500 hover:text-gray-300">ESC TO CLOSE</button>
    </div>
@@ -358,6 +365,15 @@
     let cinderBoss = null;
     let cinderAttacks = [];
     let cinderPools = [];
+
+    // Frozen Torturer boss (Level 20)
+    let frozenBossActive = false;
+    let frozenBoss = null;
+    let icicles = [];
+    let freezeBreaths = [];
+    let icicleWarnings = [];
+    let frostSpikes = [];
+    let iceShards = [];
 
     // Audio Manager - Retro Chiptune Sound System
     const AudioManager = {
@@ -888,6 +904,226 @@
         if (this.ctx.state === 'suspended') this.ctx.resume();
         this.stopBGM();
         this.playLavaBGMLoop();
+      },
+
+      playFrostBGMLoop() {
+        if (!this.ctx || this.muted) return;
+        if (this.ctx.state === 'suspended') this.ctx.resume();
+        const now = this.ctx.currentTime;
+        const b = 0.72; // beat length (slow, ~83 BPM)
+
+        // Haunting ice melody — E natural minor, triangle oscillator (bell-like)
+        const melody = [
+          { note: 659.25, dur: 0.5  }, // E5
+          { note: 493.88, dur: 0.25 }, // B4
+          { note: 587.33, dur: 0.25 }, // D5
+          { note: 392.00, dur: 0.5  }, // G4
+          { note: 440.00, dur: 0.5  }, // A4
+          { note: 493.88, dur: 0.5  }, // B4
+          { note: 659.25, dur: 0.25 }, // E5
+          { note: 587.33, dur: 0.25 }, // D5
+          { note: 493.88, dur: 0.5  }, // B4
+          { note: 440.00, dur: 0.5  }, // A4
+          { note: 392.00, dur: 0.25 }, // G4
+          { note: 440.00, dur: 0.25 }, // A4
+          { note: 659.25, dur: 0.75 }, // E5 — sustained
+          { note: 493.88, dur: 0.5  }, // B4
+          { note: 440.00, dur: 0.25 }, // A4
+          { note: 392.00, dur: 0.25 }, // G4
+          { note: 329.63, dur: 0.5  }, // E4
+          { note: 440.00, dur: 0.5  }, // A4
+          { note: 493.88, dur: 0.5  }, // B4
+          { note: 587.33, dur: 0.25 }, // D5
+          { note: 493.88, dur: 0.25 }, // B4
+          { note: 440.00, dur: 0.5  }, // A4
+          { note: 392.00, dur: 0.25 }, // G4
+          { note: 493.88, dur: 0.25 }, // B4
+          { note: 659.25, dur: 1.0  }, // E5 — long fade out
+        ];
+
+        // Slow bass pulse — sine for soft subfrequency rumble
+        const bass = [
+          { note: 82.41,  dur: 2.0 }, // E2
+          { note: 98.00,  dur: 2.0 }, // G2
+          { note: 110.00, dur: 2.0 }, // A2
+          { note: 123.47, dur: 2.0 }, // B2
+          { note: 82.41,  dur: 2.0 }, // E2
+          { note: 110.00, dur: 2.0 }, // A2
+          { note: 98.00,  dur: 1.0 }, // G2
+          { note: 123.47, dur: 1.0 }, // B2
+        ];
+
+        // Sparkle arpeggio — very high triangle, very quiet
+        const arp = [
+          { note: 1318.51, dur: 0.08 }, // E6
+          { note: 1567.98, dur: 0.08 }, // G6
+          { note: 1975.53, dur: 0.08 }, // B6
+          { note: 1318.51, dur: 0.08 }, { note: 1567.98, dur: 0.08 }, { note: 1975.53, dur: 0.08 },
+          { note: 1318.51, dur: 0.08 }, { note: 1975.53, dur: 0.08 }, { note: 2637.02, dur: 0.08 },
+          { note: 1975.53, dur: 0.08 }, { note: 1567.98, dur: 0.08 }, { note: 1318.51, dur: 0.08 },
+          { note: 1318.51, dur: 0.08 }, { note: 1567.98, dur: 0.08 }, { note: 1975.53, dur: 0.08 },
+          { note: 2093.00, dur: 0.08 }, { note: 1975.53, dur: 0.08 }, { note: 1567.98, dur: 0.08 },
+          { note: 1318.51, dur: 0.08 }, { note: 1174.66, dur: 0.08 }, { note: 1318.51, dur: 0.08 },
+          { note: 1567.98, dur: 0.08 }, { note: 1975.53, dur: 0.08 }, { note: 1318.51, dur: 0.08 },
+          { note: 987.77,  dur: 0.08 }, { note: 1318.51, dur: 0.08 }, { note: 1975.53, dur: 0.16 },
+        ];
+
+        let time = 0;
+        this.bgmOscillators = [];
+
+        // Melody — triangle for icy bell tone
+        melody.forEach(note => {
+          const osc = this.ctx.createOscillator();
+          const g   = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.value = note.note;
+          osc.connect(g); g.connect(this.bgmGain);
+          const st = now + time * b, et = st + note.dur * b;
+          g.gain.setValueAtTime(0.0, st);
+          g.gain.linearRampToValueAtTime(0.13, st + 0.02);
+          g.gain.exponentialRampToValueAtTime(0.001, et + 0.1);
+          osc.start(st); osc.stop(et + 0.15);
+          this.bgmOscillators.push(osc);
+          time += note.dur;
+        });
+
+        // Bass — sine for deep cold undertone
+        let bassTime = 0;
+        bass.forEach(note => {
+          const osc = this.ctx.createOscillator();
+          const g   = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.value = note.note;
+          osc.connect(g); g.connect(this.bgmGain);
+          const st = now + bassTime * b, et = st + note.dur * b;
+          g.gain.setValueAtTime(0.0, st);
+          g.gain.linearRampToValueAtTime(0.12, st + 0.1);
+          g.gain.setValueAtTime(0.12, et - 0.15);
+          g.gain.exponentialRampToValueAtTime(0.001, et);
+          osc.start(st); osc.stop(et);
+          this.bgmOscillators.push(osc);
+          bassTime += note.dur;
+        });
+
+        // Sparkle arp — triangle, barely audible shimmer
+        let arpTime = 0;
+        arp.forEach(note => {
+          const osc = this.ctx.createOscillator();
+          const g   = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.value = note.note;
+          osc.connect(g); g.connect(this.bgmGain);
+          const st = now + arpTime * b, et = st + note.dur * b;
+          g.gain.setValueAtTime(0.025, st);
+          g.gain.exponentialRampToValueAtTime(0.001, et);
+          osc.start(st); osc.stop(et);
+          this.bgmOscillators.push(osc);
+          arpTime += note.dur;
+        });
+
+        this.bgmTimeout = setTimeout(() => this.playFrostBGMLoop(), time * b * 1000);
+      },
+
+      startFrostBGM() {
+        if (!this.ctx || this.muted) return;
+        if (this.ctx.state === 'suspended') this.ctx.resume();
+        this.stopBGM();
+        this.playFrostBGMLoop();
+      },
+
+      // Frost Boss fight music — urgent, chromatic, icy dread
+      playFrostBossBGMLoop() {
+        if (!this.ctx || this.muted) return;
+        if (this.ctx.state === 'suspended') this.ctx.resume();
+
+        const time = this.ctx.currentTime;
+        const b = 60 / 148; // ~148 BPM — faster & more tense than frost level BGM
+
+        // Scale: D minor with flat 6 (Bb) for icy menace
+        // D3=146.83, F3=174.61, G3=196, A3=220, Bb3=233.08, C4=261.63, D4=293.66
+        const notes = [146.83, 174.61, 196, 220, 233.08, 261.63, 293.66, 329.63];
+
+        const masterGain = this.ctx.createGain();
+        masterGain.gain.setValueAtTime(0.22, time);
+        masterGain.connect(this.ctx.destination);
+        this.bgmOscillators.push(masterGain);
+
+        // --- Driving bass pulse (sawtooth) ---
+        const bassPattern = [0, 0, 2, 0, 1, 0, 3, 1]; // indices into notes
+        bassPattern.forEach((ni, i) => {
+          const osc = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(notes[ni] * 0.5, time + i * b);
+          g.gain.setValueAtTime(0, time + i * b);
+          g.gain.linearRampToValueAtTime(0.35, time + i * b + 0.03);
+          g.gain.linearRampToValueAtTime(0.28, time + i * b + b * 0.8);
+          g.gain.linearRampToValueAtTime(0, time + i * b + b * 0.95);
+          osc.connect(g); g.connect(masterGain);
+          osc.start(time + i * b);
+          osc.stop(time + i * b + b);
+          this.bgmOscillators.push(osc);
+        });
+
+        // --- Icy lead melody (square wave) ---
+        const melodyPattern = [
+          {ni: 2, t: 0},   {ni: 4, t: 1},   {ni: 3, t: 2},   {ni: 5, t: 3},
+          {ni: 4, t: 4},   {ni: 6, t: 5},   {ni: 5, t: 5.5}, {ni: 7, t: 6},
+          {ni: 6, t: 7},
+        ];
+        melodyPattern.forEach(({ni, t}) => {
+          const osc = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(notes[ni], time + t * b);
+          g.gain.setValueAtTime(0, time + t * b);
+          g.gain.linearRampToValueAtTime(0.12, time + t * b + 0.02);
+          g.gain.linearRampToValueAtTime(0.08, time + t * b + b * 0.4);
+          g.gain.linearRampToValueAtTime(0, time + t * b + b * 0.6);
+          osc.connect(g); g.connect(masterGain);
+          osc.start(time + t * b);
+          osc.stop(time + t * b + b * 0.7);
+          this.bgmOscillators.push(osc);
+        });
+
+        // --- Sharp staccato high-hat clicks (triangle, high freq) ---
+        for (let i = 0; i < 8; i++) {
+          const osc = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(1800 + (i % 2) * 400, time + i * b * 0.5);
+          g.gain.setValueAtTime(0.06, time + i * b * 0.5);
+          g.gain.linearRampToValueAtTime(0, time + i * b * 0.5 + 0.04);
+          osc.connect(g); g.connect(masterGain);
+          osc.start(time + i * b * 0.5);
+          osc.stop(time + i * b * 0.5 + 0.05);
+          this.bgmOscillators.push(osc);
+        }
+
+        // --- Cold arp (triangle, descending) ---
+        const arpNotes = [notes[7], notes[5], notes[4], notes[2]];
+        arpNotes.forEach((freq, i) => {
+          const osc = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq * 2, time + (4 + i * 0.75) * b);
+          g.gain.setValueAtTime(0.09, time + (4 + i * 0.75) * b);
+          g.gain.linearRampToValueAtTime(0, time + (4 + i * 0.75) * b + b * 0.5);
+          osc.connect(g); g.connect(masterGain);
+          osc.start(time + (4 + i * 0.75) * b);
+          osc.stop(time + (4 + i * 0.75) * b + b * 0.6);
+          this.bgmOscillators.push(osc);
+        });
+
+        const loopDuration = 8 * b * 1000;
+        this.bgmTimeout = setTimeout(() => this.playFrostBossBGMLoop(), loopDuration);
+      },
+
+      startFrostBossBGM() {
+        if (!this.ctx || this.muted) return;
+        if (this.ctx.state === 'suspended') this.ctx.resume();
+        this.stopBGM();
+        this.playFrostBossBGMLoop();
       },
 
       // Stop background music
@@ -1480,7 +1716,113 @@
         movingPlatforms: []
       },
 
-      // Level 13 - LAVA ARENA (Cinder Doppelganger fight)
+      // Level 13 - SPIKY GAUNTLET
+      {
+        bgTheme: 'cave',
+        width: 52,
+        height: 20,
+        playerStart: { x: 2, y: 17 },
+        tiles: [
+          // Floor
+          ...Array(52).fill().map((_, i) => ({ x: i, y: 19, type: 1 })),
+          // Ceiling
+          ...Array(52).fill().map((_, i) => ({ x: i, y: 0,  type: 1 })),
+          // Left/right walls
+          ...Array(19).fill().map((_, i) => ({ x: 0,  y: i + 1, type: 1 })),
+          ...Array(19).fill().map((_, i) => ({ x: 51, y: i + 1, type: 1 })),
+
+          // Elevated ledge with a REGULAR enemy (can stomp) — teaches contrast
+          { x: 9,  y: 15, type: 1 }, { x: 10, y: 15, type: 1 },
+          { x: 11, y: 15, type: 1 }, { x: 12, y: 15, type: 1 },
+          { x: 10, y: 14, type: 3 }, // regular enemy — stompable
+
+          // Zone 2 — spike pit with spiky on the bridge (can't just run across)
+          { x: 15, y: 19, type: 2 }, { x: 16, y: 19, type: 2 }, { x: 17, y: 19, type: 2 },
+          { x: 15, y: 16, type: 1 }, { x: 16, y: 16, type: 1 }, { x: 17, y: 16, type: 1 },
+          { x: 16, y: 15, type: 16 }, // spiky on the bridge
+
+          // Checkpoint early
+          { x: 14, y: 18, type: 7 },
+
+          // Zone 3 — upper ledge with one spiky
+          ...Array(9).fill().map((_, i) => ({ x: 20 + i, y: 13, type: 1 })),
+          { x: 24, y: 12, type: 16 },
+
+          // Zone 4 — crumble floor over spike pit
+          { x: 31, y: 19, type: 2 }, { x: 32, y: 19, type: 2 }, { x: 33, y: 19, type: 2 },
+          { x: 31, y: 17, type: 9 }, { x: 32, y: 17, type: 9 }, { x: 33, y: 17, type: 9 },
+
+          // Checkpoint before final stretch
+          { x: 35, y: 18, type: 7 },
+
+          // Zone 5 — final stretch
+          ...Array(7).fill().map((_, i) => ({ x: 36 + i, y: 10, type: 1 })),
+          { x: 44, y: 18, type: 3 }, // regular (stompable) enemy
+
+          // Single spike before goal
+          { x: 46, y: 19, type: 2 },
+
+          // Goal
+          { x: 50, y: 18, type: 5 },
+        ],
+        movingPlatforms: []
+      },
+
+      // Level 14 - MIMIC MADNESS
+      {
+        bgTheme: 'space',
+        width: 60,
+        height: 22,
+        playerStart: { x: 2, y: 19 },
+        tiles: [
+          // Safe start and end ground
+          ...Array(6).fill().map((_, i) => ({ x: i,      y: 21, type: 1 })),
+          ...Array(6).fill().map((_, i) => ({ x: 54 + i, y: 21, type: 1 })),
+          // Spike floor (fall = death)
+          ...Array(48).fill().map((_, i) => ({ x: 6 + i, y: 21, type: 2 })),
+
+          // ── stepping stones ──
+          // Solid (safe)
+          { x: 8,  y: 18, type: 1 }, { x: 9,  y: 18, type: 1 },
+          // Mimic (runs when landed on!)
+          { x: 12, y: 17, type: 17 }, { x: 13, y: 17, type: 17 }, { x: 14, y: 17, type: 17 },
+          // Solid
+          { x: 17, y: 18, type: 1 }, { x: 18, y: 18, type: 1 },
+          // Mimic
+          { x: 21, y: 15, type: 17 }, { x: 22, y: 15, type: 17 },
+          // Solid — checkpoint
+          { x: 25, y: 18, type: 1 }, { x: 26, y: 18, type: 1 },
+          { x: 26, y: 17, type: 7 },
+
+          // Mimic 3-wide
+          { x: 29, y: 16, type: 17 }, { x: 30, y: 16, type: 17 }, { x: 31, y: 16, type: 17 },
+          // Solid
+          { x: 34, y: 18, type: 1 }, { x: 35, y: 18, type: 1 },
+          // Single-tile mimic — very tricky
+          { x: 38, y: 16, type: 17 },
+          // Mimic 2-wide
+          { x: 40, y: 19, type: 17 }, { x: 41, y: 19, type: 17 },
+          // Solid — checkpoint
+          { x: 43, y: 19, type: 1 }, { x: 44, y: 19, type: 1 },
+          { x: 44, y: 18, type: 7 },
+
+          // Dense mimic field
+          { x: 46, y: 17, type: 17 }, { x: 47, y: 17, type: 17 },
+          { x: 49, y: 19, type: 17 },
+          // Final solid bridge to end
+          { x: 51, y: 18, type: 1 }, { x: 52, y: 18, type: 1 },
+
+          // Enemies on solid platforms (add pressure)
+          { x:  9, y: 17, type: 3  }, // on first solid
+          { x: 35, y: 17, type: 10 }, // fast walker on mid solid
+
+          // Goal
+          { x: 58, y: 20, type: 5 },
+        ],
+        movingPlatforms: []
+      },
+
+      // Level 15 - LAVA ARENA (Cinder Doppelganger fight)
       {
         bgTheme: 'volcano',
         isMinionBoss: true,
@@ -1522,6 +1864,187 @@
           // Geysers on floating platforms — punish standing still
           { x: 9, y: 17, type: 15 },
           { x: 31, y: 17, type: 15 },
+        ],
+        movingPlatforms: []
+      },
+
+      // Level 16 - FROZEN TUNDRA (ice intro — all jumps ≤3 tiles up)
+      {
+        bgTheme: 'ice',
+        width: 48,
+        height: 18,
+        playerStart: { x: 2, y: 15 },
+        tiles: [
+          ...Array(48).fill().map((_, i) => ({ x: i, y: 17, type: 1 })),
+          ...Array(17).fill().map((_, i) => ({ x: 0,  y: i, type: 1 })),
+          ...Array(17).fill().map((_, i) => ({ x: 47, y: i, type: 1 })),
+          // Ice floor sections
+          ...Array(6).fill().map((_, i) => ({ x: 10 + i, y: 17, type: 18 })),
+          ...Array(8).fill().map((_, i) => ({ x: 25 + i, y: 17, type: 18 })),
+          // Platform A: 3 tiles above floor (y=14), gap 4 from start
+          { x: 6, y: 14, type: 18 }, { x: 7, y: 14, type: 18 }, { x: 8, y: 14, type: 18 }, { x: 9, y: 14, type: 18 },
+          // Platform B: 3 tiles above A (y=11), gap 3 from A
+          { x: 13, y: 11, type: 18 }, { x: 14, y: 11, type: 18 }, { x: 15, y: 11, type: 18 }, { x: 16, y: 11, type: 18 },
+          // Platform C: 3 tiles below B (y=14), gap 3 from B — regular so you can stop
+          { x: 20, y: 14, type: 1 }, { x: 21, y: 14, type: 1 }, { x: 22, y: 14, type: 1 }, { x: 23, y: 14, type: 1 }, { x: 24, y: 14, type: 1 },
+          // Platform D: 3 up from C (y=11), gap 2
+          { x: 27, y: 11, type: 18 }, { x: 28, y: 11, type: 18 }, { x: 29, y: 11, type: 18 }, { x: 30, y: 11, type: 18 }, { x: 31, y: 11, type: 18 },
+          // Platform E: 2 down from D (y=13), gap 3 — ice finale
+          { x: 35, y: 13, type: 18 }, { x: 36, y: 13, type: 18 }, { x: 37, y: 13, type: 18 }, { x: 38, y: 13, type: 18 }, { x: 39, y: 13, type: 18 },
+          // Enemies
+          { x: 7,  y: 13, type: 3 },  // walker on A
+          { x: 15, y: 10, type: 3 },  // walker on B
+          { x: 24, y: 13, type: 2 },  // spike on C right edge
+          // Checkpoint on C
+          { x: 21, y: 13, type: 7 },
+          // Goal near end floor
+          { x: 45, y: 16, type: 5 },
+        ],
+        movingPlatforms: []
+      },
+
+      // Level 17 - ICE CAVERN (two-step platforms, all jumps ≤3 tiles)
+      {
+        bgTheme: 'ice',
+        width: 55,
+        height: 22,
+        playerStart: { x: 2, y: 19 },
+        tiles: [
+          ...Array(55).fill().map((_, i) => ({ x: i, y: 21, type: 1 })),
+          ...Array(55).fill().map((_, i) => ({ x: i, y: 0,  type: 1 })),
+          ...Array(20).fill().map((_, i) => ({ x: 0,  y: i + 1, type: 1 })),
+          ...Array(20).fill().map((_, i) => ({ x: 54, y: i + 1, type: 1 })),
+          // Narrow spike pits (2 wide — jumpable)
+          { x: 10, y: 21, type: 2 }, { x: 11, y: 21, type: 2 },
+          { x: 25, y: 21, type: 2 }, { x: 26, y: 21, type: 2 },
+          { x: 40, y: 21, type: 2 }, { x: 41, y: 21, type: 2 },
+          // Step platforms — 3 above floor (y=18), just past each pit
+          { x: 8,  y: 18, type: 18 }, { x: 9,  y: 18, type: 18 }, { x: 10, y: 18, type: 18 },
+          { x: 11, y: 18, type: 18 }, { x: 12, y: 18, type: 18 }, { x: 13, y: 18, type: 18 },
+          { x: 23, y: 18, type: 18 }, { x: 24, y: 18, type: 18 }, { x: 25, y: 18, type: 18 },
+          { x: 26, y: 18, type: 18 }, { x: 27, y: 18, type: 18 }, { x: 28, y: 18, type: 18 },
+          { x: 38, y: 18, type: 18 }, { x: 39, y: 18, type: 18 }, { x: 40, y: 18, type: 18 },
+          { x: 41, y: 18, type: 18 }, { x: 42, y: 18, type: 18 }, { x: 43, y: 18, type: 18 },
+          // Upper platforms — 3 above step (y=15)
+          { x: 14, y: 15, type: 1  }, { x: 15, y: 15, type: 1  }, { x: 16, y: 15, type: 1  },
+          { x: 17, y: 15, type: 1  }, { x: 18, y: 15, type: 1  }, { x: 19, y: 15, type: 1  },
+          { x: 30, y: 15, type: 18 }, { x: 31, y: 15, type: 18 }, { x: 32, y: 15, type: 18 },
+          { x: 33, y: 15, type: 18 }, { x: 34, y: 15, type: 18 }, { x: 35, y: 15, type: 18 },
+          { x: 44, y: 15, type: 18 }, { x: 45, y: 15, type: 18 }, { x: 46, y: 15, type: 18 },
+          { x: 47, y: 15, type: 18 }, { x: 48, y: 15, type: 18 }, { x: 49, y: 15, type: 18 },
+          // Enemies
+          { x: 16, y: 14, type: 3  },
+          { x: 32, y: 14, type: 10 },
+          { x: 47, y: 14, type: 16 },
+          // Checkpoint
+          { x: 30, y: 14, type: 7 },
+          // Goal
+          { x: 52, y: 14, type: 5 },
+        ],
+        movingPlatforms: []
+      },
+
+      // Level 18 - GLACIER RUN (staircase pattern, all jumps ≤3 tiles)
+      {
+        bgTheme: 'ice',
+        width: 60,
+        height: 20,
+        playerStart: { x: 2, y: 17 },
+        tiles: [
+          ...Array(60).fill().map((_, i) => ({ x: i, y: 19, type: 1 })),
+          ...Array(19).fill().map((_, i) => ({ x: 0,  y: i, type: 1 })),
+          ...Array(19).fill().map((_, i) => ({ x: 59, y: i, type: 1 })),
+          // Ice floor sections (hazard spikes embedded)
+          ...Array(11).fill().map((_, i) => ({ x: 8  + i, y: 19, type: 18 })),
+          ...Array(11).fill().map((_, i) => ({ x: 26 + i, y: 19, type: 18 })),
+          ...Array(11).fill().map((_, i) => ({ x: 44 + i, y: 19, type: 18 })),
+          { x: 13, y: 19, type: 2 }, { x: 31, y: 19, type: 2 }, { x: 49, y: 19, type: 2 },
+          // Platform chain (each step ≤3 tiles up/down, ≤4 tiles gap)
+          // A: 3 up from floor (y=16)
+          { x: 5,  y: 16, type: 18 }, { x: 6,  y: 16, type: 18 }, { x: 7,  y: 16, type: 18 }, { x: 8,  y: 16, type: 18 }, { x: 9,  y: 16, type: 18 },
+          // B: 3 up from A (y=13), gap 4
+          { x: 14, y: 13, type: 18 }, { x: 15, y: 13, type: 18 }, { x: 16, y: 13, type: 18 }, { x: 17, y: 13, type: 18 }, { x: 18, y: 13, type: 18 }, { x: 19, y: 13, type: 18 },
+          // C: 3 down from B (y=16), gap 2 — regular
+          { x: 22, y: 16, type: 1  }, { x: 23, y: 16, type: 1  }, { x: 24, y: 16, type: 1  }, { x: 25, y: 16, type: 1  },
+          // D: 3 up from C (y=13), gap 3
+          { x: 30, y: 13, type: 18 }, { x: 31, y: 13, type: 18 }, { x: 32, y: 13, type: 18 }, { x: 33, y: 13, type: 18 }, { x: 34, y: 13, type: 18 }, { x: 35, y: 13, type: 18 },
+          // E: 3 down from D (y=16), gap 3
+          { x: 39, y: 16, type: 18 }, { x: 40, y: 16, type: 18 }, { x: 41, y: 16, type: 18 }, { x: 42, y: 16, type: 18 }, { x: 43, y: 16, type: 18 },
+          // F: 3 up from E (y=13), gap 3 — regular
+          { x: 47, y: 13, type: 1  }, { x: 48, y: 13, type: 1  }, { x: 49, y: 13, type: 1  }, { x: 50, y: 13, type: 1  }, { x: 51, y: 13, type: 1  },
+          // G: 3 down from F (y=16), gap 2 — ice
+          { x: 55, y: 16, type: 18 }, { x: 56, y: 16, type: 18 }, { x: 57, y: 16, type: 18 }, { x: 58, y: 16, type: 18 },
+          // Enemies
+          { x: 7,  y: 15, type: 10 }, { x: 16, y: 12, type: 10 },
+          { x: 24, y: 15, type: 3  },
+          { x: 32, y: 12, type: 10 }, { x: 41, y: 15, type: 10 },
+          { x: 49, y: 12, type: 3  },
+          // Checkpoints
+          { x: 22, y: 15, type: 7  }, { x: 47, y: 12, type: 7  },
+          // Goal
+          { x: 57, y: 15, type: 5 },
+        ],
+        movingPlatforms: []
+      },
+
+      // Level 19 - FROSTBITE PEAKS (spike floor, platform chain, all jumps ≤3 tiles)
+      {
+        bgTheme: 'ice',
+        width: 65,
+        height: 24,
+        playerStart: { x: 2, y: 21 },
+        tiles: [
+          ...Array(65).fill().map((_, i) => ({ x: i, y: 23, type: 2 })),
+          // Start platform (solid)
+          { x: 0, y: 22, type: 1 }, { x: 1, y: 22, type: 1 }, { x: 2, y: 22, type: 1 }, { x: 3, y: 22, type: 1 }, { x: 4, y: 22, type: 1 },
+          // Chain: each step ≤3 up/down, gap ≤3 horiz
+          { x: 6,  y: 22, type: 18 }, { x: 7,  y: 22, type: 18 }, { x: 8,  y: 22, type: 18 }, { x: 9,  y: 22, type: 18 }, // same height, gap 2
+          { x: 12, y: 19, type: 18 }, { x: 13, y: 19, type: 18 }, { x: 14, y: 19, type: 18 }, { x: 15, y: 19, type: 18 }, // 3 up, gap 3
+          { x: 18, y: 22, type: 1  }, { x: 19, y: 22, type: 1  }, { x: 20, y: 22, type: 1  }, { x: 21, y: 22, type: 1  }, // 3 down, gap 3
+          { x: 24, y: 19, type: 18 }, { x: 25, y: 19, type: 18 }, { x: 26, y: 19, type: 18 }, { x: 27, y: 19, type: 18 }, // 3 up, gap 3
+          { x: 30, y: 16, type: 18 }, { x: 31, y: 16, type: 18 }, { x: 32, y: 16, type: 18 }, { x: 33, y: 16, type: 18 }, // 3 up, gap 3
+          { x: 36, y: 19, type: 1  }, { x: 37, y: 19, type: 1  }, { x: 38, y: 19, type: 1  }, { x: 39, y: 19, type: 1  }, // 3 down, gap 3
+          { x: 42, y: 16, type: 18 }, { x: 43, y: 16, type: 18 }, { x: 44, y: 16, type: 18 }, { x: 45, y: 16, type: 18 }, // 3 up, gap 3
+          { x: 48, y: 19, type: 1  }, { x: 49, y: 19, type: 1  }, { x: 50, y: 19, type: 1  }, { x: 51, y: 19, type: 1  }, // 3 down, gap 3
+          { x: 54, y: 22, type: 18 }, { x: 55, y: 22, type: 18 }, { x: 56, y: 22, type: 18 }, { x: 57, y: 22, type: 18 }, // 3 down, gap 3
+          // End platform (solid)
+          { x: 60, y: 22, type: 1 }, { x: 61, y: 22, type: 1 }, { x: 62, y: 22, type: 1 }, { x: 63, y: 22, type: 1 }, { x: 64, y: 22, type: 1 },
+          // Enemies (on platforms, tile y = platform_y - 1)
+          { x: 13, y: 18, type: 3  },
+          { x: 20, y: 21, type: 11 }, // bouncer on solid
+          { x: 31, y: 15, type: 10 }, // fast walker
+          { x: 38, y: 18, type: 11 }, // bouncer
+          // Checkpoints
+          { x: 27, y: 18, type: 7 }, { x: 45, y: 15, type: 7 },
+          // Goal
+          { x: 63, y: 21, type: 5 },
+        ],
+        movingPlatforms: []
+      },
+
+      // Level 20 - THE FROZEN TORTURER (Ice Boss Arena)
+      {
+        bgTheme: 'ice',
+        isIceBoss: true,
+        width: 38,
+        height: 22,
+        playerStart: { x: 2, y: 18 },
+        tiles: [
+          // Slippery ice floor
+          ...Array(38).fill().map((_, i) => ({ x: i, y: 21, type: 18 })),
+          // Solid ceiling
+          ...Array(38).fill().map((_, i) => ({ x: i, y: 0,  type: 1  })),
+          // Walls
+          ...Array(20).fill().map((_, i) => ({ x: 0,  y: i + 1, type: 1 })),
+          ...Array(20).fill().map((_, i) => ({ x: 37, y: i + 1, type: 1 })),
+          // Solid start/end ledges so player doesn't slide off immediately
+          { x: 0, y: 20, type: 1 }, { x: 1, y: 20, type: 1 }, { x: 2, y: 20, type: 1 }, { x: 3, y: 20, type: 1 },
+          { x: 34, y: 20, type: 1 }, { x: 35, y: 20, type: 1 }, { x: 36, y: 20, type: 1 }, { x: 37, y: 20, type: 1 },
+          // Ice platforms (slippery — replace crumble so player can stand and shoot)
+          { x: 5,  y: 17, type: 18 }, { x: 6,  y: 17, type: 18 }, { x: 7,  y: 17, type: 18 }, { x: 8,  y: 17, type: 18 }, { x: 9,  y: 17, type: 18 },
+          { x: 13, y: 15, type: 18 }, { x: 14, y: 15, type: 18 }, { x: 15, y: 15, type: 18 }, { x: 16, y: 15, type: 18 }, { x: 17, y: 15, type: 18 },
+          { x: 20, y: 17, type: 18 }, { x: 21, y: 17, type: 18 }, { x: 22, y: 17, type: 18 }, { x: 23, y: 17, type: 18 }, { x: 24, y: 17, type: 18 },
+          { x: 28, y: 15, type: 18 }, { x: 29, y: 15, type: 18 }, { x: 30, y: 15, type: 18 }, { x: 31, y: 15, type: 18 }, { x: 32, y: 15, type: 18 },
         ],
         movingPlatforms: []
       }
@@ -2286,6 +2809,397 @@
     }
     // ────────────────────────────────────────────────────────────────────────
 
+    // ── Frozen Torturer Boss ─────────────────────────────────────────────────
+    function frozenBossRespawn() {
+      deaths++; updateHUD();
+      playerHP = 15;
+      frozenBoss.hp = frozenBoss.maxHP;
+      spawnDeathParticles(player.x, player.y, SKINS[selectedSkin].color);
+      triggerShake(12, 20);
+      AudioManager.playSound('death');
+      const lvl = levels[currentLevel];
+      player.x = lvl.playerStart.x * TILE_SIZE;
+      player.y = lvl.playerStart.y * TILE_SIZE;
+      player.vx = 0; player.vy = 0;
+      player.onGround = false; player.onPlatform = null;
+      player.freezeTimer = 0;
+      bullets = []; icicles = []; freezeBreaths = []; icicleWarnings = [];
+      frostSpikes = []; iceShards = [];
+    }
+
+    function createFrozenBoss() {
+      const level = levels[currentLevel];
+      const arenaW = level.width * TILE_SIZE;
+      frozenBoss = {
+        x: arenaW / 2 - 32,
+        y: TILE_SIZE * 11,
+        width: 64, height: 64,
+        hp: 20, maxHP: 20,
+        vx: 1.8, vy: 0,
+        attackTimer: 0,
+        phase: 0, // 0=icicles, 1=freeze breath spread, 2=stomp, 3=frost nova, 4=shard fan
+        stomping: false, stompVy: 0, stompStartY: TILE_SIZE * 11,
+        flashTimer: 0, nameTimer: 220,
+      };
+      icicles = []; freezeBreaths = []; icicleWarnings = [];
+      frostSpikes = []; iceShards = [];
+      playerHP = 15;
+      frozenBossActive = true;
+      bullets = []; bossAttacks = [];
+      showShootTip = true; shootTipTimer = 0;
+    }
+
+    function updateFrozenBoss() {
+      if (!frozenBoss || !frozenBossActive) return;
+      const level = levels[currentLevel];
+      const arenaW = level.width * TILE_SIZE;
+      const floorY = (level.height - 1) * TILE_SIZE;
+      const isPhase2 = frozenBoss.hp <= Math.ceil(frozenBoss.maxHP / 2);
+      const speed = isPhase2 ? 2.6 : 1.8;
+      const attackInterval = isPhase2 ? 90 : 120;
+
+      if (frozenBoss.nameTimer > 0) frozenBoss.nameTimer--;
+      if (frozenBoss.flashTimer > 0) frozenBoss.flashTimer--;
+
+      // Float back and forth
+      if (!frozenBoss.stomping) {
+        frozenBoss.x += frozenBoss.vx * (speed / 1.8);
+        frozenBoss.y = TILE_SIZE * 11 + Math.sin(Date.now() / 700) * 18;
+        if (frozenBoss.x < TILE_SIZE * 2)                               { frozenBoss.x = TILE_SIZE * 2; frozenBoss.vx = speed; }
+        if (frozenBoss.x + frozenBoss.width > arenaW - TILE_SIZE * 2)   { frozenBoss.x = arenaW - TILE_SIZE * 2 - frozenBoss.width; frozenBoss.vx = -speed; }
+      }
+
+      // Attack cycle
+      frozenBoss.attackTimer++;
+      if (frozenBoss.attackTimer >= attackInterval) {
+        frozenBoss.attackTimer = 0;
+        frozenBoss.phase = (frozenBoss.phase + 1) % 5;
+        const bx = frozenBoss.x + frozenBoss.width / 2;
+        const by = frozenBoss.y + frozenBoss.height / 2;
+
+        if (frozenBoss.phase === 0) {
+          // ICICLE BARRAGE — 4 ceiling drops (5 in phase 2)
+          const count = isPhase2 ? 5 : 4;
+          for (let i = 0; i < count; i++) {
+            const wx = TILE_SIZE * 3 + Math.random() * (arenaW - TILE_SIZE * 6);
+            icicleWarnings.push({ x: wx, timer: 55 });
+          }
+
+        } else if (frozenBoss.phase === 1) {
+          // FREEZE BREATH SPREAD — 3 projectiles at 3 heights
+          const dir = player.x > frozenBoss.x ? 1 : -1;
+          [-1, 0, 1].forEach(offset => {
+            freezeBreaths.push({
+              x: bx, y: by + offset * 18,
+              vx: dir * 4, vy: offset * 0.6,
+              radius: 14, lifetime: 160
+            });
+          });
+
+        } else if (frozenBoss.phase === 2) {
+          // ICE STOMP — dive at player, create shockwave on impact
+          frozenBoss.stomping = true;
+          frozenBoss.stompStartY = frozenBoss.y;
+          frozenBoss.stompVy = 10;
+          frozenBoss.x = Math.max(TILE_SIZE * 2, Math.min(arenaW - TILE_SIZE * 2 - frozenBoss.width, player.x - frozenBoss.width / 2));
+
+        } else if (frozenBoss.phase === 3) {
+          // FROST NOVA — 4 floor spikes with warnings
+          const count = isPhase2 ? 5 : 4;
+          for (let i = 0; i < count; i++) {
+            const sx = TILE_SIZE * 2 + (i + 0.5) * ((arenaW - TILE_SIZE * 4) / count) + (Math.random() - 0.5) * 24;
+            frostSpikes.push({ x: sx, floorY: floorY, growTimer: 50, state: 'warning' });
+          }
+
+        } else if (frozenBoss.phase === 4) {
+          // ICE SHARD FAN — 5 shards spray diagonally downward from boss
+          for (let i = 0; i < 5; i++) {
+            const angle = (-Math.PI / 2) + (i - 2) * (Math.PI / 7); // spread fan downward
+            iceShards.push({
+              x: bx, y: by,
+              vx: Math.cos(angle) * 7,
+              vy: Math.sin(angle) * 7,
+              lifetime: 90
+            });
+          }
+        }
+      }
+
+      // Stomp movement
+      if (frozenBoss.stomping) {
+        frozenBoss.y += frozenBoss.stompVy;
+        if (frozenBoss.y + frozenBoss.height >= floorY - TILE_SIZE * 0.5) {
+          frozenBoss.y = floorY - TILE_SIZE * 0.5 - frozenBoss.height;
+          frozenBoss.stomping = false; frozenBoss.stompVy = 0;
+          triggerShake(12, 18);
+          // Stomp shockwave — two outward shards
+          const sx = frozenBoss.x + frozenBoss.width / 2;
+          [-1, 1].forEach(dir => {
+            for (let i = 1; i <= 3; i++) {
+              iceShards.push({ x: sx, y: frozenBoss.y + frozenBoss.height, vx: dir * i * 2.5, vy: -3 + i * 0.5, lifetime: 50 });
+            }
+          });
+          setTimeout(() => { if (frozenBoss) frozenBoss.y = frozenBoss.stompStartY; }, 500);
+        }
+      }
+
+      // --- Update icicle warnings → spawn icicles ---
+      icicleWarnings = icicleWarnings.filter(w => {
+        w.timer--;
+        if (w.timer <= 0) {
+          icicles.push({ x: w.x - 7, y: TILE_SIZE, vy: isPhase2 ? 6 : 4.5, width: 14, height: 30 });
+          return false;
+        }
+        return true;
+      });
+
+      // --- Update icicles ---
+      icicles = icicles.filter(ic => {
+        ic.y += ic.vy;
+        if (ic.y + ic.height >= floorY) return false;
+        if (!flyMode && rectIntersect(player, { x: ic.x, y: ic.y, width: ic.width, height: ic.height })) {
+          playerHP--; AudioManager.playSound('death');
+          if (playerHP <= 0) frozenBossRespawn();
+          return false;
+        }
+        if (twoPlayerMode && rectIntersect(player2, { x: ic.x, y: ic.y, width: ic.width, height: ic.height })) { die2(); }
+        return true;
+      });
+
+      // --- Update freeze breath ---
+      freezeBreaths = freezeBreaths.filter(fb => {
+        fb.x += fb.vx; fb.y += fb.vy; fb.lifetime--;
+        if (fb.lifetime <= 0 || fb.x < 0 || fb.x > arenaW) return false;
+        const fbRect = { x: fb.x - fb.radius, y: fb.y - fb.radius, width: fb.radius * 2, height: fb.radius * 2 };
+        if (!flyMode && rectIntersect(player, fbRect)) {
+          player.freezeTimer = 180;
+          playerHP--; AudioManager.playSound('death');
+          if (playerHP <= 0) frozenBossRespawn();
+          return false;
+        }
+        if (twoPlayerMode && rectIntersect(player2, fbRect)) { player2.freezeTimer = 180; return false; }
+        return true;
+      });
+
+      // --- Update frost nova spikes ---
+      frostSpikes = frostSpikes.filter(sp => {
+        sp.growTimer--;
+        if (sp.state === 'warning' && sp.growTimer <= 0) { sp.state = 'growing'; sp.growTimer = 20; sp.h = 0; }
+        else if (sp.state === 'growing') {
+          sp.h = Math.min(64, (20 - sp.growTimer) / 20 * 64);
+          if (sp.growTimer <= 0) { sp.state = 'hold'; sp.growTimer = 60; }
+        } else if (sp.state === 'hold') {
+          if (sp.growTimer <= 0) { sp.state = 'shrink'; sp.growTimer = 15; }
+        } else if (sp.state === 'shrink') {
+          sp.h = (sp.growTimer / 15) * 64;
+          if (sp.growTimer <= 0) return false;
+        }
+        // Damage player if touching active spike
+        if ((sp.state === 'growing' || sp.state === 'hold') && sp.h > 0) {
+          const sRect = { x: sp.x - 8, y: sp.floorY - sp.h, width: 16, height: sp.h };
+          if (!flyMode && rectIntersect(player, sRect)) {
+            playerHP--; AudioManager.playSound('death');
+            if (playerHP <= 0) frozenBossRespawn();
+          }
+          if (twoPlayerMode && rectIntersect(player2, sRect)) die2();
+        }
+        return true;
+      });
+
+      // --- Update ice shards ---
+      iceShards = iceShards.filter(sh => {
+        sh.x += sh.vx; sh.y += sh.vy; sh.lifetime--;
+        if (sh.lifetime <= 0 || sh.y > floorY) return false;
+        const sRect = { x: sh.x - 5, y: sh.y - 10, width: 10, height: 20 };
+        if (!flyMode && rectIntersect(player, sRect)) {
+          playerHP--; AudioManager.playSound('death');
+          if (playerHP <= 0) frozenBossRespawn();
+          return false;
+        }
+        if (twoPlayerMode && rectIntersect(player2, sRect)) { die2(); return false; }
+        return true;
+      });
+
+      // --- Bullet hits ---
+      bullets = bullets.filter(b => {
+        if (rectIntersect({ x: b.x, y: b.y, width: 8, height: 4 },
+            { x: frozenBoss.x, y: frozenBoss.y, width: frozenBoss.width, height: frozenBoss.height })) {
+          frozenBoss.hp--; frozenBoss.flashTimer = 8;
+          AudioManager.playSound('hit'); return false;
+        }
+        b.x += b.vx;
+        return b.x > 0 && b.x < arenaW;
+      });
+
+      if (frozenBoss.hp <= 0) {
+        frozenBossActive = false; showShootTip = false;
+        AudioManager.playSound('levelComplete');
+        setTimeout(() => completeLevel(), 800);
+      }
+    }
+
+    function renderFrozenBoss() {
+      if (!frozenBoss || !frozenBossActive) return;
+      const t = Date.now();
+      const { x, y, width, height, flashTimer, nameTimer } = frozenBoss;
+      const level = levels[currentLevel];
+      const floorY = (level.height - 1) * TILE_SIZE;
+
+      // Icicle warnings — pulsing blue rings on ceiling
+      icicleWarnings.forEach(w => {
+        const pulse = Math.sin(w.timer * 0.25) * 0.5 + 0.5;
+        ctx.strokeStyle = `rgba(100,200,255,${0.4 + pulse * 0.6})`;
+        ctx.lineWidth = 2 + pulse * 2; ctx.shadowColor = '#88ddff'; ctx.shadowBlur = 10;
+        ctx.beginPath(); ctx.arc(w.x, TILE_SIZE * 1.2, 12, 0, Math.PI * 2); ctx.stroke();
+        ctx.shadowBlur = 0;
+      });
+
+      // Falling icicles
+      icicles.forEach(ic => {
+        ctx.fillStyle = '#c8eeff'; ctx.shadowColor = '#aaddff'; ctx.shadowBlur = 8;
+        ctx.beginPath();
+        ctx.moveTo(ic.x + ic.width / 2, ic.y + ic.height);
+        ctx.lineTo(ic.x + 2, ic.y + 4);
+        ctx.lineTo(ic.x + ic.width - 2, ic.y + 4);
+        ctx.lineTo(ic.x + ic.width, ic.y);
+        ctx.lineTo(ic.x, ic.y);
+        ctx.closePath(); ctx.fill();
+        // Inner highlight
+        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        ctx.fillRect(ic.x + 3, ic.y + 2, 3, ic.height * 0.6);
+        ctx.shadowBlur = 0;
+      });
+
+      // Freeze breath projectiles
+      freezeBreaths.forEach(fb => {
+        const a = fb.lifetime / 160;
+        ctx.fillStyle = `rgba(150,220,255,${a * 0.8})`;
+        ctx.shadowColor = '#88ccff'; ctx.shadowBlur = 14;
+        ctx.beginPath(); ctx.arc(fb.x, fb.y, fb.radius, 0, Math.PI * 2); ctx.fill();
+        // Inner cold core
+        ctx.fillStyle = `rgba(220,245,255,${a * 0.9})`;
+        ctx.beginPath(); ctx.arc(fb.x, fb.y, fb.radius * 0.5, 0, Math.PI * 2); ctx.fill();
+        ctx.shadowBlur = 0;
+      });
+
+      // Frost nova spikes (floor spikes)
+      frostSpikes.forEach(sp => {
+        if (sp.state === 'warning') {
+          const pulse = Math.sin(t / 80) * 0.5 + 0.5;
+          ctx.strokeStyle = `rgba(140,210,255,${0.3 + pulse * 0.5})`;
+          ctx.lineWidth = 2; ctx.shadowColor = '#88ccff'; ctx.shadowBlur = 8;
+          ctx.beginPath(); ctx.arc(sp.x, sp.floorY - 4, 12, 0, Math.PI * 2); ctx.stroke();
+          ctx.shadowBlur = 0;
+        } else if (sp.h > 0) {
+          ctx.fillStyle = '#a8d8f0'; ctx.shadowColor = '#cceeff'; ctx.shadowBlur = 10;
+          const spikeTop = sp.floorY - sp.h;
+          ctx.beginPath();
+          ctx.moveTo(sp.x, spikeTop);
+          ctx.lineTo(sp.x - 9, sp.floorY);
+          ctx.lineTo(sp.x + 9, sp.floorY);
+          ctx.closePath(); ctx.fill();
+          // Inner shine
+          ctx.fillStyle = 'rgba(220,245,255,0.6)';
+          ctx.beginPath();
+          ctx.moveTo(sp.x, spikeTop + 6);
+          ctx.lineTo(sp.x - 3, sp.floorY - 4);
+          ctx.lineTo(sp.x + 3, sp.floorY - 4);
+          ctx.closePath(); ctx.fill();
+          ctx.shadowBlur = 0;
+        }
+      });
+
+      // Ice shards
+      iceShards.forEach(sh => {
+        const a = sh.lifetime / 90;
+        ctx.save();
+        ctx.translate(sh.x, sh.y);
+        ctx.rotate(Math.atan2(sh.vy, sh.vx));
+        ctx.fillStyle = `rgba(180,230,255,${a})`;
+        ctx.shadowColor = '#aaddff'; ctx.shadowBlur = 6;
+        ctx.beginPath();
+        ctx.moveTo(12, 0); ctx.lineTo(-4, -4); ctx.lineTo(-4, 4); ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      });
+
+      // Boss body
+      const lp = 0.5 + 0.5 * Math.sin(t / 280);
+      if (flashTimer > 0) {
+        ctx.fillStyle = '#fff'; ctx.shadowColor = '#fff'; ctx.shadowBlur = 28;
+      } else {
+        ctx.fillStyle = `rgb(22,${Math.floor(70 + 40 * lp)},${Math.floor(150 + 50 * lp)})`;
+        ctx.shadowColor = '#3388cc'; ctx.shadowBlur = 16 + 8 * lp;
+      }
+      ctx.fillRect(x, y, width, height);
+      ctx.shadowBlur = 0;
+
+      // Ice armour cracks
+      if (flashTimer === 0) {
+        ctx.strokeStyle = 'rgba(160,220,255,0.5)'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x+8, y+4); ctx.lineTo(x+14, y+20); ctx.lineTo(x+8, y+30); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x+40, y+6); ctx.lineTo(x+34, y+22); ctx.lineTo(x+42, y+38); ctx.stroke();
+        ctx.lineWidth = 1;
+      }
+
+      // Eyes
+      ctx.shadowColor = '#88ddff'; ctx.shadowBlur = 12;
+      ctx.fillStyle = flashTimer > 0 ? '#ff0000' : '#aaeeff';
+      ctx.fillRect(x + 10, y + 14, 10, 8);
+      ctx.fillRect(x + 28, y + 14, 10, 8);
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = '#001833';
+      ctx.fillRect(x + 13, y + 16, 5, 5);
+      ctx.fillRect(x + 31, y + 16, 5, 5);
+
+      // Crown spikes
+      ctx.fillStyle = flashTimer > 0 ? '#fff' : '#c0e8ff';
+      ctx.shadowColor = '#aaddff'; ctx.shadowBlur = 8;
+      [[x+6,y-8],[x+18,y-14],[x+32,y-10],[x+46,y-6]].forEach(([sx,sy]) => {
+        ctx.beginPath(); ctx.moveTo(sx,sy+12); ctx.lineTo(sx-6,sy); ctx.lineTo(sx+6,sy); ctx.closePath(); ctx.fill();
+      });
+      ctx.shadowBlur = 0;
+
+      // Name
+      ctx.save();
+      ctx.font = '8px "Press Start 2P"'; ctx.textAlign = 'center';
+      const na = nameTimer > 60 ? 1 : Math.max(0.25, nameTimer / 60);
+      ctx.fillStyle = `rgba(180,230,255,${na})`; ctx.shadowColor = '#4499dd'; ctx.shadowBlur = 8;
+      ctx.fillText('THE FROZEN TORTURER', x + width / 2, y - 20);
+      ctx.shadowBlur = 0; ctx.restore();
+
+      // HP bar
+      const hbW = 220, hbH = 14, hbX = (ctx.canvas.width - hbW) / 2, hbY = 18;
+      ctx.fillStyle = '#081422'; ctx.fillRect(hbX - 2, hbY - 2, hbW + 4, hbH + 4);
+      ctx.fillStyle = '#122840'; ctx.fillRect(hbX, hbY, hbW, hbH);
+      const hpPct = frozenBoss.hp / frozenBoss.maxHP;
+      ctx.fillStyle = hpPct > 0.5 ? '#44aaff' : hpPct > 0.25 ? '#ff9900' : '#ff3300';
+      ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 6;
+      ctx.fillRect(hbX, hbY, hbW * hpPct, hbH);
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = '#66bbdd'; ctx.lineWidth = 1; ctx.strokeRect(hbX, hbY, hbW, hbH);
+      ctx.font = '6px "Press Start 2P"'; ctx.fillStyle = '#99ddff'; ctx.textAlign = 'center';
+      ctx.fillText('FROZEN TORTURER', ctx.canvas.width / 2, hbY + hbH + 10);
+
+      // Player HP hearts
+      for (let i = 0; i < 15; i++) {
+        ctx.fillStyle = i < playerHP ? '#44aaff' : '#1a2a3a';
+        ctx.shadowColor = i < playerHP ? '#88ccff' : 'transparent'; ctx.shadowBlur = i < playerHP ? 4 : 0;
+        ctx.fillRect(hbX + i * (hbW / 15) + 1, hbY + hbH + 16, hbW / 15 - 3, 8);
+      }
+      ctx.shadowBlur = 0;
+
+      // Freeze tint on player
+      if (player.freezeTimer > 0) {
+        ctx.fillStyle = `rgba(100,180,255,${Math.min(1, player.freezeTimer / 80) * 0.45})`;
+        ctx.fillRect(player.x, player.y, player.width, player.height);
+      }
+
+      ctx.fillStyle = '#00ffff';
+      bullets.forEach(b => ctx.fillRect(b.x, b.y, 8, 4));
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
     // Initialize Game
     function init() {
       canvas = document.getElementById('game-canvas');
@@ -2650,7 +3564,9 @@
         vx: 0,
         vy: 0,
         onGround: false,
-        onPlatform: null
+        onPlatform: null,
+        mimicTile: null,
+        freezeTimer: 0
       };
       if (twoPlayerMode) {
         player2 = {
@@ -2661,7 +3577,9 @@
           vx: 0,
           vy: 0,
           onGround: false,
-          onPlatform: null
+          onPlatform: null,
+          mimicTile: null,
+          freezeTimer: 0
         };
         p2FacingRight = true;
         p2Squish = { x: 1, y: 1 };
@@ -2729,6 +3647,24 @@
         e.moveRange = TILE_SIZE * 2;
       });
 
+      // Initialize spiky enemies (type 16) — chase + bob
+      level.tiles.filter(t => t.type === 16).forEach(e => {
+        e.startX   = e.x * TILE_SIZE;
+        e.currentX = e.startX;
+        e.currentY = e.y * TILE_SIZE;
+        e.direction = 1;
+        e.moveRange = TILE_SIZE * 2.5;
+        e.phase = Math.random() * Math.PI * 2;
+      });
+
+      // Initialize mimic platforms (type 17)
+      level.tiles.filter(t => t.type === 17).forEach(t => {
+        t.mimicState = 'idle';
+        t.mimicX = t.x * TILE_SIZE;
+        t.mimicVx = 0;
+        t.mimicTimer = 0;
+      });
+
       // Initialize lava geysers (type 15) — periodic fire column
       level.tiles.filter(t => t.type === 15).forEach((g, i) => {
         g.geyserTimer = Math.floor((120 / Math.max(1, level.tiles.filter(t => t.type === 15).length)) * i);
@@ -2751,8 +3687,19 @@
         bossActive = false; boss = null;
         cinderBossActive = false; cinderBoss = null;
         cinderAttacks = []; cinderPools = [];
+        frozenBossActive = false; frozenBoss = null;
+        icicles = []; freezeBreaths = []; icicleWarnings = [];
         createCinderBoss();
         if (!AudioManager.muted) { AudioManager.stopBGM(); AudioManager.startLavaBGM(); }
+      } else if (levels[levelIndex].isIceBoss) {
+        // Frozen Torturer level
+        bossActive = false; boss = null;
+        cinderBossActive = false; cinderBoss = null;
+        cinderAttacks = []; cinderPools = [];
+        frozenBossActive = false; frozenBoss = null;
+        icicles = []; freezeBreaths = []; icicleWarnings = [];
+        createFrozenBoss();
+        if (!AudioManager.muted) { AudioManager.stopBGM(); AudioManager.startFrostBossBGM(); }
       } else {
         // Reset all boss state for normal levels
         bossActive = false;
@@ -2764,10 +3711,16 @@
         cinderBoss = null;
         cinderAttacks = [];
         cinderPools = [];
-        // Return to normal music
+        frozenBossActive = false; frozenBoss = null;
+        icicles = []; freezeBreaths = []; icicleWarnings = [];
+        // Choose music based on level theme
         if (!AudioManager.muted && gameRunning) {
           AudioManager.stopBGM();
-          AudioManager.startBGM();
+          if (levels[levelIndex].bgTheme === 'ice') {
+            AudioManager.startFrostBGM();
+          } else {
+            AudioManager.startBGM();
+          }
         }
       }
 
@@ -3099,6 +4052,81 @@
         e.currentY = e.startY - Math.max(0, Math.sin(e.hopPhase)) * TILE_SIZE * 1.2;
       });
 
+      // Update spiky enemies (type 16 — chase player when nearby, bob vertically)
+      level.tiles.filter(t => t.type === 16).forEach(e => {
+        const px = player.x + player.width / 2;
+        const ex = e.currentX + TILE_SIZE / 2;
+        const dist = Math.abs(px - ex);
+        if (!flyMode && dist < TILE_SIZE * 7) {
+          // Chase player
+          const chaseDir = px > ex ? 1 : -1;
+          e.currentX += chaseDir * (glitchMode ? 3.5 : 1.8);
+          e.direction = chaseDir;
+        } else {
+          // Normal patrol
+          e.currentX += e.direction * (glitchMode ? 2.5 : 1);
+          if (Math.abs(e.currentX - e.startX) > e.moveRange) e.direction *= -1;
+        }
+        // Vertical bobbing — makes it unpredictable to jump over
+        e.phase += 0.04;
+        e.currentY = e.y * TILE_SIZE + Math.sin(e.phase) * 9;
+      });
+
+      // Update mimic platforms (type 17) — move and carry players
+      level.tiles.filter(t => t.type === 17).forEach(t => {
+        if (t.mimicState === 'running') {
+          const delta = t.mimicVx; // movement this frame (before acceleration)
+          t.mimicX += delta;
+          t.mimicVx *= 1.05; // accelerate as it panics
+          t.mimicTimer++;
+
+          // Carry P1 if riding this mimic
+          if (player.mimicTile === t) {
+            if (player.vy < 0) {
+              player.mimicTile = null; // player jumped off
+            } else {
+              const onTop = player.x + player.width > t.mimicX - 2 && player.x < t.mimicX + TILE_SIZE + 2;
+              if (onTop) {
+                player.x += delta;
+                player.y  = t.y * TILE_SIZE - player.height;
+                player.vy = 0;
+                player.onGround = true;
+              } else {
+                player.mimicTile = null; // fell off edge
+              }
+            }
+          }
+
+          // Carry P2 if riding this mimic
+          if (twoPlayerMode && player2.mimicTile === t) {
+            if (player2.vy < 0) {
+              player2.mimicTile = null;
+            } else {
+              const p2OnTop = player2.x + player2.width > t.mimicX - 2 && player2.x < t.mimicX + TILE_SIZE + 2;
+              if (p2OnTop) {
+                player2.x += delta;
+                player2.y  = t.y * TILE_SIZE - player2.height;
+                player2.vy = 0;
+                player2.onGround = true;
+              } else {
+                player2.mimicTile = null;
+              }
+            }
+          }
+
+          if (t.mimicTimer > 220) { // reset
+            if (player.mimicTile === t)  player.mimicTile  = null;
+            if (twoPlayerMode && player2.mimicTile === t) player2.mimicTile = null;
+            t.mimicState = 'idle';
+            t.mimicX = t.x * TILE_SIZE;
+            t.mimicVx = 0;
+            t.mimicTimer = 0;
+          }
+        } else {
+          t.mimicTimer++;
+        }
+      });
+
       // Update lava geysers (type 15 — fire every 150 frames for 40 frames)
       level.tiles.filter(t => t.type === 15).forEach(g => {
         g.geyserTimer++;
@@ -3179,8 +4207,6 @@
         playerFacingRight = true;
       }
 
-      player.vx = moveX;
-
       // Fly mode controls
       if (flyMode) {
         let moveY = 0;
@@ -3189,8 +4215,8 @@
         if (keys['Space']) moveY = -FLY_SPEED;
         player.vy = moveY;
       } else {
-        // Boss fight shooting (main boss or cinder boss)
-        if (bossActive || cinderBossActive) {
+        // Boss fight shooting (main boss, cinder boss, or frozen boss)
+        if (bossActive || cinderBossActive || frozenBossActive) {
           if (keys['Space']) {
             shootBullet();
           }
@@ -3198,6 +4224,7 @@
           if ((keys['KeyW'] || (!twoPlayerMode && keys['ArrowUp'])) && player.onGround) {
             player.vy = JUMP_FORCE;
             player.onGround = false;
+            player.mimicTile = null;
             playerSquish = { x: 0.65, y: 1.4 };
             AudioManager.playSound('jump');
           }
@@ -3206,6 +4233,7 @@
           if ((keys['Space'] || keys['KeyW'] || (!twoPlayerMode && keys['ArrowUp'])) && player.onGround) {
             player.vy = JUMP_FORCE;
             player.onGround = false;
+            player.mimicTile = null;
             playerSquish = { x: 0.65, y: 1.4 };
             AudioManager.playSound('jump');
           }
@@ -3228,14 +4256,31 @@
       }
       
       // Horizontal collision
+      // Freeze slowdown
+      if (player.freezeTimer > 0) { player.freezeTimer--; moveX *= 0.4; }
+
+      // Ice slipperiness (uses onIce from previous frame)
+      if (player.onIce && !flyMode) {
+        if (moveX !== 0) {
+          player.vx += (moveX - player.vx) * 0.08;
+        } else {
+          player.vx *= 0.985;
+          if (Math.abs(player.vx) < 0.1) player.vx = 0;
+        }
+      } else {
+        player.vx = moveX;
+      }
+
       player.x += player.vx;
       const hTiles = getCollidingTiles(player, level);
       hTiles.forEach(tile => {
-        if (tile.type === 1 || tile.type === 9 || tile.type === 12) {
+        if (tile.type === 1 || tile.type === 9 || tile.type === 12 || tile.type === 18 ||
+            (tile.type === 17 && tile.mimicState === 'idle')) {
+          const tileLeft = (tile.type === 17) ? tile.mimicX : tile.x * TILE_SIZE;
           if (player.vx > 0) {
-            player.x = tile.x * TILE_SIZE - player.width;
+            player.x = tileLeft - player.width;
           } else if (player.vx < 0) {
-            player.x = (tile.x + 1) * TILE_SIZE;
+            player.x = tileLeft + TILE_SIZE;
           }
         }
       });
@@ -3243,6 +4288,7 @@
       // Vertical collision
       player.y += player.vy;
       player.onGround = false;
+      player.onIce = false;
 
       // Only reset platform if player walked off horizontally
       if (player.onPlatform) {
@@ -3257,17 +4303,26 @@
       
       const vTiles = getCollidingTiles(player, level);
       vTiles.forEach(tile => {
-        if (tile.type === 1 || tile.type === 9 || tile.type === 12) {
+        if (tile.type === 1 || tile.type === 9 || tile.type === 12 || tile.type === 18 ||
+            (tile.type === 17 && tile.mimicState === 'idle')) {
           if (player.vy > 0) {
             player.y = tile.y * TILE_SIZE - player.height;
             if (tile.type === 12) {
-              // Spring — launch upward, don't set onGround
               player.vy = SPRING_FORCE;
               playerSquish = { x: 0.55, y: 1.5 };
               AudioManager.playSound('boost');
+            } else if (tile.type === 17) {
+              // Mimic! Activate it — run away from player's direction
+              tile.mimicState = 'running';
+              tile.mimicVx = player.vx >= 0 ? 4 : -4;
+              tile.mimicTimer = 0;
+              player.mimicTile = tile; // player rides it
+              player.vy = 0;
+              player.onGround = true;
             } else {
               player.vy = 0;
               player.onGround = true;
+              if (tile.type === 18) player.onIce = true;
               if (tile.type === 9 && tile.crumbleState === 'idle') {
                 tile.crumbleState = 'crumbling';
                 tile.crumbleTimer = 0;
@@ -3279,7 +4334,7 @@
           }
         }
       });
-      
+
       // Moving platform collision
       level.movingPlatforms.forEach(plat => {
         const platRect = {
@@ -3334,9 +4389,10 @@
 
       // Enemy collision (disabled in fly mode)
       if (!flyMode) {
-        // Walker (3) and fast walker (10)
-        level.tiles.filter(t => t.type === 3 || t.type === 10).forEach(e => {
-          const enemyRect = { x: e.currentX + 4, y: e.y * TILE_SIZE + 4, width: TILE_SIZE - 8, height: TILE_SIZE - 8 };
+        // Walker (3), fast walker (10), and spiky (16 — any direction kills)
+        level.tiles.filter(t => t.type === 3 || t.type === 10 || t.type === 16).forEach(e => {
+          const ey16 = (e.type === 16 && e.currentY !== undefined) ? e.currentY : e.y * TILE_SIZE;
+          const enemyRect = { x: e.currentX + 4, y: ey16 + 4, width: TILE_SIZE - 8, height: TILE_SIZE - 8 };
           if (rectIntersect(player, enemyRect)) die();
         });
         // Bouncer (11) — uses currentY too
@@ -3373,6 +4429,10 @@
       }
       if (cinderBossActive) {
         updateCinderBoss();
+        updateBullets();
+      }
+      if (frozenBossActive) {
+        updateFrozenBoss();
         updateBullets();
       }
 
@@ -3424,7 +4484,20 @@
       let moveX = 0;
       if (keys['ArrowLeft'])  { moveX = -MOVE_SPEED; p2FacingRight = false; }
       if (keys['ArrowRight']) { moveX =  MOVE_SPEED; p2FacingRight = true;  }
-      player2.vx = moveX;
+      // Freeze slowdown P2
+      if (player2.freezeTimer > 0) { player2.freezeTimer--; moveX *= 0.4; }
+
+      // Ice slipperiness for P2
+      if (player2.onIce && !flyMode) {
+        if (moveX !== 0) {
+          player2.vx += (moveX - player2.vx) * 0.2;
+        } else {
+          player2.vx *= 0.93;
+          if (Math.abs(player2.vx) < 0.2) player2.vx = 0;
+        }
+      } else {
+        player2.vx = moveX;
+      }
 
       // Fly mode (shared global flag — P2 uses ArrowUp/ArrowDown)
       if (flyMode) {
@@ -3434,11 +4507,12 @@
         player2.vy = moveY;
       } else {
         // Shoot in boss fights (Enter key)
-        if (bossActive || cinderBossActive) {
+        if (bossActive || cinderBossActive || frozenBossActive) {
           if (keys['Enter']) shootBullet2();
           if (keys['ArrowUp'] && player2.onGround) {
             player2.vy = JUMP_FORCE;
             player2.onGround = false;
+            player2.mimicTile = null;
             p2Squish = { x: 0.65, y: 1.4 };
             AudioManager.playSound('jump');
           }
@@ -3446,6 +4520,7 @@
           if (keys['ArrowUp'] && player2.onGround) {
             player2.vy = JUMP_FORCE;
             player2.onGround = false;
+            player2.mimicTile = null;
             p2Squish = { x: 0.65, y: 1.4 };
             AudioManager.playSound('jump');
           }
@@ -3469,15 +4544,18 @@
       player2.x += player2.vx;
       const hTiles2 = getCollidingTiles(player2, level);
       hTiles2.forEach(tile => {
-        if (tile.type === 1 || tile.type === 9 || tile.type === 12) {
-          if (player2.vx > 0) player2.x = tile.x * TILE_SIZE - player2.width;
-          else if (player2.vx < 0) player2.x = (tile.x + 1) * TILE_SIZE;
+        if (tile.type === 1 || tile.type === 9 || tile.type === 12 || tile.type === 18 ||
+            (tile.type === 17 && tile.mimicState === 'idle')) {
+          const tileLeft = (tile.type === 17) ? tile.mimicX : tile.x * TILE_SIZE;
+          if (player2.vx > 0) player2.x = tileLeft - player2.width;
+          else if (player2.vx < 0) player2.x = tileLeft + TILE_SIZE;
         }
       });
 
       // Vertical collision
       player2.y += player2.vy;
       player2.onGround = false;
+      player2.onIce = false;
 
       if (player2.onPlatform) {
         const plat = player2.onPlatform;
@@ -3488,16 +4566,25 @@
 
       const vTiles2 = getCollidingTiles(player2, level);
       vTiles2.forEach(tile => {
-        if (tile.type === 1 || tile.type === 9 || tile.type === 12) {
+        if (tile.type === 1 || tile.type === 9 || tile.type === 12 || tile.type === 18 ||
+            (tile.type === 17 && tile.mimicState === 'idle')) {
           if (player2.vy > 0) {
             player2.y = tile.y * TILE_SIZE - player2.height;
             if (tile.type === 12) {
               player2.vy = SPRING_FORCE;
               p2Squish = { x: 0.55, y: 1.5 };
               AudioManager.playSound('boost');
+            } else if (tile.type === 17) {
+              tile.mimicState = 'running';
+              tile.mimicVx = player2.vx >= 0 ? 4 : -4;
+              tile.mimicTimer = 0;
+              player2.mimicTile = tile;
+              player2.vy = 0;
+              player2.onGround = true;
             } else {
               player2.vy = 0;
               player2.onGround = true;
+              if (tile.type === 18) player2.onIce = true;
               if (tile.type === 9 && tile.crumbleState === 'idle') {
                 tile.crumbleState = 'crumbling';
                 tile.crumbleTimer = 0;
@@ -3539,8 +4626,9 @@
 
       // Enemy collision (disabled in fly mode)
       if (!flyMode) {
-        level.tiles.filter(t => t.type === 3 || t.type === 10).forEach(e => {
-          if (rectIntersect(player2, { x: e.currentX + 4, y: e.y * TILE_SIZE + 4, width: TILE_SIZE - 8, height: TILE_SIZE - 8 })) die2();
+        level.tiles.filter(t => t.type === 3 || t.type === 10 || t.type === 16).forEach(e => {
+          const ey16p2 = (e.type === 16 && e.currentY !== undefined) ? e.currentY : e.y * TILE_SIZE;
+          if (rectIntersect(player2, { x: e.currentX + 4, y: ey16p2 + 4, width: TILE_SIZE - 8, height: TILE_SIZE - 8 })) die2();
         });
         level.tiles.filter(t => t.type === 11).forEach(e => {
           if (rectIntersect(player2, { x: e.currentX + 4, y: e.currentY + 4, width: TILE_SIZE - 8, height: TILE_SIZE - 8 })) die2();
@@ -3594,9 +4682,10 @@
     function getCollidingTiles(rect, level) {
       const colliding = [];
       level.tiles.forEach(tile => {
-        if (tile.type === 9 && tile.crumbleState === 'fallen') return; // no collision when fallen
+        if (tile.type === 9  && tile.crumbleState === 'fallen') return; // no collision when fallen
+        if (tile.type === 17 && tile.mimicState   === 'running') return; // mimic ran away
         const tileRect = {
-          x: tile.x * TILE_SIZE,
+          x: (tile.type === 17 && tile.mimicX !== undefined) ? tile.mimicX : tile.x * TILE_SIZE,
           y: tile.y * TILE_SIZE,
           width: TILE_SIZE,
           height: TILE_SIZE
@@ -3641,6 +4730,8 @@
         gradient.addColorStop(0, '#001212'); gradient.addColorStop(1, '#001a22');
       } else if (bgTheme === 'void') {
         gradient.addColorStop(0, '#03010f'); gradient.addColorStop(1, '#0a0520');
+      } else if (bgTheme === 'ice') {
+        gradient.addColorStop(0, '#06141e'); gradient.addColorStop(1, '#0d2a40');
       } else { // space (default)
         gradient.addColorStop(0, '#060818'); gradient.addColorStop(0.6, '#0f172a'); gradient.addColorStop(1, '#1a1a3e');
       }
@@ -3745,6 +4836,38 @@
           ctx.lineTo(px, canvas.height * 0.6 + Math.sin(wx * 0.003) * 60 + Math.sin(wx * 0.007 + 1) * 25);
         }
         ctx.lineTo(canvas.width, canvas.height); ctx.closePath(); ctx.fill();
+
+      } else if (bgTheme === 'ice') {
+        // Snowy mountain peaks (far)
+        ctx.fillStyle = '#0e2232';
+        ctx.beginPath(); ctx.moveTo(0, canvas.height);
+        for (let px = 0; px <= canvas.width; px += 5) {
+          const wx = px + cameraX * 0.07;
+          ctx.lineTo(px, canvas.height * 0.45 + Math.sin(wx * 0.004) * 70 + Math.abs(Math.sin(wx * 0.011)) * 50);
+        }
+        ctx.lineTo(canvas.width, canvas.height); ctx.closePath(); ctx.fill();
+        // Snow caps on peaks (near)
+        ctx.fillStyle = '#a8cce0';
+        ctx.beginPath(); ctx.moveTo(0, canvas.height);
+        for (let px = 0; px <= canvas.width; px += 5) {
+          const wx = px + cameraX * 0.18;
+          ctx.lineTo(px, canvas.height * 0.62 + Math.sin(wx * 0.006 + 1) * 45 + Math.abs(Math.sin(wx * 0.015 + 0.5)) * 30);
+        }
+        ctx.lineTo(canvas.width, canvas.height); ctx.closePath(); ctx.fill();
+        // Frost glow at ground
+        const iceGrad = ctx.createLinearGradient(0, canvas.height * 0.85, 0, canvas.height);
+        iceGrad.addColorStop(0, 'rgba(100,180,220,0)');
+        iceGrad.addColorStop(1, 'rgba(140,210,240,0.18)');
+        ctx.fillStyle = iceGrad;
+        ctx.fillRect(0, canvas.height * 0.85, canvas.width, canvas.height * 0.15);
+        // Drifting snow particles
+        ctx.fillStyle = 'rgba(200,230,245,0.55)';
+        for (let s = 0; s < 40; s++) {
+          const sx = ((s * 173 + cameraX * 0.25 + now * 0.04) % canvas.width + canvas.width) % canvas.width;
+          const sy = (s * 97 + now * (0.3 + (s % 5) * 0.08)) % canvas.height;
+          const sr = 1 + (s % 3) * 0.5;
+          ctx.beginPath(); ctx.arc(sx, sy, sr, 0, Math.PI * 2); ctx.fill();
+        }
       }
       
       ctx.save();
@@ -4143,6 +5266,128 @@
             }
             break;
           }
+
+          case 16: { // Spiky Enemy — untouchable from ANY direction, chases + bobs
+            const sx = tile.currentX !== undefined ? tile.currentX : x;
+            const sy = tile.currentY !== undefined ? tile.currentY : y;
+            // Body — dark crimson
+            ctx.fillStyle = glitchMode ? '#ff0000' : '#7f1d1d';
+            if (glitchMode) { ctx.shadowColor = '#ff0000'; ctx.shadowBlur = 8; }
+            ctx.beginPath();
+            ctx.arc(sx + TILE_SIZE / 2, sy + TILE_SIZE / 2, TILE_SIZE / 2 - 6, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            // Spikes radiating in 8 directions
+            ctx.fillStyle = '#fca5a5';
+            for (let si = 0; si < 8; si++) {
+              const angle = (si / 8) * Math.PI * 2;
+              const tipX = sx + TILE_SIZE / 2 + Math.cos(angle) * (TILE_SIZE / 2 + 2);
+              const tipY = sy + TILE_SIZE / 2 + Math.sin(angle) * (TILE_SIZE / 2 + 2);
+              const lX = sx + TILE_SIZE / 2 + Math.cos(angle + 0.3) * (TILE_SIZE / 2 - 8);
+              const lY = sy + TILE_SIZE / 2 + Math.sin(angle + 0.3) * (TILE_SIZE / 2 - 8);
+              const rX = sx + TILE_SIZE / 2 + Math.cos(angle - 0.3) * (TILE_SIZE / 2 - 8);
+              const rY = sy + TILE_SIZE / 2 + Math.sin(angle - 0.3) * (TILE_SIZE / 2 - 8);
+              ctx.beginPath();
+              ctx.moveTo(tipX, tipY);
+              ctx.lineTo(lX, lY);
+              ctx.lineTo(rX, rY);
+              ctx.closePath();
+              ctx.fill();
+            }
+            // Red glowing eyes
+            ctx.fillStyle = '#ff0000';
+            ctx.shadowColor = '#ff0000';
+            ctx.shadowBlur = 6;
+            ctx.beginPath();
+            ctx.arc(sx + TILE_SIZE / 2 - 4, sy + TILE_SIZE / 2 - 2, 2.5, 0, Math.PI * 2);
+            ctx.arc(sx + TILE_SIZE / 2 + 4, sy + TILE_SIZE / 2 - 2, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            break;
+          }
+
+          case 17: { // Mimic Platform — looks safe, runs when you land
+            const mx = tile.mimicX !== undefined ? tile.mimicX : x;
+            const isRunning = tile.mimicState === 'running';
+            const t17 = Date.now();
+            // Platform body
+            ctx.fillStyle = isRunning ? '#6b7280' : '#4a5568';
+            ctx.fillRect(mx, y, TILE_SIZE, TILE_SIZE);
+            ctx.fillStyle = isRunning ? '#9ca3af' : '#718096';
+            ctx.fillRect(mx, y, TILE_SIZE, 4);
+            ctx.fillStyle = '#2d3748';
+            ctx.fillRect(mx, y + TILE_SIZE - 4, TILE_SIZE, 4);
+
+            if (!isRunning) {
+              // Idle — subtle "eyes" peeking from top (hint it's alive)
+              const blink = Math.sin(t17 / 600 + tile.x) > 0.85;
+              ctx.fillStyle = blink ? '#4a5568' : '#fbbf24'; // blink = pupils close
+              if (!blink) {
+                ctx.beginPath();
+                ctx.arc(mx + TILE_SIZE / 2 - 5, y + 6, 2.5, 0, Math.PI * 2);
+                ctx.arc(mx + TILE_SIZE / 2 + 5, y + 6, 2.5, 0, Math.PI * 2);
+                ctx.fill();
+                // Tiny pupils
+                ctx.fillStyle = '#000';
+                ctx.beginPath();
+                ctx.arc(mx + TILE_SIZE / 2 - 5, y + 6, 1, 0, Math.PI * 2);
+                ctx.arc(mx + TILE_SIZE / 2 + 5, y + 6, 1, 0, Math.PI * 2);
+                ctx.fill();
+              }
+            } else {
+              // Running — wide scared eyes + cartoon legs
+              // Eyes wide with fear
+              ctx.fillStyle = '#fff';
+              ctx.beginPath();
+              ctx.arc(mx + TILE_SIZE / 2 - 6, y + 8, 4, 0, Math.PI * 2);
+              ctx.arc(mx + TILE_SIZE / 2 + 6, y + 8, 4, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.fillStyle = '#000';
+              // Pupils shifted in run direction
+              const pupilShift = tile.mimicVx > 0 ? 2 : -2;
+              ctx.beginPath();
+              ctx.arc(mx + TILE_SIZE / 2 - 6 + pupilShift, y + 8, 2, 0, Math.PI * 2);
+              ctx.arc(mx + TILE_SIZE / 2 + 6 + pupilShift, y + 8, 2, 0, Math.PI * 2);
+              ctx.fill();
+              // Legs — 4 animated stick legs below platform
+              const legSwing = Math.sin(t17 / 60) * 6;
+              ctx.strokeStyle = '#4a5568';
+              ctx.lineWidth = 3;
+              ctx.lineCap = 'round';
+              [mx + 6, mx + 12, mx + 20, mx + 26].forEach((lx, li) => {
+                const swing = li % 2 === 0 ? legSwing : -legSwing;
+                ctx.beginPath();
+                ctx.moveTo(lx, y + TILE_SIZE);
+                ctx.lineTo(lx + swing, y + TILE_SIZE + 8);
+                ctx.stroke();
+              });
+              ctx.lineWidth = 1;
+            }
+            break;
+          }
+
+          case 18: { // Ice Platform — slippery, pale blue-white
+            // Base
+            ctx.fillStyle = '#1e4d6b';
+            ctx.fillRect(x, y, TILE_SIZE, TILE_SIZE);
+            // Icy top highlight
+            ctx.fillStyle = '#a8d8f0';
+            ctx.fillRect(x, y, TILE_SIZE, 5);
+            ctx.fillStyle = '#cdeeff';
+            ctx.fillRect(x + 2, y + 1, TILE_SIZE - 4, 2);
+            // Side sheen
+            ctx.fillStyle = '#2d6a8a';
+            ctx.fillRect(x, y + 5, TILE_SIZE, TILE_SIZE - 9);
+            ctx.fillStyle = '#163d54';
+            ctx.fillRect(x, y + TILE_SIZE - 4, TILE_SIZE, 4);
+            // Ice crystal sparkles
+            ctx.fillStyle = 'rgba(180,230,255,0.6)';
+            [[x+6,y+10],[x+18,y+16],[x+26,y+9]].forEach(([cx,cy]) => {
+              ctx.fillRect(cx-1, cy-3, 2, 6);
+              ctx.fillRect(cx-3, cy-1, 6, 2);
+            });
+            break;
+          }
         }
       });
 
@@ -4256,6 +5501,7 @@
       // Draw boss and bullets
       renderBoss();
       renderCinderBoss();
+      renderFrozenBoss();
 
       ctx.restore(); // end camera transform
 
