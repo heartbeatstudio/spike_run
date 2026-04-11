@@ -73,6 +73,24 @@
     .boost-pad {
       animation: boost-pulse 0.5s ease-in-out infinite;
     }
+
+    @keyframes premium-rainbow-chip {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 200% 50%; }
+    }
+    .skin-chip-diamond {
+      background: linear-gradient(135deg, #ffffff 0%, #7dd3fc 32%, #e0f2fe 55%, #38bdf8 78%, #f0f9ff 100%) !important;
+      box-shadow: inset 0 0 8px rgba(255,255,255,0.95), 0 0 14px rgba(56,189,248,0.45);
+    }
+    .skin-chip-rainbow {
+      background: linear-gradient(90deg, #ff006e, #ffbe0b, #06ffa5, #3a86ff, #8338ec, #ff006e) !important;
+      background-size: 200% 100% !important;
+      animation: premium-rainbow-chip 2.8s linear infinite;
+    }
+    .skin-chip-voidholo {
+      background: linear-gradient(125deg, #0a0118 0%, #4c1d95 25%, #c026d3 50%, #0e7490 75%, #1e1b4b 100%) !important;
+      box-shadow: inset 0 0 10px rgba(232,121,249,0.35), 0 0 12px rgba(168,85,247,0.4);
+    }
     
     .enemy {
       animation: enemy-float 1s ease-in-out infinite;
@@ -84,6 +102,10 @@
  <body class="h-full bg-gray-900 overflow-hidden">
   <div id="game-container" class="h-full w-full relative flex items-center justify-center"><!-- Start Screen -->
    <div id="start-screen" class="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-gray-900 via-purple-900 to-gray-900 z-50">
+    <div class="absolute top-4 right-4 left-4 flex flex-col items-end gap-2 pointer-events-none">
+     <span id="start-screen-coins" class="game-font text-xs text-amber-400 pointer-events-auto bg-black/50 px-3 py-2 rounded-lg">COINS 0</span>
+     <span id="start-screen-powerups" class="game-font text-[10px] text-cyan-300 pointer-events-auto bg-black/50 px-3 py-2 rounded-lg text-right leading-relaxed max-w-[14rem]"></span>
+    </div>
     <h1 id="game-title" class="game-font text-3xl md:text-5xl text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-yellow-500 to-red-500 mb-6 text-center px-4" style="animation: pulse-glow 2s ease-in-out infinite;">SPIKE RUNNER</h1>
     <p class="game-font text-xs md:text-sm text-gray-400 mb-5 text-center px-4">Super Hard Platformer</p>
     <p class="game-font text-xs text-gray-500 mb-2">CHOOSE YOUR RUNNER</p>
@@ -95,7 +117,13 @@
      <button class="skin-btn w-9 h-9 rounded-lg border-2 border-transparent transition-transform hover:scale-110" style="background:#374151" data-skin="4"></button>
      <button class="skin-btn w-9 h-9 rounded-lg border-2 border-transparent transition-transform hover:scale-110" style="background:#a855f7" data-skin="5"></button>
     </div>
-    <p id="skin-name-label" class="game-font text-xs text-green-400 mb-3">NEON</p>
+    <p id="skin-name-label" class="game-font text-xs text-green-400 mb-2">NEON</p>
+    <p class="game-font text-xs text-gray-500 mb-2">PREMIUM (SHOP)</p>
+    <div id="skin-selector-premium" class="flex gap-2 justify-center mb-3">
+     <button type="button" class="skin-btn premium-skin skin-chip-diamond w-9 h-9 rounded-lg border-2 border-transparent transition-transform hover:scale-110 relative" data-skin="6" title="Diamond — buy in Shop"><span class="skin-lock pointer-events-none absolute inset-0 flex items-center justify-center game-font text-[8px] text-white/90 drop-shadow-md">🔒</span></button>
+     <button type="button" class="skin-btn premium-skin skin-chip-rainbow w-9 h-9 rounded-lg border-2 border-transparent transition-transform hover:scale-110 relative" data-skin="7" title="Rainbow — buy in Shop"><span class="skin-lock pointer-events-none absolute inset-0 flex items-center justify-center game-font text-[8px] text-white/90 drop-shadow-md">🔒</span></button>
+     <button type="button" class="skin-btn premium-skin skin-chip-voidholo w-9 h-9 rounded-lg border-2 border-transparent transition-transform hover:scale-110 relative" data-skin="8" title="Void Holo — buy in Shop"><span class="skin-lock pointer-events-none absolute inset-0 flex items-center justify-center game-font text-[8px] text-white/90 drop-shadow-md">🔒</span></button>
+    </div>
     <!-- 2-player toggle -->
     <button id="two-player-toggle" class="game-font text-xs text-gray-500 hover:text-cyan-400 border border-gray-700 hover:border-cyan-600 px-4 py-2 rounded-lg transition-colors mb-3">2 PLAYER: OFF</button>
     <!-- P2 skin section (hidden until 2P enabled) -->
@@ -110,7 +138,15 @@
       <button class="skin-btn-2 w-9 h-9 rounded-lg border-2 border-transparent transition-transform hover:scale-110" style="background:#a855f7" data-skin2="5"></button>
      </div>
      <p id="skin-name-label-2" class="game-font text-xs mb-1" style="color:#ef4444">CRIMSON</p>
+     <p class="game-font text-xs text-gray-500 mb-2">P2 PREMIUM</p>
+     <div id="skin-selector-premium-2" class="flex gap-2 justify-center mb-1">
+      <button type="button" class="skin-btn-2 premium-skin-2 skin-chip-diamond w-9 h-9 rounded-lg border-2 border-transparent transition-transform hover:scale-110 relative" data-skin2="6" title="Diamond — buy in Shop"><span class="skin-lock-2 pointer-events-none absolute inset-0 flex items-center justify-center game-font text-[8px] text-white/90 drop-shadow-md">🔒</span></button>
+      <button type="button" class="skin-btn-2 premium-skin-2 skin-chip-rainbow w-9 h-9 rounded-lg border-2 border-transparent transition-transform hover:scale-110 relative" data-skin2="7" title="Rainbow — buy in Shop"><span class="skin-lock-2 pointer-events-none absolute inset-0 flex items-center justify-center game-font text-[8px] text-white/90 drop-shadow-md">🔒</span></button>
+      <button type="button" class="skin-btn-2 premium-skin-2 skin-chip-voidholo w-9 h-9 rounded-lg border-2 border-transparent transition-transform hover:scale-110 relative" data-skin2="8" title="Void Holo — buy in Shop"><span class="skin-lock-2 pointer-events-none absolute inset-0 flex items-center justify-center game-font text-[8px] text-white/90 drop-shadow-md">🔒</span></button>
+     </div>
     </div>
+    <button id="open-shop-btn" class="game-font text-xs text-amber-400 hover:text-amber-300 border border-amber-700 hover:border-amber-500 px-4 py-2 rounded-lg transition-colors mb-3">SHOP</button>
+    <button type="button" id="open-progress-level-select-btn" class="game-font text-xs text-cyan-400 hover:text-cyan-300 border border-cyan-700 hover:border-cyan-500 px-4 py-2 rounded-lg transition-colors mb-3">LEVEL SELECT</button>
     <button id="practice-toggle" class="game-font text-xs text-gray-500 hover:text-yellow-400 border border-gray-700 hover:border-yellow-600 px-4 py-2 rounded-lg transition-colors mb-5">PRACTICE MODE: OFF</button>
     <button id="start-btn" class="game-font text-sm bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white px-8 py-4 rounded-lg transition-all transform hover:scale-105">START GAME</button>
     <div id="controls-hint" class="mt-6 game-font text-xs text-gray-500 text-center px-4">
@@ -136,16 +172,24 @@
     </div>
     <div class="bg-black/70 px-4 py-2 rounded-lg"><span class="text-gray-400">DEATHS</span> <span id="death-display" class="text-red-400 ml-2">0</span>
     </div>
+    <div class="bg-black/70 px-4 py-2 rounded-lg"><span class="text-gray-400">COINS</span> <span id="hud-coins" class="text-amber-400 ml-2">0</span>
+    </div>
     <div id="practice-hud" class="bg-yellow-500/20 border border-yellow-500/50 px-4 py-2 rounded-lg hidden"><span class="text-yellow-400">PRACTICE</span>
     </div>
+    <button type="button" id="menu-btn" class="game-font bg-black/70 px-2 py-2 rounded-lg cursor-pointer hover:bg-violet-900/60 transition-colors border border-transparent hover:border-violet-500/50 text-center leading-tight shrink-0">
+     <span class="block text-[7px] text-gray-400">RETURN</span>
+     <span class="block text-[7px] text-violet-300">TO MENU</span>
+    </button>
     <div id="mute-btn" class="bg-black/70 px-4 py-2 rounded-lg cursor-pointer hover:bg-black/80 transition-colors"><span class="text-gray-400">SOUND</span> <span id="mute-indicator" class="text-green-400 ml-2">ON</span>
     </div>
    </div><!-- Level Complete -->
    <div id="level-complete" class="absolute inset-0 flex-col items-center justify-center bg-black/90 z-40 hidden">
     <h2 class="game-font text-2xl text-green-400 mb-4">LEVEL COMPLETE!</h2>
+    <p id="level-coins-earned" class="game-font text-xs text-amber-400 mb-2 hidden">+<span id="level-coins-amount">0</span> COINS</p>
     <p class="game-font text-xs text-cyan-400 mb-2">TIME <span id="level-time-display" class="text-white ml-2">0:00.0</span></p>
-    <p class="game-font text-xs text-gray-500 mb-8">TOTAL <span id="total-time-interim-display" class="text-gray-300 ml-2">0:00.0</span></p>
-    <button id="next-level-btn" class="game-font text-sm bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white px-8 py-4 rounded-lg">NEXT LEVEL</button>
+    <p class="game-font text-xs text-gray-500 mb-6">TOTAL <span id="total-time-interim-display" class="text-gray-300 ml-2">0:00.0</span></p>
+    <button id="next-level-btn" class="game-font text-sm bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white px-8 py-4 rounded-lg mb-3">NEXT LEVEL</button>
+    <button type="button" id="level-return-menu-btn" class="game-font text-xs text-gray-500 hover:text-violet-300 border border-gray-600 hover:border-violet-500 px-6 py-3 rounded-lg transition-colors">RETURN TO MENU</button>
    </div><!-- Cheat Screen -->
    <div id="cheat-screen" class="absolute inset-0 flex-col items-center justify-center bg-black z-50 hidden" style="text-align:center;padding:40px;">
     <h1 style="font-family:'Press Start 2P',monospace;font-size:2.2rem;color:#cc0000;margin-bottom:28px;letter-spacing:4px;">YOU CHEATED</h1>
@@ -187,15 +231,18 @@
     <p class="game-font text-sm text-gray-300 mb-2">All levels completed!</p>
     <p class="game-font text-xs text-gray-500 mb-2">Total Deaths: <span id="final-deaths" class="text-red-400">0</span></p>
     <p class="game-font text-xs text-gray-500 mb-2">Total Time: <span id="final-time" class="text-cyan-400">0:00.0</span></p>
+    <p id="victory-coins-earned" class="game-font text-xs text-amber-400 mb-2 hidden">+<span id="victory-coins-amount">0</span> COINS this run</p>
     <p id="rank-display" class="game-font text-xs text-gray-500 mb-8"></p>
     <button id="view-leaderboard-btn" class="game-font text-sm bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white px-8 py-4 rounded-lg mb-4">VIEW LEADERBOARD</button>
-    <button id="restart-btn" class="game-font text-sm bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white px-8 py-4 rounded-lg">PLAY AGAIN</button>
+    <button id="restart-btn" class="game-font text-sm bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white px-8 py-4 rounded-lg mb-3">PLAY AGAIN</button>
+    <button type="button" id="victory-return-menu-btn" class="game-font text-xs text-gray-500 hover:text-violet-300 border border-gray-600 hover:border-violet-500 px-6 py-3 rounded-lg transition-colors">RETURN TO MENU</button>
    </div><!-- Name Input Modal -->
    <div id="name-input-modal" class="absolute inset-0 flex-col items-center justify-center bg-black/95 z-50 hidden">
     <h2 class="game-font text-2xl text-yellow-400 mb-8">ENTER YOUR NAME</h2>
     <input id="player-name-input" type="text" maxlength="20" placeholder="Your Name" class="game-font text-sm bg-gray-800 text-white px-6 py-3 rounded-lg mb-6 text-center border-2 border-gray-600 focus:border-green-400 outline-none">
     <button id="submit-score-btn" class="game-font text-sm bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white px-8 py-4 rounded-lg mb-2">SUBMIT SCORE</button>
     <button id="skip-score-btn" class="game-font text-xs text-gray-500 hover:text-gray-300 mt-2">Skip</button>
+    <button type="button" id="name-modal-return-menu-btn" class="game-font text-xs text-gray-500 hover:text-violet-300 border border-gray-600 hover:border-violet-500 px-6 py-2 rounded-lg transition-colors mt-6">RETURN TO MENU</button>
    </div><!-- Leaderboard Screen -->
    <div id="leaderboard-screen" class="absolute inset-0 flex-col items-center justify-center bg-gradient-to-b from-gray-900 via-blue-900 to-gray-900 z-50 hidden">
     <h2 class="game-font text-3xl text-yellow-400 mb-8">🏅 TOP SCORES 🏅</h2>
@@ -203,6 +250,22 @@
      <!-- Dynamically populated -->
     </div>
     <button id="close-leaderboard-btn" class="game-font text-sm bg-gradient-to-r from-gray-600 to-gray-500 hover:from-gray-500 hover:to-gray-400 text-white px-8 py-4 rounded-lg">CLOSE</button>
+   </div><!-- Shop Screen -->
+   <div id="shop-screen" class="absolute inset-0 flex-col items-center justify-center bg-gradient-to-b from-gray-900 via-amber-950/40 to-gray-900 z-50 hidden overflow-y-auto py-8">
+    <h2 class="game-font text-2xl text-amber-400 mb-2">SHOP</h2>
+    <p class="game-font text-xs text-gray-400 mb-4 text-center max-w-md px-2">Earn coins by picking them up in levels. No coin gains in practice mode or when using cheats.</p>
+    <p class="game-font text-[10px] text-gray-500 mb-6 text-center max-w-md px-2">Coins, unlocked skins, and power-ups reset when you reload the page or close the tab. Sound mute is kept.</p>
+    <p class="game-font text-sm text-amber-300 mb-6">Your coins: <span id="shop-coin-balance">0</span></p>
+    <div id="shop-items" class="w-full max-w-md px-4 flex flex-col gap-3 mb-8">
+     <!-- Filled by script -->
+    </div>
+    <button id="close-shop-btn" class="game-font text-sm bg-gradient-to-r from-gray-600 to-gray-500 hover:from-gray-500 hover:to-gray-400 text-white px-8 py-4 rounded-lg">BACK</button>
+   </div><!-- Progress level select (unlocked by beating prior levels) -->
+   <div id="progress-level-select" class="absolute inset-0 flex-col items-center justify-center bg-black/95 z-50 hidden overflow-y-auto py-8">
+    <h2 class="game-font text-2xl text-cyan-400 mb-2">LEVEL SELECT</h2>
+    <p class="game-font text-[10px] text-gray-500 mb-6 text-center max-w-md px-4 leading-relaxed">Green = cleared. Cyan = unlocked next. 🔒 = beat the level before it first. No bonus coins for clearing — only pickups count.</p>
+    <div id="progress-level-select-grid" class="grid grid-cols-5 gap-3 mb-8 px-4 max-w-3xl w-full justify-items-stretch"></div>
+    <button type="button" id="close-progress-level-select" class="game-font text-sm bg-gradient-to-r from-gray-600 to-gray-500 hover:from-gray-500 hover:to-gray-400 text-white px-8 py-4 rounded-lg">BACK</button>
    </div><!-- Secret Level Select -->
    <div id="level-select" class="absolute inset-0 flex-col items-center justify-center bg-black/95 z-50 hidden">
     <h2 class="game-font text-2xl text-cyan-400 mb-8">LEVEL SELECT</h2>
@@ -239,6 +302,7 @@
   <script>
     // Game Constants
     const TILE_SIZE = 32;
+    const TILE_COIN = 23; // collectible — spend in shop (session only; resets on reload)
     const GRAVITY = 0.8;
     const JUMP_FORCE = -14;
     const MOVE_SPEED = 5;
@@ -249,6 +313,8 @@
     let canvas, ctx;
     let gameRunning = false;
     let currentLevel = 0;
+    let maxSelectableLevelIndex = 0; // can play 0 .. this (inclusive); grows when you beat a level
+    let beatenLevelIndices = new Set();
     let deaths = 0;
     let player = {};
     let keys = {};
@@ -273,7 +339,8 @@
     let p2FacingRight = true;
     let p2Squish = { x: 1, y: 1 };
     let wasOnGround2 = false;
-    let selectedSkin2 = parseInt(localStorage.getItem('spikeRunnerSkin2') || '1');
+    let selectedSkin = 0;
+    let selectedSkin2 = 1;
     const FLY_SPEED = 8;
 
     // Character skins
@@ -284,8 +351,224 @@
       { name: 'GOLD',    color: '#f59e0b', highlight: '#fbbf24' },
       { name: 'SHADOW',  color: '#374151', highlight: '#9ca3af' },
       { name: 'AURORA',  color: '#a855f7', highlight: '#c084fc' },
+      { name: 'DIAMOND', color: '#e0f7ff', highlight: '#ffffff', labelColor: '#7dd3fc', shopPrice: 75,  premiumStyle: 'diamond' },
+      { name: 'RAINBOW', color: '#ff006e', highlight: '#ffd60a', labelColor: '#fde047', shopPrice: 150, premiumStyle: 'rainbow' },
+      { name: 'VOID HOLO', color: '#1a0a2e', highlight: '#f0abfc', labelColor: '#e879f9', shopPrice: 250, premiumStyle: 'voidholo' },
     ];
-    let selectedSkin = parseInt(localStorage.getItem('spikeRunnerSkin') || '0');
+
+    const COIN_STORAGE_KEY = 'spikeRunnerCoins';
+    const OWNED_PREMIUM_SKINS_KEY = 'spikeRunnerOwnedPremiumSkins';
+
+    function wipeNonMuteSaveData() {
+      [COIN_STORAGE_KEY, OWNED_PREMIUM_SKINS_KEY, 'spikeRunnerSkin', 'spikeRunnerSkin2'].forEach(k => localStorage.removeItem(k));
+    }
+    wipeNonMuteSaveData();
+    window.addEventListener('pagehide', wipeNonMuteSaveData);
+
+    let sessionCoins = 0;
+    let ownedPremiumSkins = new Set();
+    let coinsEarnedThisRun = 0;
+
+    let powerUpShieldCharges = 0;
+    let powerUpReviveCharges = 0;
+    let powerUpSpeedRunsQueued = 0;
+    let powerUpHighJumpRunsQueued = 0;
+    let runSpeedMult = 1;
+    let runJumpMult = 1;
+    let playerInvulnFrames = 0;
+    let player2InvulnFrames = 0;
+
+    const SHOP_POWERUPS = [
+      { id: 'shield', name: 'SHIELD', price: 42, desc: 'Next lethal hit: rewind to last safe spot, level unchanged.' },
+      { id: 'revive', name: 'PHOENIX', price: 68, desc: 'Next death: same respawn, but does not add to death count.' },
+      { id: 'speed', name: 'SPEED RUN', price: 52, desc: 'Next start from title: faster move speed for that campaign.' },
+      { id: 'jump', name: 'MOON BOOTS', price: 48, desc: 'Next start from title: higher jumps for that campaign.' },
+    ];
+
+    function isSkinUnlocked(skinIndex) {
+      const s = SKINS[skinIndex];
+      if (!s) return false;
+      if (s.shopPrice == null) return true;
+      return ownedPremiumSkins.has(skinIndex);
+    }
+
+    function getCoins() {
+      return sessionCoins;
+    }
+
+    function setCoins(amount) {
+      sessionCoins = Math.max(0, Math.floor(amount));
+      updateCoinDisplays();
+    }
+
+    function addCoins(delta) {
+      const n = Math.floor(delta);
+      if (n <= 0) return;
+      setCoins(getCoins() + n);
+    }
+
+    function tryCollectCoins(playerRect, level) {
+      let picked = 0;
+      level.tiles.forEach(tile => {
+        if (tile.type !== TILE_COIN || tile.collected) return;
+        const coinBox = {
+          x: tile.x * TILE_SIZE + 6,
+          y: tile.y * TILE_SIZE + 6,
+          width: TILE_SIZE - 12,
+          height: TILE_SIZE - 12
+        };
+        if (!rectIntersect(playerRect, coinBox)) return;
+        tile.collected = true;
+        picked++;
+        AudioManager.playSound('coin');
+        if (!practiceMode && !cheatUsed) {
+          addCoins(1);
+          coinsEarnedThisRun += 1;
+        }
+      });
+      if (picked && !practiceMode && !cheatUsed) updateCoinDisplays();
+    }
+
+    function updateCoinDisplays() {
+      const c = getCoins();
+      const startEl = document.getElementById('start-screen-coins');
+      const hudEl = document.getElementById('hud-coins');
+      const shopEl = document.getElementById('shop-coin-balance');
+      if (startEl) startEl.textContent = `COINS ${c}`;
+      if (hudEl) hudEl.textContent = String(c);
+      if (shopEl) shopEl.textContent = String(c);
+      updatePowerUpDisplays();
+    }
+
+    function updatePowerUpDisplays() {
+      const el = document.getElementById('start-screen-powerups');
+      if (!el) return;
+      const parts = [];
+      if (powerUpShieldCharges) parts.push(`SHIELD ×${powerUpShieldCharges}`);
+      if (powerUpReviveCharges) parts.push(`PHOENIX ×${powerUpReviveCharges}`);
+      if (powerUpSpeedRunsQueued) parts.push(`SPEED ×${powerUpSpeedRunsQueued}`);
+      if (powerUpHighJumpRunsQueued) parts.push(`JUMP ×${powerUpHighJumpRunsQueued}`);
+      el.textContent = parts.length ? parts.join(' · ') : 'NO POWER-UPS';
+    }
+
+    function applyPremiumSkinLockUI() {
+      document.querySelectorAll('#skin-selector-premium .skin-btn[data-skin]').forEach(btn => {
+        const i = parseInt(btn.dataset.skin, 10);
+        const lock = btn.querySelector('.skin-lock');
+        const unlocked = isSkinUnlocked(i);
+        btn.style.opacity = unlocked ? '1' : '0.45';
+        if (lock) lock.classList.toggle('hidden', unlocked);
+      });
+      document.querySelectorAll('#skin-selector-premium-2 .skin-btn-2[data-skin2]').forEach(btn => {
+        const i = parseInt(btn.dataset.skin2, 10);
+        const lock = btn.querySelector('.skin-lock-2');
+        const unlocked = isSkinUnlocked(i);
+        btn.style.opacity = unlocked ? '1' : '0.45';
+        if (lock) lock.classList.toggle('hidden', unlocked);
+      });
+    }
+
+    function renderShopItems() {
+      const container = document.getElementById('shop-items');
+      if (!container) return;
+      container.innerHTML = '';
+
+      const skinHeading = document.createElement('p');
+      skinHeading.className = 'game-font text-[10px] text-gray-500 tracking-widest mb-1';
+      skinHeading.textContent = 'SKINS';
+      container.appendChild(skinHeading);
+
+      SKINS.forEach((skin, index) => {
+        if (skin.shopPrice == null) return;
+        const owned = ownedPremiumSkins.has(index);
+        const row = document.createElement('div');
+        row.className = 'flex items-center justify-between gap-3 bg-black/50 border border-amber-900/50 rounded-lg px-4 py-3';
+        const left = document.createElement('div');
+        left.className = 'flex items-center gap-3';
+        const sw = document.createElement('div');
+        sw.className = 'w-12 h-12 rounded-lg border-2 border-amber-400/50 shrink-0 overflow-hidden ring-1 ring-white/15 shadow-lg';
+        if (skin.premiumStyle === 'diamond') sw.classList.add('skin-chip-diamond');
+        else if (skin.premiumStyle === 'rainbow') sw.classList.add('skin-chip-rainbow');
+        else if (skin.premiumStyle === 'voidholo') sw.classList.add('skin-chip-voidholo');
+        else sw.style.background = skin.color;
+        const flair = skin.premiumStyle === 'diamond' ? 'Crystal facets · prismatic edge'
+          : skin.premiumStyle === 'rainbow' ? 'Hue-cycling spectrum body'
+          : skin.premiumStyle === 'voidholo' ? 'Nebula holo · dark core glow' : '';
+        const label = document.createElement('div');
+        label.innerHTML = flair
+          ? `<p class="game-font text-xs text-white tracking-tight">${skin.name}</p><p class="game-font text-[9px] text-fuchsia-200/80 mt-1 leading-snug">${flair}</p><p class="game-font text-[10px] text-amber-400 mt-1.5">${skin.shopPrice} coins</p>`
+          : `<p class="game-font text-xs text-white">${skin.name}</p><p class="game-font text-[10px] text-amber-400 mt-1">${skin.shopPrice} coins</p>`;
+        left.appendChild(sw);
+        left.appendChild(label);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'game-font text-xs px-4 py-2 rounded-lg shrink-0 ' + (owned
+          ? 'bg-gray-700 text-gray-400 cursor-default'
+          : 'bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-white');
+        btn.textContent = owned ? 'OWNED' : 'BUY';
+        btn.disabled = owned;
+        if (!owned) {
+          btn.addEventListener('click', () => {
+            const price = skin.shopPrice;
+            if (getCoins() < price) {
+              AudioManager.playSound('deny');
+              return;
+            }
+            setCoins(getCoins() - price);
+            ownedPremiumSkins.add(index);
+            AudioManager.playSound('coin');
+            applyPremiumSkinLockUI();
+            renderShopItems();
+          });
+        }
+        row.appendChild(left);
+        row.appendChild(btn);
+        container.appendChild(row);
+      });
+
+      const puHeading = document.createElement('p');
+      puHeading.className = 'game-font text-[10px] text-gray-500 tracking-widest mt-4 mb-1';
+      puHeading.textContent = 'POWER-UPS';
+      container.appendChild(puHeading);
+
+      SHOP_POWERUPS.forEach(pu => {
+        const stock =
+          pu.id === 'shield' ? powerUpShieldCharges :
+          pu.id === 'revive' ? powerUpReviveCharges :
+          pu.id === 'speed' ? powerUpSpeedRunsQueued :
+          powerUpHighJumpRunsQueued;
+        const row = document.createElement('div');
+        row.className = 'flex items-center justify-between gap-3 bg-black/50 border border-cyan-900/40 rounded-lg px-4 py-3';
+        const left = document.createElement('div');
+        left.className = 'flex-1 min-w-0';
+        left.innerHTML = `<p class="game-font text-xs text-white">${pu.name}</p><p class="game-font text-[10px] text-cyan-400/90 mt-1">${pu.desc}</p><p class="game-font text-[10px] text-gray-500 mt-1">Owned: ${stock} · ${pu.price} coins</p>`;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'game-font text-xs px-4 py-2 rounded-lg shrink-0 bg-gradient-to-r from-cyan-700 to-cyan-600 hover:from-cyan-600 hover:to-cyan-500 text-white';
+        btn.textContent = 'BUY';
+        btn.addEventListener('click', () => {
+          if (getCoins() < pu.price) {
+            AudioManager.playSound('deny');
+            return;
+          }
+          setCoins(getCoins() - pu.price);
+          if (pu.id === 'shield') powerUpShieldCharges++;
+          else if (pu.id === 'revive') powerUpReviveCharges++;
+          else if (pu.id === 'speed') powerUpSpeedRunsQueued++;
+          else if (pu.id === 'jump') powerUpHighJumpRunsQueued++;
+          AudioManager.playSound('coin');
+          updatePowerUpDisplays();
+          renderShopItems();
+        });
+        row.appendChild(left);
+        row.appendChild(btn);
+        container.appendChild(row);
+      });
+    }
+
+    if (!isSkinUnlocked(selectedSkin)) selectedSkin = 0;
+    if (!Number.isFinite(selectedSkin2)) selectedSkin2 = 1;
+    if (!isSkinUnlocked(selectedSkin2)) selectedSkin2 = 1;
 
     // Parallax background: pre-generate star fields (normalized x in [0,1], tiled at render time)
     const STARS_FAR = Array.from({ length: 60 }, () => ({
@@ -319,7 +602,21 @@
 
     // Particles
     let particles = [];
-    function spawnDeathParticles(px, py, color) {
+    function particleColorForSkin(skin) {
+      if (!skin || !skin.premiumStyle) return skin.color;
+      if (skin.premiumStyle === 'rainbow') return `hsl(${Math.random() * 360}, 92%, 58%)`;
+      if (skin.premiumStyle === 'diamond') {
+        const o = ['#e0f2fe', '#7dd3fc', '#bae6fd', '#f0f9ff', '#38bdf8', '#ffffff'];
+        return o[Math.floor(Math.random() * o.length)];
+      }
+      if (skin.premiumStyle === 'voidholo') {
+        const o = ['#e879f9', '#c084fc', '#f0abfc', '#22d3ee', '#a78bfa', '#f472b6'];
+        return o[Math.floor(Math.random() * o.length)];
+      }
+      return skin.color;
+    }
+
+    function spawnDeathParticles(px, py, skin) {
       for (let i = 0; i < 14; i++) {
         const angle = (i / 14) * Math.PI * 2;
         const speed = 1.5 + Math.random() * 5;
@@ -331,9 +628,74 @@
           size: 2 + Math.random() * 4,
           life: 1.0,
           decay: 0.025 + Math.random() * 0.03,
-          color
+          color: particleColorForSkin(skin)
         });
       }
+    }
+
+    function fillPremiumPlayerBody(ctx, skin, w, h, now) {
+      const ps = skin.premiumStyle;
+      if (!ps) return false;
+      if (ps === 'diamond') {
+        const g = ctx.createLinearGradient(0, 0, w, h);
+        g.addColorStop(0, '#ffffff');
+        g.addColorStop(0.22, '#bae6fd');
+        g.addColorStop(0.45, '#e0f2fe');
+        g.addColorStop(0.68, '#7dd3fc');
+        g.addColorStop(1, '#f8fafc');
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, w, h);
+        const g2 = ctx.createLinearGradient(w, 0, 0, h);
+        g2.addColorStop(0, 'rgba(255,255,255,0.55)');
+        g2.addColorStop(0.4, 'rgba(255,255,255,0)');
+        g2.addColorStop(0.55, 'rgba(56,189,248,0.35)');
+        g2.addColorStop(1, 'rgba(255,255,255,0.5)');
+        ctx.fillStyle = g2;
+        ctx.fillRect(0, 0, w, h);
+        ctx.fillStyle = 'rgba(255,255,255,0.92)';
+        ctx.fillRect(0, 0, w, 4);
+        ctx.strokeStyle = 'rgba(56,189,248,0.45)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(0.5, 0.5, w - 1, h - 1);
+        return true;
+      }
+      if (ps === 'rainbow') {
+        const hueBase = (now / 28) % 360;
+        const g = ctx.createLinearGradient(0, 0, w, 0);
+        for (let s = 0; s <= 6; s++) {
+          g.addColorStop(s / 6, `hsl(${(hueBase + s * 52) % 360}, 95%, 58%)`);
+        }
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, w, h);
+        ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(0.5, 0.5, w - 1, h - 1);
+        ctx.fillStyle = `hsl(${(hueBase + 40) % 360}, 100%, 82%)`;
+        ctx.fillRect(0, 0, w, 4);
+        return true;
+      }
+      if (ps === 'voidholo') {
+        const shift = (now / 35) % 360;
+        ctx.fillStyle = '#0a0118';
+        ctx.fillRect(0, 0, w, h);
+        const g = ctx.createLinearGradient(0, 0, w, h);
+        g.addColorStop(0, `hsla(${shift}, 88%, 48%, 0.95)`);
+        g.addColorStop(0.3, `hsla(${(shift + 115) % 360}, 90%, 52%, 0.65)`);
+        g.addColorStop(0.55, `hsla(${(shift + 230) % 360}, 85%, 55%, 0.7)`);
+        g.addColorStop(1, `hsla(${(shift + 300) % 360}, 80%, 42%, 0.9)`);
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, w, h);
+        ctx.restore();
+        ctx.strokeStyle = `hsla(${(shift + 60) % 360}, 100%, 70%, 0.5)`;
+        ctx.lineWidth = 1;
+        ctx.strokeRect(0.5, 0.5, w - 1, h - 1);
+        ctx.fillStyle = `hsl(${(shift + 90) % 360}, 95%, 72%)`;
+        ctx.fillRect(0, 0, w, 3);
+        return true;
+      }
+      return false;
     }
 
     // Player squish/stretch
@@ -534,6 +896,33 @@
             boostGain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
             boost.start(now);
             boost.stop(now + 0.05);
+            break;
+
+          case 'coin':
+            const coinOsc = this.ctx.createOscillator();
+            const coinGain = this.ctx.createGain();
+            coinOsc.type = 'square';
+            coinOsc.connect(coinGain);
+            coinGain.connect(this.sfxGain);
+            coinOsc.frequency.setValueAtTime(880, now);
+            coinOsc.frequency.exponentialRampToValueAtTime(1320, now + 0.06);
+            coinGain.gain.setValueAtTime(0.25, now);
+            coinGain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+            coinOsc.start(now);
+            coinOsc.stop(now + 0.12);
+            break;
+
+          case 'deny':
+            const denyOsc = this.ctx.createOscillator();
+            const denyGain = this.ctx.createGain();
+            denyOsc.type = 'square';
+            denyOsc.frequency.value = 120;
+            denyOsc.connect(denyGain);
+            denyGain.connect(this.sfxGain);
+            denyGain.gain.setValueAtTime(0.2, now);
+            denyGain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+            denyOsc.start(now);
+            denyOsc.stop(now + 0.1);
             break;
         }
       },
@@ -1443,6 +1832,10 @@
           // High platform with goal
           { x: 42, y: 8, type: 1 }, { x: 43, y: 8, type: 1 }, { x: 44, y: 8, type: 1 },
           { x: 44, y: 7, type: 5 },
+          { x: 23, y: 10, type: TILE_COIN },
+          { x: 31, y: 13, type: TILE_COIN },
+          { x: 41, y: 7, type: TILE_COIN },
+          { x: 12, y: 11, type: TILE_COIN },
         ],
         movingPlatforms: []
       },
@@ -1473,6 +1866,10 @@
           // Goal
           { x: 35, y: 6, type: 1 }, { x: 36, y: 6, type: 1 },
           { x: 36, y: 5, type: 5 },
+          { x: 11, y: 15, type: TILE_COIN },
+          { x: 19, y: 11, type: TILE_COIN },
+          { x: 27, y: 5, type: TILE_COIN },
+          { x: 33, y: 4, type: TILE_COIN },
         ],
         movingPlatforms: []
       },
@@ -1503,6 +1900,10 @@
           ...Array(8).fill().map((_, i) => ({ x: 42 + i, y: 14, type: 1 })),
           { x: 45, y: 10, type: 1 }, { x: 46, y: 10, type: 1 },
           { x: 46, y: 9, type: 5 },
+          { x: 17, y: 13, type: TILE_COIN },
+          { x: 30, y: 12, type: TILE_COIN },
+          { x: 44, y: 8, type: TILE_COIN },
+          { x: 8, y: 11, type: TILE_COIN },
         ],
         movingPlatforms: []
       },
@@ -1535,6 +1936,10 @@
           { x: 42, y: 10, type: 1 },
           { x: 45, y: 8, type: 1 }, { x: 46, y: 8, type: 1 }, { x: 47, y: 8, type: 1 },
           { x: 47, y: 7, type: 5 },
+          { x: 7, y: 12, type: TILE_COIN },
+          { x: 15, y: 8, type: TILE_COIN },
+          { x: 28, y: 5, type: TILE_COIN },
+          { x: 42, y: 8, type: TILE_COIN },
         ],
         movingPlatforms: []
       },
@@ -1579,6 +1984,10 @@
           // Victory platform
           { x: 58, y: 12, type: 1 }, { x: 59, y: 12, type: 1 }, { x: 60, y: 12, type: 1 },
           { x: 60, y: 11, type: 5 },
+          { x: 8, y: 13, type: TILE_COIN },
+          { x: 16, y: 10, type: TILE_COIN },
+          { x: 32, y: 6, type: TILE_COIN },
+          { x: 52, y: 14, type: TILE_COIN },
         ],
         movingPlatforms: []
       },
@@ -1635,6 +2044,10 @@
 
           // Goal!
           { x: 48, y: 18, type: 5 },
+          { x: 12, y: 15, type: TILE_COIN },
+          { x: 21, y: 9, type: TILE_COIN },
+          { x: 33, y: 3, type: TILE_COIN },
+          { x: 46, y: 16, type: TILE_COIN },
         ],
         movingPlatforms: []
       },
@@ -1676,6 +2089,10 @@
           // Goal
           { x: 66, y: 14, type: 1 }, { x: 67, y: 14, type: 1 },
           { x: 67, y: 13, type: 5 },
+          { x: 14, y: 14, type: TILE_COIN },
+          { x: 28, y: 10, type: TILE_COIN },
+          { x: 45, y: 12, type: TILE_COIN },
+          { x: 62, y: 14, type: TILE_COIN },
         ],
         movingPlatforms: []
       },
@@ -1727,6 +2144,10 @@
           // Goal
           { x: 56, y: 16, type: 1 }, { x: 57, y: 16, type: 1 },
           { x: 57, y: 15, type: 5 },
+          { x: 6, y: 14, type: TILE_COIN },
+          { x: 18, y: 11, type: TILE_COIN },
+          { x: 35, y: 7, type: TILE_COIN },
+          { x: 52, y: 13, type: TILE_COIN },
         ],
         movingPlatforms: []
       },
@@ -1781,6 +2202,10 @@
           // Goal!
           { x: 57, y: 14, type: 1 }, { x: 58, y: 14, type: 1 }, { x: 59, y: 14, type: 1 },
           { x: 59, y: 13, type: 5 },
+          { x: 16, y: 13, type: TILE_COIN },
+          { x: 27, y: 10, type: TILE_COIN },
+          { x: 40, y: 6, type: TILE_COIN },
+          { x: 55, y: 12, type: TILE_COIN },
         ],
         movingPlatforms: []
       },
@@ -1810,6 +2235,10 @@
           { x: 32, y: 18, type: 1 }, { x: 33, y: 18, type: 1 }, { x: 34, y: 18, type: 1 }, { x: 35, y: 18, type: 1 },
 
           // No goal tile - boss defeat triggers level complete
+          { x: 6, y: 16, type: TILE_COIN },
+          { x: 13, y: 13, type: TILE_COIN },
+          { x: 19, y: 10, type: TILE_COIN },
+          { x: 32, y: 16, type: TILE_COIN },
         ],
         movingPlatforms: []
       },
@@ -1858,6 +2287,10 @@
 
           // Goal on final approach
           { x: 50, y: 13, type: 5 },
+          { x: 10, y: 14, type: TILE_COIN },
+          { x: 24, y: 7, type: TILE_COIN },
+          { x: 38, y: 9, type: TILE_COIN },
+          { x: 48, y: 11, type: TILE_COIN },
         ],
         movingPlatforms: []
       },
@@ -1904,6 +2337,10 @@
 
           // Goal
           { x: 54, y: 19, type: 5 },
+          { x: 7, y: 17, type: TILE_COIN },
+          { x: 20, y: 13, type: TILE_COIN },
+          { x: 35, y: 12, type: TILE_COIN },
+          { x: 49, y: 16, type: TILE_COIN },
         ],
         movingPlatforms: []
       },
@@ -1956,6 +2393,10 @@
 
           // Goal
           { x: 50, y: 18, type: 5 },
+          { x: 11, y: 12, type: TILE_COIN },
+          { x: 22, y: 11, type: TILE_COIN },
+          { x: 33, y: 15, type: TILE_COIN },
+          { x: 47, y: 16, type: TILE_COIN },
         ],
         movingPlatforms: []
       },
@@ -2010,6 +2451,10 @@
 
           // Goal
           { x: 58, y: 20, type: 5 },
+          { x: 9, y: 16, type: TILE_COIN },
+          { x: 18, y: 16, type: TILE_COIN },
+          { x: 30, y: 14, type: TILE_COIN },
+          { x: 53, y: 16, type: TILE_COIN },
         ],
         movingPlatforms: []
       },
@@ -2056,6 +2501,10 @@
           // Geysers on floating platforms — punish standing still
           { x: 9, y: 17, type: 15 },
           { x: 31, y: 17, type: 15 },
+          { x: 14, y: 11, type: TILE_COIN },
+          { x: 20, y: 10, type: TILE_COIN },
+          { x: 26, y: 11, type: TILE_COIN },
+          { x: 33, y: 16, type: TILE_COIN },
         ],
         movingPlatforms: []
       },
@@ -2091,6 +2540,10 @@
           { x: 21, y: 13, type: 7 },
           // Goal near end floor
           { x: 45, y: 16, type: 5 },
+          { x: 7, y: 12, type: TILE_COIN },
+          { x: 15, y: 9, type: TILE_COIN },
+          { x: 29, y: 9, type: TILE_COIN },
+          { x: 37, y: 11, type: TILE_COIN },
         ],
         movingPlatforms: []
       },
@@ -2132,6 +2585,10 @@
           { x: 30, y: 14, type: 7 },
           // Goal
           { x: 52, y: 14, type: 5 },
+          { x: 10, y: 16, type: TILE_COIN },
+          { x: 25, y: 16, type: TILE_COIN },
+          { x: 40, y: 16, type: TILE_COIN },
+          { x: 50, y: 12, type: TILE_COIN },
         ],
         movingPlatforms: []
       },
@@ -2175,6 +2632,10 @@
           { x: 22, y: 15, type: 7  }, { x: 47, y: 12, type: 7  },
           // Goal
           { x: 57, y: 15, type: 5 },
+          { x: 7, y: 14, type: TILE_COIN },
+          { x: 16, y: 10, type: TILE_COIN },
+          { x: 33, y: 10, type: TILE_COIN },
+          { x: 55, y: 14, type: TILE_COIN },
         ],
         movingPlatforms: []
       },
@@ -2210,6 +2671,10 @@
           { x: 27, y: 18, type: 7 }, { x: 45, y: 15, type: 7 },
           // Goal
           { x: 63, y: 21, type: 5 },
+          { x: 8, y: 20, type: TILE_COIN },
+          { x: 14, y: 16, type: TILE_COIN },
+          { x: 32, y: 13, type: TILE_COIN },
+          { x: 56, y: 19, type: TILE_COIN },
         ],
         movingPlatforms: []
       },
@@ -2237,6 +2702,10 @@
           { x: 13, y: 15, type: 18 }, { x: 14, y: 15, type: 18 }, { x: 15, y: 15, type: 18 }, { x: 16, y: 15, type: 18 }, { x: 17, y: 15, type: 18 },
           { x: 20, y: 17, type: 18 }, { x: 21, y: 17, type: 18 }, { x: 22, y: 17, type: 18 }, { x: 23, y: 17, type: 18 }, { x: 24, y: 17, type: 18 },
           { x: 28, y: 15, type: 18 }, { x: 29, y: 15, type: 18 }, { x: 30, y: 15, type: 18 }, { x: 31, y: 15, type: 18 }, { x: 32, y: 15, type: 18 },
+          { x: 6, y: 14, type: TILE_COIN },
+          { x: 14, y: 12, type: TILE_COIN },
+          { x: 22, y: 14, type: TILE_COIN },
+          { x: 30, y: 12, type: TILE_COIN },
         ],
         movingPlatforms: []
       },
@@ -2274,6 +2743,10 @@
           { x: 45, y: 14, type: 22 }, // factory bot
           { x: 49, y: 14, type: 7  }, // checkpoint
           { x: 53, y: 14, type: 5  }, // goal
+          { x: 5, y: 12, type: TILE_COIN },
+          { x: 18, y: 11, type: TILE_COIN },
+          { x: 26, y: 10, type: TILE_COIN },
+          { x: 48, y: 12, type: TILE_COIN },
         ],
         movingPlatforms: []
       },
@@ -2318,6 +2791,10 @@
           // Final zone
           ...Array(17).fill().map((_, i) => ({ x: 38 + i, y: 17, type: 1 })),
           { x: 42, y: 16, type: 22 }, { x: 47, y: 16, type: 7 }, { x: 53, y: 16, type: 5 },
+          { x: 4, y: 14, type: TILE_COIN },
+          { x: 21, y: 11, type: TILE_COIN },
+          { x: 34, y: 11, type: TILE_COIN },
+          { x: 45, y: 14, type: TILE_COIN },
         ],
         movingPlatforms: []
       },
@@ -2353,6 +2830,10 @@
           // Final stretch
           ...Array(15).fill().map((_, i) => ({ x: 43 + i, y: 16, type: 1 })),
           { x: 47, y: 15, type: 22 }, { x: 53, y: 15, type: 7 }, { x: 57, y: 15, type: 5 },
+          { x: 5, y: 14, type: TILE_COIN },
+          { x: 20, y: 11, type: TILE_COIN },
+          { x: 30, y: 10, type: TILE_COIN },
+          { x: 50, y: 14, type: TILE_COIN },
         ],
         movingPlatforms: []
       },
@@ -2399,6 +2880,10 @@
           { x: 51, y: 17, type: 2 },
           ...Array(9).fill().map((_, i) => ({ x: 52 + i, y: 17, type: 1 })),
           { x: 54, y: 16, type: 22 }, { x: 58, y: 16, type: 7 }, { x: 60, y: 16, type: 5 },
+          { x: 5, y: 14, type: TILE_COIN },
+          { x: 20, y: 11, type: TILE_COIN },
+          { x: 38, y: 11, type: TILE_COIN },
+          { x: 56, y: 14, type: TILE_COIN },
         ],
         movingPlatforms: []
       },
@@ -2420,6 +2905,10 @@
           {x:12,y:18,type:1},{x:13,y:18,type:1},{x:14,y:18,type:1},{x:15,y:18,type:1},{x:16,y:18,type:1},
           {x:23,y:18,type:1},{x:24,y:18,type:1},{x:25,y:18,type:1},{x:26,y:18,type:1},{x:27,y:18,type:1},
           {x:31,y:18,type:1},{x:32,y:18,type:1},{x:33,y:18,type:1},{x:34,y:18,type:1},{x:35,y:18,type:1},
+          { x: 10, y: 16, type: TILE_COIN },
+          { x: 18, y: 14, type: TILE_COIN },
+          { x: 25, y: 16, type: TILE_COIN },
+          { x: 32, y: 14, type: TILE_COIN },
         ],
         movingPlatforms: []
       },
@@ -2650,7 +3139,7 @@
             playerHP = 10;
             boss.hp = boss.maxHP;
 
-            spawnDeathParticles(player.x, player.y, SKINS[selectedSkin].color);
+            spawnDeathParticles(player.x, player.y, SKINS[selectedSkin]);
             triggerShake(12, 20);
 
             const level = levels[currentLevel];
@@ -3049,7 +3538,7 @@
             deaths++; updateHUD();
             playerHP = 12;
             cinderBoss.hp = cinderBoss.maxHP;
-            spawnDeathParticles(player.x, player.y, SKINS[selectedSkin].color);
+            spawnDeathParticles(player.x, player.y, SKINS[selectedSkin]);
             triggerShake(12, 20);
             const lvl = levels[currentLevel];
             player.x = lvl.playerStart.x * TILE_SIZE;
@@ -3189,7 +3678,7 @@
       deaths++; updateHUD();
       playerHP = 15;
       frozenBoss.hp = frozenBoss.maxHP;
-      spawnDeathParticles(player.x, player.y, SKINS[selectedSkin].color);
+      spawnDeathParticles(player.x, player.y, SKINS[selectedSkin]);
       triggerShake(12, 20);
       AudioManager.playSound('death');
       const lvl = levels[currentLevel];
@@ -3583,7 +4072,7 @@
       deaths++; updateHUD();
       playerHP = 10;
       wardenBoss.hp = wardenBoss.maxHP;
-      spawnDeathParticles(player.x, player.y, SKINS[selectedSkin].color);
+      spawnDeathParticles(player.x, player.y, SKINS[selectedSkin]);
       triggerShake(12, 20);
       AudioManager.playSound('death');
       const lvl = levels[currentLevel];
@@ -3982,23 +4471,28 @@
       document.getElementById('roast3-restart-btn').addEventListener('click', restartGame);
       document.getElementById('roast4-btn').addEventListener('click', permanentCheaterPage);
 
-      // Skin selector
+      // Skin selector (includes premium row)
       document.querySelectorAll('.skin-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-          selectedSkin = parseInt(btn.dataset.skin);
-          localStorage.setItem('spikeRunnerSkin', selectedSkin);
+          const idx = parseInt(btn.dataset.skin, 10);
+          if (!isSkinUnlocked(idx)) {
+            AudioManager.playSound('deny');
+            return;
+          }
+          selectedSkin = idx;
           document.querySelectorAll('.skin-btn').forEach(b =>
             b.style.borderColor = b.dataset.skin == selectedSkin ? '#fff' : 'transparent'
           );
-          document.getElementById('skin-name-label').textContent = SKINS[selectedSkin].name;
-          document.getElementById('skin-name-label').style.color = SKINS[selectedSkin].color;
+          const s = SKINS[selectedSkin];
+          document.getElementById('skin-name-label').textContent = s.name;
+          document.getElementById('skin-name-label').style.color = s.labelColor || s.color;
         });
       });
 
       // Restore saved skin
       document.querySelector(`.skin-btn[data-skin="${selectedSkin}"]`).style.borderColor = '#fff';
       document.getElementById('skin-name-label').textContent = SKINS[selectedSkin].name;
-      document.getElementById('skin-name-label').style.color = SKINS[selectedSkin].color;
+      document.getElementById('skin-name-label').style.color = SKINS[selectedSkin].labelColor || SKINS[selectedSkin].color;
 
       // 2-player toggle
       document.getElementById('two-player-toggle').addEventListener('click', () => {
@@ -4017,23 +4511,31 @@
           : '<p>ARROW KEYS / WASD to move</p><p class="mt-2">SPACE / W / UP to jump</p>';
       });
 
-      // P2 skin selector
+      // P2 skin selector (includes premium row)
       document.querySelectorAll('.skin-btn-2').forEach(btn => {
         btn.addEventListener('click', () => {
-          selectedSkin2 = parseInt(btn.dataset.skin2);
-          localStorage.setItem('spikeRunnerSkin2', selectedSkin2);
+          const idx = parseInt(btn.dataset.skin2, 10);
+          if (!isSkinUnlocked(idx)) {
+            AudioManager.playSound('deny');
+            return;
+          }
+          selectedSkin2 = idx;
           document.querySelectorAll('.skin-btn-2').forEach(b =>
             b.style.borderColor = b.dataset.skin2 == selectedSkin2 ? '#fff' : 'transparent'
           );
-          document.getElementById('skin-name-label-2').textContent = SKINS[selectedSkin2].name;
-          document.getElementById('skin-name-label-2').style.color = SKINS[selectedSkin2].color;
+          const s2 = SKINS[selectedSkin2];
+          document.getElementById('skin-name-label-2').textContent = s2.name;
+          document.getElementById('skin-name-label-2').style.color = s2.labelColor || s2.color;
         });
       });
 
       // Restore saved P2 skin highlight
       document.querySelector(`.skin-btn-2[data-skin2="${selectedSkin2}"]`).style.borderColor = '#fff';
       document.getElementById('skin-name-label-2').textContent = SKINS[selectedSkin2].name;
-      document.getElementById('skin-name-label-2').style.color = SKINS[selectedSkin2].color;
+      document.getElementById('skin-name-label-2').style.color = SKINS[selectedSkin2].labelColor || SKINS[selectedSkin2].color;
+
+      applyPremiumSkinLockUI();
+      updateCoinDisplays();
 
       // Practice mode toggle
       document.getElementById('practice-toggle').addEventListener('click', () => {
@@ -4043,6 +4545,21 @@
         btn.className = practiceMode
           ? 'game-font text-xs text-yellow-400 border border-yellow-500 px-4 py-2 rounded-lg transition-colors mb-5'
           : 'game-font text-xs text-gray-500 hover:text-yellow-400 border border-gray-700 hover:border-yellow-600 px-4 py-2 rounded-lg transition-colors mb-5';
+      });
+
+      document.getElementById('open-shop-btn').addEventListener('click', () => {
+        document.getElementById('start-screen').classList.add('hidden');
+        document.getElementById('start-screen').classList.remove('flex');
+        document.getElementById('shop-screen').classList.remove('hidden');
+        document.getElementById('shop-screen').classList.add('flex');
+        updateCoinDisplays();
+        renderShopItems();
+      });
+      document.getElementById('close-shop-btn').addEventListener('click', () => {
+        document.getElementById('shop-screen').classList.add('hidden');
+        document.getElementById('shop-screen').classList.remove('flex');
+        document.getElementById('start-screen').classList.remove('hidden');
+        document.getElementById('start-screen').classList.add('flex');
       });
 
       // Leaderboard handlers
@@ -4134,6 +4651,10 @@
 
       // Initialize audio
       AudioManager.init();
+      document.getElementById('menu-btn').addEventListener('click', () => returnToMenu());
+      document.getElementById('level-return-menu-btn').addEventListener('click', () => returnToMenu());
+      document.getElementById('victory-return-menu-btn').addEventListener('click', () => returnToMenu());
+      document.getElementById('name-modal-return-menu-btn').addEventListener('click', () => returnToMenu());
       document.getElementById('mute-btn').addEventListener('click', () => AudioManager.toggleMute());
 
       // Update mute indicator based on saved preference
@@ -4191,8 +4712,17 @@
 
       // Close level select with ESC or click
       document.getElementById('close-level-select').addEventListener('click', closeLevelSelect);
+      document.getElementById('open-progress-level-select-btn').addEventListener('click', () => openProgressLevelSelect());
+      document.getElementById('close-progress-level-select').addEventListener('click', () => closeProgressLevelSelect());
       window.addEventListener('keydown', (e) => {
-        if (e.code === 'Escape' && !document.getElementById('level-select').classList.contains('hidden')) {
+        if (e.code !== 'Escape') return;
+        const prog = document.getElementById('progress-level-select');
+        if (!prog.classList.contains('hidden')) {
+          closeProgressLevelSelect();
+          e.preventDefault();
+          return;
+        }
+        if (!document.getElementById('level-select').classList.contains('hidden')) {
           closeLevelSelect();
         }
       });
@@ -4216,6 +4746,80 @@
       const levelSelect = document.getElementById('level-select');
       levelSelect.classList.remove('flex');
       levelSelect.classList.add('hidden');
+    }
+
+    function renderProgressLevelSelectGrid() {
+      const grid = document.getElementById('progress-level-select-grid');
+      if (!grid) return;
+      grid.innerHTML = '';
+      for (let i = 0; i < levels.length; i++) {
+        const beaten = beatenLevelIndices.has(i);
+        const unlocked = i <= maxSelectableLevelIndex;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        if (unlocked) {
+          if (beaten) {
+            btn.className = 'game-font text-xs sm:text-sm px-2 py-3 rounded-lg bg-gradient-to-r from-green-700 to-emerald-600 hover:from-green-600 hover:to-emerald-500 text-white shadow-md transform hover:scale-105 transition-all';
+            btn.textContent = `${i + 1} ✓`;
+            btn.title = 'Cleared — tap to replay';
+          } else {
+            btn.className = 'game-font text-xs sm:text-sm px-2 py-3 rounded-lg bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-white shadow-md transform hover:scale-105 transition-all';
+            btn.textContent = String(i + 1);
+            btn.title = 'Unlocked — not cleared yet';
+          }
+          const idx = i;
+          btn.addEventListener('click', () => {
+            closeProgressLevelSelect();
+            startFromProgressLevel(idx);
+          });
+        } else {
+          btn.className = 'game-font text-xs sm:text-sm px-2 py-3 rounded-lg bg-gray-900 text-gray-600 border border-gray-800 cursor-not-allowed relative overflow-hidden';
+          btn.disabled = true;
+          btn.innerHTML = `<span class="opacity-40 relative z-0">${i + 1}</span><span class="absolute inset-0 flex items-center justify-center text-base pointer-events-none z-10">🔒</span>`;
+          btn.title = 'Beat the previous level to unlock';
+        }
+        grid.appendChild(btn);
+      }
+    }
+
+    function openProgressLevelSelect() {
+      renderProgressLevelSelectGrid();
+      const el = document.getElementById('progress-level-select');
+      el.classList.remove('hidden');
+      el.classList.add('flex');
+    }
+
+    function closeProgressLevelSelect() {
+      const el = document.getElementById('progress-level-select');
+      el.classList.remove('flex');
+      el.classList.add('hidden');
+    }
+
+    function startFromProgressLevel(levelIndex) {
+      if (levelIndex < 0 || levelIndex > maxSelectableLevelIndex || levelIndex >= levels.length) {
+        AudioManager.playSound('deny');
+        return;
+      }
+      document.getElementById('start-screen').classList.add('hidden');
+      document.getElementById('start-screen').classList.remove('flex');
+      document.getElementById('hud').classList.remove('hidden');
+      const practiceHud = document.getElementById('practice-hud');
+      if (practiceMode) practiceHud.classList.remove('hidden');
+      else practiceHud.classList.add('hidden');
+
+      currentLevel = levelIndex;
+      deaths = 0;
+      totalTime = 0;
+      levelTimes = [];
+      coinsEarnedThisRun = 0;
+      playerInvulnFrames = 0;
+      player2InvulnFrames = 0;
+      gameRunning = true;
+      if (AudioManager.ctx && AudioManager.ctx.state === 'suspended') {
+        AudioManager.ctx.resume();
+      }
+      loadLevel(currentLevel);
+      gameLoop();
     }
 
     function jumpToLevel(levelIndex) {
@@ -4278,7 +4882,77 @@
       setTimeout(() => document.getElementById('begin-btn').style.opacity = '1', 2900);
     }
 
+    function returnToMenu() {
+      gameRunning = false;
+      AudioManager.stopBGM();
+      bossActive = false;
+      boss = null;
+      bullets = [];
+      bossAttacks = [];
+      cinderBossActive = false;
+      cinderBoss = null;
+      cinderAttacks = [];
+      cinderPools = [];
+      frozenBossActive = false;
+      frozenBoss = null;
+      icicles = [];
+      freezeBreaths = [];
+      icicleWarnings = [];
+      wardenBossActive = false;
+      wardenBoss = null;
+      wardenMissiles = [];
+      wardenDrones = [];
+      wardenLasers = [];
+      wardenConveyorTraps = [];
+      wardenSparks = [];
+      shooterProjectiles = [];
+
+      document.getElementById('hud').classList.add('hidden');
+      document.getElementById('story-screen').classList.add('hidden');
+      document.getElementById('story-screen').classList.remove('flex');
+      document.getElementById('level-complete').classList.add('hidden');
+      document.getElementById('level-complete').classList.remove('flex');
+      document.getElementById('game-complete').classList.add('hidden');
+      document.getElementById('game-complete').classList.remove('flex');
+      document.getElementById('name-input-modal').classList.add('hidden');
+      document.getElementById('name-input-modal').classList.remove('flex');
+      document.getElementById('leaderboard-screen').classList.add('hidden');
+      document.getElementById('leaderboard-screen').classList.remove('flex');
+      document.getElementById('shop-screen').classList.add('hidden');
+      document.getElementById('shop-screen').classList.remove('flex');
+      document.getElementById('level-select').classList.add('hidden');
+      document.getElementById('level-select').classList.remove('flex');
+      document.getElementById('progress-level-select').classList.add('hidden');
+      document.getElementById('progress-level-select').classList.remove('flex');
+      ['cheat-screen', 'roast-screen', 'roast-screen-3', 'roast-screen-4'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.classList.add('hidden');
+          el.classList.remove('flex');
+        }
+      });
+
+      const flyInd = document.getElementById('fly-indicator');
+      if (flyInd) flyInd.remove();
+
+      document.getElementById('start-screen').classList.remove('hidden');
+      document.getElementById('start-screen').classList.add('flex');
+      updateCoinDisplays();
+      applyPremiumSkinLockUI();
+    }
+
     function beginGame() {
+      runSpeedMult = 1;
+      runJumpMult = 1;
+      if (powerUpSpeedRunsQueued > 0) {
+        powerUpSpeedRunsQueued--;
+        runSpeedMult = 1.28;
+      }
+      if (powerUpHighJumpRunsQueued > 0) {
+        powerUpHighJumpRunsQueued--;
+        runJumpMult = 1.16;
+      }
+      updatePowerUpDisplays();
       document.getElementById('story-screen').classList.remove('flex');
       document.getElementById('story-screen').classList.add('hidden');
       startGame();
@@ -4299,6 +4973,9 @@
       deaths = 0;
       totalTime = 0;
       levelTimes = [];
+      coinsEarnedThisRun = 0;
+      playerInvulnFrames = 0;
+      player2InvulnFrames = 0;
       gameRunning = true;
 
       // Unlock audio on user interaction
@@ -4385,6 +5062,8 @@
         t.crumbleTimer = 0;
         t.shakeX = 0;
       });
+
+      level.tiles.filter(t => t.type === TILE_COIN).forEach(t => { t.collected = false; });
 
       // Initialize shooters (stagger timers so they don't all fire at once)
       level.tiles.filter(t => t.type === 8).forEach((s, i) => {
@@ -4525,6 +5204,7 @@
     function updateHUD() {
       document.getElementById('level-display').textContent = currentLevel + 1;
       document.getElementById('death-display').textContent = deaths;
+      updateCoinDisplays();
     }
 
     function updateTimer() {
@@ -4536,6 +5216,8 @@
     function nextLevel() {
       document.getElementById('level-complete').classList.remove('flex');
       document.getElementById('level-complete').classList.add('hidden');
+      const lcLine = document.getElementById('level-coins-earned');
+      if (lcLine) lcLine.classList.add('hidden');
       currentLevel++;
       loadLevel(currentLevel);
       gameRunning = true;
@@ -4555,6 +5237,8 @@
       document.getElementById('roast-screen-4').classList.add('hidden');
       if (cheatCount >= 3) glitchMode = true;
       cheatUsed = false;
+      runSpeedMult = 1;
+      runJumpMult = 1;
       startGame();
     }
 
@@ -4663,7 +5347,8 @@
     }
     
     function die() {
-      spawnDeathParticles(player.x, player.y, SKINS[selectedSkin].color);
+      if (playerInvulnFrames > 0) return;
+      spawnDeathParticles(player.x, player.y, SKINS[selectedSkin]);
       triggerShake(10, 15);
 
       if (practiceMode) {
@@ -4678,7 +5363,29 @@
         return;
       }
 
-      deaths++;
+      if (powerUpShieldCharges > 0) {
+        powerUpShieldCharges--;
+        player.x = lastSafePos.x;
+        player.y = lastSafePos.y;
+        player.vx = 0;
+        player.vy = 0;
+        player.onGround = false;
+        player.onPlatform = null;
+        player.mimicTile = null;
+        playerSquish = { x: 1.5, y: 0.5 };
+        playerInvulnFrames = 100;
+        triggerShake(8, 12);
+        AudioManager.playSound('coin');
+        updatePowerUpDisplays();
+        return;
+      }
+
+      let skipDeathStat = false;
+      if (powerUpReviveCharges > 0) {
+        powerUpReviveCharges--;
+        skipDeathStat = true;
+      }
+      if (!skipDeathStat) deaths++;
       updateHUD();
       AudioManager.playSound('death');
 
@@ -4715,6 +5422,16 @@
       levelTimes[currentLevel] = finishTime;
       totalTime += finishTime;
 
+      if (!practiceMode && !cheatUsed) {
+        beatenLevelIndices.add(currentLevel);
+        maxSelectableLevelIndex = Math.min(
+          levels.length - 1,
+          Math.max(maxSelectableLevelIndex, currentLevel + 1)
+        );
+      }
+
+      // Coins are only from pickups in the level — no bonus for clearing a stage.
+
       if (currentLevel >= levels.length - 1) {
         // Game complete
         if (cheatUsed) {
@@ -4738,6 +5455,16 @@
         AudioManager.playSound('victory');
         document.getElementById('final-deaths').textContent = deaths;
         document.getElementById('final-time').textContent = formatTime(totalTime);
+        const vicCoins = document.getElementById('victory-coins-earned');
+        const vicAmt = document.getElementById('victory-coins-amount');
+        if (vicCoins && vicAmt) {
+          if (coinsEarnedThisRun > 0) {
+            vicAmt.textContent = String(coinsEarnedThisRun);
+            vicCoins.classList.remove('hidden');
+          } else {
+            vicCoins.classList.add('hidden');
+          }
+        }
 
         // Show name input modal
         document.getElementById('name-input-modal').classList.remove('hidden');
@@ -4751,6 +5478,8 @@
         AudioManager.playSound('levelComplete');
         document.getElementById('level-time-display').textContent = formatTime(finishTime);
         document.getElementById('total-time-interim-display').textContent = formatTime(totalTime);
+        const lcLine = document.getElementById('level-coins-earned');
+        if (lcLine) lcLine.classList.add('hidden');
         document.getElementById('level-complete').classList.remove('hidden');
         document.getElementById('level-complete').classList.add('flex');
       }
@@ -4770,7 +5499,9 @@
     
     function update() {
       const level = levels[currentLevel];
-      
+      if (playerInvulnFrames > 0) playerInvulnFrames--;
+      if (twoPlayerMode && player2InvulnFrames > 0) player2InvulnFrames--;
+
       // Update moving platforms
       level.movingPlatforms.forEach(p => {
         p.phase += p.speed;
@@ -4990,13 +5721,15 @@
       wasOnGround = player.onGround;
 
       // Player movement (P1: WASD always; arrow keys only in single-player)
+      const p1Spd = flyMode ? 1 : runSpeedMult;
+      const p1Jump = flyMode ? 1 : runJumpMult;
       let moveX = 0;
       if (keys['KeyA'] || (!twoPlayerMode && keys['ArrowLeft'])) {
-        moveX = -MOVE_SPEED;
+        moveX = -MOVE_SPEED * p1Spd;
         playerFacingRight = false;
       }
       if (keys['KeyD'] || (!twoPlayerMode && keys['ArrowRight'])) {
-        moveX = MOVE_SPEED;
+        moveX = MOVE_SPEED * p1Spd;
         playerFacingRight = true;
       }
 
@@ -5015,7 +5748,7 @@
           }
           // Jump with W/Up during boss fights (P1 only uses ArrowUp in single-player)
           if ((keys['KeyW'] || (!twoPlayerMode && keys['ArrowUp'])) && player.onGround) {
-            player.vy = JUMP_FORCE;
+            player.vy = JUMP_FORCE * p1Jump;
             player.onGround = false;
             player.mimicTile = null;
             playerSquish = { x: 0.65, y: 1.4 };
@@ -5024,7 +5757,7 @@
         } else {
           // Normal jump
           if ((keys['Space'] || keys['KeyW'] || (!twoPlayerMode && keys['ArrowUp'])) && player.onGround) {
-            player.vy = JUMP_FORCE;
+            player.vy = JUMP_FORCE * p1Jump;
             player.onGround = false;
             player.mimicTile = null;
             playerSquish = { x: 0.65, y: 1.4 };
@@ -5186,6 +5919,8 @@
         }
       });
 
+      tryCollectCoins(player, level);
+
       // Enemy collision (disabled in fly mode)
       if (!flyMode) {
         // Walker (3), fast walker (10), spiky (16), factory bot (22)
@@ -5241,6 +5976,7 @@
 
       // Player 2 update
       if (twoPlayerMode) updatePlayer2();
+      if (twoPlayerMode) tryCollectCoins(player2, level);
 
       // Camera follow — midpoint in 2P, P1 in solo
       const focusX = twoPlayerMode
@@ -5252,13 +5988,38 @@
     }
     
     function die2() {
-      spawnDeathParticles(player2.x, player2.y, SKINS[selectedSkin2].color);
+      if (player2InvulnFrames > 0) return;
+      spawnDeathParticles(player2.x, player2.y, SKINS[selectedSkin2]);
       triggerShake(8, 10);
-      deaths++;
+      const lvl = levels[currentLevel];
+
+      if (powerUpShieldCharges > 0) {
+        powerUpShieldCharges--;
+        if (checkpointPos) {
+          player2.x = checkpointPos.x + TILE_SIZE;
+          player2.y = checkpointPos.y;
+        } else {
+          player2.x = (lvl.playerStart.x + 1) * TILE_SIZE;
+          player2.y = lvl.playerStart.y * TILE_SIZE;
+        }
+        player2.vx = 0;
+        player2.vy = 0;
+        player2.onGround = false;
+        player2.onPlatform = null;
+        player2InvulnFrames = 100;
+        AudioManager.playSound('coin');
+        updatePowerUpDisplays();
+        return;
+      }
+
+      let skipDeathStat = false;
+      if (powerUpReviveCharges > 0) {
+        powerUpReviveCharges--;
+        skipDeathStat = true;
+      }
+      if (!skipDeathStat) deaths++;
       updateHUD();
       AudioManager.playSound('death');
-      // Respawn at checkpoint or level start
-      const lvl = levels[currentLevel];
       if (checkpointPos) {
         player2.x = checkpointPos.x + TILE_SIZE;
         player2.y = checkpointPos.y;
@@ -5284,9 +6045,11 @@
       wasOnGround2 = player2.onGround;
 
       // Movement: Arrow keys
+      const p2Spd = flyMode ? 1 : runSpeedMult;
+      const p2Jump = flyMode ? 1 : runJumpMult;
       let moveX = 0;
-      if (keys['ArrowLeft'])  { moveX = -MOVE_SPEED; p2FacingRight = false; }
-      if (keys['ArrowRight']) { moveX =  MOVE_SPEED; p2FacingRight = true;  }
+      if (keys['ArrowLeft'])  { moveX = -MOVE_SPEED * p2Spd; p2FacingRight = false; }
+      if (keys['ArrowRight']) { moveX =  MOVE_SPEED * p2Spd; p2FacingRight = true;  }
       // Freeze slowdown P2
       if (player2.freezeTimer > 0) { player2.freezeTimer--; moveX *= 0.4; }
 
@@ -5315,7 +6078,7 @@
         if (bossActive || cinderBossActive || frozenBossActive || wardenBossActive) {
           if (keys['Enter']) shootBullet2();
           if (keys['ArrowUp'] && player2.onGround) {
-            player2.vy = JUMP_FORCE;
+            player2.vy = JUMP_FORCE * p2Jump;
             player2.onGround = false;
             player2.mimicTile = null;
             p2Squish = { x: 0.65, y: 1.4 };
@@ -5323,7 +6086,7 @@
           }
         } else {
           if (keys['ArrowUp'] && player2.onGround) {
-            player2.vy = JUMP_FORCE;
+            player2.vy = JUMP_FORCE * p2Jump;
             player2.onGround = false;
             player2.mimicTile = null;
             p2Squish = { x: 0.65, y: 1.4 };
@@ -5490,6 +6253,7 @@
     function getCollidingTiles(rect, level) {
       const colliding = [];
       level.tiles.forEach(tile => {
+        if (tile.type === TILE_COIN) return; // pickups — not solid
         if (tile.type === 9  && tile.crumbleState === 'fallen') return; // no collision when fallen
         if (tile.type === 17 && tile.mimicState   === 'running') return; // mimic ran away
         const tileRect = {
@@ -6330,6 +7094,31 @@
             ctx.fillRect(ex + TILE_SIZE / 2 - 3, ey, 6, 2);
             break;
           }
+
+          case 23: { // Collectible coin (shop currency)
+            if (tile.collected) break;
+            const cx = x + TILE_SIZE / 2;
+            const cy = y + TILE_SIZE / 2;
+            const bob = Math.sin(now / 220 + tile.x * 0.7) * 3;
+            const pulse = 0.85 + 0.15 * Math.sin(now / 180);
+            ctx.shadowColor = '#fbbf24';
+            ctx.shadowBlur = 12 * pulse;
+            ctx.fillStyle = '#ca8a04';
+            ctx.beginPath();
+            ctx.arc(cx, cy + bob, 11, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#fde047';
+            ctx.beginPath();
+            ctx.arc(cx - 2, cy + bob - 2, 5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#78350f';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.arc(cx, cy + bob, 7, 0, Math.PI * 2);
+            ctx.stroke();
+            break;
+          }
         }
       });
 
@@ -6350,10 +7139,12 @@
         ctx.translate(foot2CX, foot2Y);
         ctx.scale(p2Squish.x, p2Squish.y);
         ctx.translate(-player2.width / 2, -player2.height);
-        ctx.fillStyle = skin2.color;
-        ctx.fillRect(0, 0, player2.width, player2.height);
-        ctx.fillStyle = skin2.highlight;
-        ctx.fillRect(0, 0, player2.width, 4);
+        if (!fillPremiumPlayerBody(ctx, skin2, player2.width, player2.height, now)) {
+          ctx.fillStyle = skin2.color;
+          ctx.fillRect(0, 0, player2.width, player2.height);
+          ctx.fillStyle = skin2.highlight;
+          ctx.fillRect(0, 0, player2.width, 4);
+        }
         // Fly mode glow
         if (flyMode) {
           ctx.strokeStyle = '#00ffff';
@@ -6390,12 +7181,13 @@
       ctx.translate(footCX, footY);
       ctx.scale(playerSquish.x, playerSquish.y);
       ctx.translate(-player.width / 2, -player.height);
-      // Body
-      ctx.fillStyle = skin.color;
-      ctx.fillRect(0, 0, player.width, player.height);
-      // Highlight stripe
-      ctx.fillStyle = skin.highlight;
-      ctx.fillRect(0, 0, player.width, 4);
+      // Body (+ premium shaders)
+      if (!fillPremiumPlayerBody(ctx, skin, player.width, player.height, now)) {
+        ctx.fillStyle = skin.color;
+        ctx.fillRect(0, 0, player.width, player.height);
+        ctx.fillStyle = skin.highlight;
+        ctx.fillRect(0, 0, player.width, 4);
+      }
       // Practice glow
       if (practiceMode) {
         ctx.strokeStyle = '#fbbf24';
