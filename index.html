@@ -303,6 +303,7 @@
     // Game Constants
     const TILE_SIZE = 32;
     const TILE_COIN = 23; // collectible — spend in shop (session only; resets on reload)
+    const COIN_PICKUP_VALUE = 10; // wallet credit per coin tile collected
     const GRAVITY = 0.8;
     const JUMP_FORCE = -14;
     const MOVE_SPEED = 5;
@@ -422,8 +423,8 @@
         picked++;
         AudioManager.playSound('coin');
         if (!practiceMode && !cheatUsed) {
-          addCoins(1);
-          coinsEarnedThisRun += 1;
+          addCoins(COIN_PICKUP_VALUE);
+          coinsEarnedThisRun += COIN_PICKUP_VALUE;
         }
       });
       if (picked && !practiceMode && !cheatUsed) updateCoinDisplays();
