@@ -154,6 +154,24 @@
      <p class="mt-2">SPACE / W / UP to jump</p>
     </div>
    </div>
+   <!-- Memory cutscene (after level 25) -->
+   <div id="memory-cutscene" class="absolute inset-0 flex-col items-center justify-center bg-black z-50 hidden px-6">
+    <p class="game-font text-[10px] sm:text-xs text-purple-300/90 mb-4 tracking-wide">FRACTURED MEMORY</p>
+    <p class="game-font text-xs sm:text-sm text-gray-300 text-center max-w-xl leading-relaxed mb-4">LEVEL 25 — CLEAR.</p>
+    <p class="game-font text-[10px] sm:text-xs text-gray-400 text-center max-w-lg leading-loose mb-3">BEFORE THE FACTORIES, BEFORE THE ARENAS — THERE WAS ONLY DARKNESS AND THE SOUND OF SPIKES SCRAPING STONE.</p>
+    <p class="game-font text-[10px] sm:text-xs text-red-400/95 text-center max-w-lg leading-loose mb-8">SOMETHING COLOSSAL MADE OF SPIKES HUNTED YOU THROUGH THE VOID. YOU NEVER SAW ITS FACE. ONLY ROWS OF TEETH THAT WERE NOT TEETH.</p>
+    <p class="game-font text-[9px] text-gray-500 text-center mb-8">Relive the sprint. One last corridor.</p>
+    <button type="button" id="memory-cutscene-continue" class="game-font text-sm bg-gradient-to-r from-violet-700 to-fuchsia-600 hover:from-violet-600 hover:to-fuchsia-500 text-white px-8 py-4 rounded-lg">RUN</button>
+   </div>
+   <!-- Level 26 intro cutscene (memory chase — before gameplay) -->
+   <div id="level26-cutscene" class="absolute inset-0 flex-col items-center justify-center bg-gradient-to-b from-black via-[#0f0518] to-black z-50 hidden px-6 overflow-y-auto py-10">
+    <p class="game-font text-2xl sm:text-3xl text-fuchsia-400 mb-2 text-center drop-shadow-[0_0_12px_rgba(232,121,249,0.5)]">LEVEL 26</p>
+    <p class="game-font text-[10px] sm:text-xs text-purple-200/80 mb-8 tracking-widest text-center">FRACTURED MEMORY</p>
+    <p class="game-font text-[10px] sm:text-xs text-gray-400 text-center max-w-lg leading-loose mb-4">THE CORRIDOR DOES NOT END. THE FLOOR REMEMBERS YOUR WEIGHT.</p>
+    <p class="game-font text-[10px] sm:text-xs text-red-400/90 text-center max-w-lg leading-loose mb-4">BEHIND YOU — NOT FOOTSTEPS. SCRAPING. SOMETHING TOO BIG FOR THE TUNNEL STILL TRYING TO FIT THROUGH.</p>
+    <p class="game-font text-[10px] sm:text-xs text-gray-500 text-center max-w-md leading-relaxed mb-10">Reach the light. Do not look back. Hold <span class="text-yellow-300">Q</span> when you need to sprint — your legs will give out if you push them forever.</p>
+    <button type="button" id="level26-cutscene-continue" class="game-font text-sm bg-gradient-to-r from-fuchsia-700 to-purple-600 hover:from-fuchsia-600 hover:to-purple-500 text-white px-10 py-4 rounded-lg">ENTER THE RUN</button>
+   </div>
    <!-- Story Intro -->
    <div id="story-screen" class="absolute inset-0 flex-col items-center justify-center bg-black z-50 hidden">
     <div class="max-w-lg px-8 text-center">
@@ -295,6 +313,11 @@
      <button class="level-select-btn game-font text-sm bg-gradient-to-r from-orange-700 to-orange-600 hover:from-orange-600 hover:to-orange-500 text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105" data-level="22">23</button>
      <button class="level-select-btn game-font text-sm bg-gradient-to-r from-orange-700 to-orange-600 hover:from-orange-600 hover:to-orange-500 text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105" data-level="23">24</button>
      <button class="level-select-btn game-font text-sm bg-gradient-to-r from-orange-700 to-orange-600 hover:from-orange-600 hover:to-orange-500 text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105" data-level="24">25</button>
+     <button class="level-select-btn game-font text-sm bg-gradient-to-r from-fuchsia-800 to-purple-700 hover:from-fuchsia-700 hover:to-purple-600 text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105" data-level="25">26</button>
+     <button class="level-select-btn game-font text-sm bg-gradient-to-r from-fuchsia-900 to-violet-900 hover:from-fuchsia-800 hover:to-violet-800 text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105" data-level="26">27</button>
+     <button class="level-select-btn game-font text-sm bg-gradient-to-r from-fuchsia-900 to-violet-900 hover:from-fuchsia-800 hover:to-violet-800 text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105" data-level="27">28</button>
+     <button class="level-select-btn game-font text-sm bg-gradient-to-r from-fuchsia-900 to-violet-900 hover:from-fuchsia-800 hover:to-violet-800 text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105" data-level="28">29</button>
+     <button class="level-select-btn game-font text-sm bg-gradient-to-r from-fuchsia-900 to-violet-900 hover:from-fuchsia-800 hover:to-violet-800 text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105" data-level="29">30</button>
     </div>
     <button id="close-level-select" class="game-font text-xs text-gray-500 hover:text-gray-300">ESC TO CLOSE</button>
    </div>
@@ -703,6 +726,22 @@
     let playerSquish = { x: 1, y: 1 };
     let wasOnGround = false;
 
+    // Falling off the bottom of the level — short tumble before respawn
+    let playerVoidFallActive = false;
+    let playerVoidFallTimer = 0;
+    let playerFallSpin = 0;
+    let player2VoidFallActive = false;
+    let player2VoidFallTimer = 0;
+    let player2FallSpin = 0;
+
+    // Memory chase level (after level 25): spike colossus + sprint stamina
+    let memoryChaser = null;
+    let memoryStamina = 100;
+    let memorySprintHintFrames = 0;
+    let memoryChaserWarningFrames = 0;
+    let fracturedJumpCharges = 2;
+    let fractMemJwWasDown = false;
+
     function formatTime(ms) {
       const totalSec = ms / 1000;
       const minutes = Math.floor(totalSec / 60);
@@ -1034,6 +1073,138 @@
         // Schedule next loop
         const loopDuration = time * 1000;
         this.bgmTimeout = setTimeout(() => this.playBGMLoop(), loopDuration);
+      },
+
+      startFracturedMemoryBGM() {
+        if (!this.ctx || this.muted) return;
+        if (this.ctx.state === 'suspended') this.ctx.resume();
+        this.stopBGM();
+        this.playFracturedMemoryBGMLoop();
+      },
+
+      // Slow Eb-minor pads + sparse motif — distinct from main campaign BGM
+      playFracturedMemoryBGMLoop() {
+        if (!this.ctx || this.muted) return;
+        if (this.ctx.state === 'suspended') this.ctx.resume();
+        const now = this.ctx.currentTime;
+        const bpm = 68;
+        const q = 60 / bpm;
+        const beatsPerChord = 4;
+        const chords = [
+          [155.56, 233.08, 311.13],
+          [116.54, 174.61, 233.08],
+          [103.83, 155.56, 220.0],
+          [98.0, 146.83, 196.0],
+        ];
+        this.bgmOscillators = [];
+        chords.forEach((freqs, ci) => {
+          const t0 = now + ci * beatsPerChord * q;
+          const dur = beatsPerChord * q;
+          freqs.forEach((f, fi) => {
+            const osc = this.ctx.createOscillator();
+            const g = this.ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(f, t0);
+            const vol = (fi === 0 ? 0.11 : fi === 1 ? 0.07 : 0.045) * 0.85;
+            g.gain.setValueAtTime(0, t0);
+            g.gain.linearRampToValueAtTime(vol, t0 + 0.35);
+            g.gain.setValueAtTime(vol * 0.92, t0 + dur - 0.5);
+            g.gain.linearRampToValueAtTime(0, t0 + dur);
+            osc.connect(g);
+            g.connect(this.bgmGain);
+            osc.start(t0);
+            osc.stop(t0 + dur + 0.05);
+            this.bgmOscillators.push(osc);
+          });
+        });
+        // Sparse high echo (triangle) — two notes per loop
+        const hi = [
+          { f: 523.25, t: 1.5 },
+          { f: 466.16, t: 9.5 },
+        ];
+        hi.forEach(({ f, t }) => {
+          const st = now + t * q;
+          const osc = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(f, st);
+          g.gain.setValueAtTime(0, st);
+          g.gain.linearRampToValueAtTime(0.05, st + 0.08);
+          g.gain.exponentialRampToValueAtTime(0.008, st + q * 1.2);
+          osc.connect(g);
+          g.connect(this.bgmGain);
+          osc.start(st);
+          osc.stop(st + q * 1.35);
+          this.bgmOscillators.push(osc);
+        });
+        const loopSec = chords.length * beatsPerChord * q;
+        this.bgmTimeout = setTimeout(() => this.playFracturedMemoryBGMLoop(), loopSec * 1000);
+      },
+
+      startMemoryChaseHorrorBGM() {
+        if (!this.ctx || this.muted) return;
+        if (this.ctx.state === 'suspended') this.ctx.resume();
+        this.stopBGM();
+        this.playMemoryChaseHorrorBGMLoop();
+      },
+
+      // Level 26 chase — loud dissonant industrial horror (separate from calmer 27–30 BGM)
+      playMemoryChaseHorrorBGMLoop() {
+        if (!this.ctx || this.muted) return;
+        if (this.ctx.state === 'suspended') this.ctx.resume();
+        const t0 = this.ctx.currentTime;
+        const bpm = 168;
+        const b = 60 / bpm;
+        const low = [41.2, 43.65, 38.89, 46.25];
+        const out = this.bgmGain;
+        this.bgmOscillators = [];
+        for (let i = 0; i < 16; i++) {
+          const st = t0 + i * b * 0.5;
+          const osc = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(low[i % 4] * (i % 4 === 0 ? 1 : 1.002), st);
+          g.gain.setValueAtTime(0, st);
+          g.gain.linearRampToValueAtTime(0.3, st + 0.015);
+          g.gain.exponentialRampToValueAtTime(0.02, st + b * 0.42);
+          osc.connect(g);
+          g.connect(out);
+          osc.start(st);
+          osc.stop(st + b * 0.48);
+          this.bgmOscillators.push(osc);
+        }
+        const hiFreqs = [349.23, 369.99, 415.3, 466.16, 493.88, 523.25];
+        for (let i = 0; i < 32; i++) {
+          const st = t0 + i * b * 0.25;
+          const osc = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(hiFreqs[i % hiFreqs.length] * (1 + (i % 5) * 0.01), st);
+          g.gain.setValueAtTime(0, st);
+          g.gain.linearRampToValueAtTime(0.085, st + 0.004);
+          g.gain.exponentialRampToValueAtTime(0.008, st + b * 0.11);
+          osc.connect(g);
+          g.connect(out);
+          osc.start(st);
+          osc.stop(st + b * 0.14);
+          this.bgmOscillators.push(osc);
+        }
+        for (let i = 0; i < 64; i++) {
+          const st = t0 + i * b * 0.125;
+          const osc = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(2200 + (i % 8) * 180, st);
+          g.gain.setValueAtTime(0, st);
+          g.gain.linearRampToValueAtTime(i % 4 === 0 ? 0.12 : 0.05, st + 0.002);
+          g.gain.exponentialRampToValueAtTime(0.01, st + 0.04);
+          osc.connect(g);
+          g.connect(out);
+          osc.start(st);
+          osc.stop(st + 0.045);
+          this.bgmOscillators.push(osc);
+        }
+        this.bgmTimeout = setTimeout(() => this.playMemoryChaseHorrorBGMLoop(), 8 * b * 1000);
       },
 
       // Boss fight music - intense and fast-paced
@@ -2913,6 +3084,167 @@
         ],
         movingPlatforms: []
       },
+
+      // Level 26 — FRACTURED MEMORY (long chase — spike colossus; hold Q to sprint)
+      {
+        isFracturedMemory: true,
+        isMemoryChase: true,
+        bgTheme: 'void',
+        width: 236,
+        height: 17,
+        playerStart: { x: 2, y: 14 },
+        tiles: (() => {
+          const T = [];
+          const W = 236;
+          const fy = 16;
+          const skip = new Set([54, 55, 112, 113, 170, 171, 198, 199]);
+          for (let x = 0; x < W - 6; x++) {
+            if (skip.has(x)) continue;
+            let typ = 1;
+            if (x >= 10 && x <= 206) {
+              if (x >= 28 && (x - 28) % 38 <= 2 && !skip.has(x) && !skip.has(x + 1) && !skip.has(x + 2)) typ = 13;
+            }
+            T.push({ x, y: fy, type: typ });
+          }
+          T.push({ x: 88, y: 15, type: 1 }, { x: 89, y: 15, type: 1 });
+          T.push({ x: 142, y: 15, type: 1 }, { x: 143, y: 15, type: 1 }, { x: 144, y: 15, type: 1 });
+          T.push({ x: 188, y: 14, type: 1 }, { x: 189, y: 14, type: 1 });
+          const cr = [26, 61, 94, 118, 152, 176, 204];
+          cr.forEach(x => T.push({ x, y: 15, type: 9 }));
+          T.push({ x: 12, y: 15, type: 4 }, { x: 48, y: 15, type: 4 }, { x: 76, y: 15, type: 4 });
+          T.push({ x: 108, y: 15, type: 4 }, { x: 138, y: 15, type: 4 }, { x: 162, y: 15, type: 4 });
+          T.push({ x: 190, y: 15, type: 4 }, { x: 214, y: 15, type: 4 });
+          T.push({ x: 34, y: 15, type: 3 }, { x: 72, y: 15, type: 3 }, { x: 128, y: 15, type: 3 });
+          T.push({ x: 178, y: 15, type: 3 }, { x: 200, y: 15, type: 3 });
+          T.push({ x: 58, y: 15, type: 10 }, { x: 104, y: 15, type: 10 }, { x: 146, y: 15, type: 10 });
+          T.push({ x: 92, y: 15, type: 10 }, { x: 188, y: 15, type: 10 });
+          const g = W - 6;
+          T.push({ x: g, y: fy, type: 1 }, { x: g + 1, y: fy, type: 1 }, { x: g + 2, y: fy, type: 1 });
+          T.push({ x: g + 1, y: fy - 1, type: 1 }, { x: g + 2, y: fy - 1, type: 1 });
+          T.push({ x: g + 2, y: fy - 2, type: 1 }, { x: g + 3, y: fy - 2, type: 1 });
+          T.push({ x: g + 4, y: fy - 3, type: 5 });
+          return T;
+        })(),
+        movingPlatforms: [
+          { x: 18, y: 10, width: 2, moveX: 1.4, moveY: 0, speed: 0.017 },
+          { x: 48, y: 9, width: 3, moveX: 0, moveY: 0.75, speed: 0.021 },
+          { x: 92, y: 11, width: 2, moveX: -1.6, moveY: 0, speed: 0.016 },
+          { x: 128, y: 9, width: 3, moveX: 0, moveY: 0.9, speed: 0.019 },
+          { x: 162, y: 10, width: 2, moveX: 1.8, moveY: 0.25, speed: 0.018 },
+          { x: 198, y: 8, width: 2, moveX: 0, moveY: 0.65, speed: 0.022 },
+          { x: 72, y: 8, width: 2, moveX: 1.1, moveY: 0.4, speed: 0.02 },
+          { x: 210, y: 9, width: 2, moveX: -1.2, moveY: 0.35, speed: 0.019 },
+        ]
+      },
+
+      // Level 27 — FRACTURED MEMORY II (no bottom ground — docks + air platforms only)
+      {
+        isFracturedMemory: true,
+        bgTheme: 'void',
+        width: 50,
+        height: 16,
+        playerStart: { x: 2, y: 9 },
+        tiles: (() => {
+          const T = [];
+          T.push({ x: 7, y: 14, type: 1 }, { x: 9, y: 14, type: 1 }, { x: 11, y: 14, type: 1 });
+          T.push({ x: 14, y: 12, type: 1 }, { x: 15, y: 12, type: 1 });
+          T.push({ x: 22, y: 11, type: 1 }, { x: 24, y: 10, type: 3 });
+          T.push({ x: 30, y: 10, type: 1 }, { x: 32, y: 9, type: 3 });
+          T.push({ x: 38, y: 11, type: 1 }, { x: 40, y: 11, type: 1 }, { x: 42, y: 10, type: 1 });
+          T.push({ x: 46, y: 9, type: 1 }, { x: 47, y: 9, type: 1 }, { x: 48, y: 8, type: 5 });
+          T.push({ x: 12, y: 12, type: TILE_COIN }, { x: 35, y: 8, type: TILE_COIN });
+          return T;
+        })(),
+        movingPlatforms: [
+          { x: 0, y: 14, width: 6, moveX: 0, moveY: 0, speed: 0 },
+          { x: 6, y: 7, width: 2, moveX: 1.1, moveY: 0.35, speed: 0.02 },
+          { x: 17, y: 6, width: 2, moveX: 0, moveY: 0.55, speed: 0.024 },
+          { x: 28, y: 8, width: 2, moveX: -1.2, moveY: 0, speed: 0.018 },
+          { x: 36, y: 5, width: 2, moveX: 0.9, moveY: 0.45, speed: 0.021 },
+        ]
+      },
+
+      // Level 28 — FRACTURED MEMORY III (no bottom ground — fast walkers + gaps)
+      {
+        isFracturedMemory: true,
+        bgTheme: 'void',
+        width: 56,
+        height: 16,
+        playerStart: { x: 2, y: 9 },
+        tiles: (() => {
+          const T = [];
+          T.push({ x: 7, y: 14, type: 1 }, { x: 10, y: 14, type: 1 }, { x: 13, y: 14, type: 1 }, { x: 16, y: 14, type: 1 });
+          T.push({ x: 23, y: 14, type: 1 }, { x: 26, y: 14, type: 1 }, { x: 29, y: 14, type: 1 }, { x: 32, y: 14, type: 1 }, { x: 35, y: 14, type: 1 });
+          T.push({ x: 43, y: 14, type: 1 }, { x: 46, y: 14, type: 1 }, { x: 49, y: 14, type: 1 });
+          T.push({ x: 19, y: 14, type: 1 }, { x: 20, y: 13, type: 1 });
+          T.push({ x: 39, y: 14, type: 1 }, { x: 40, y: 13, type: 1 });
+          T.push({ x: 26, y: 12, type: 1 }, { x: 28, y: 11, type: 10 });
+          T.push({ x: 34, y: 11, type: 1 }, { x: 36, y: 10, type: 10 });
+          T.push({ x: 48, y: 12, type: 1 }, { x: 50, y: 11, type: 1 }, { x: 52, y: 10, type: 1 }, { x: 53, y: 9, type: 5 });
+          return T;
+        })(),
+        movingPlatforms: [
+          { x: 0, y: 14, width: 6, moveX: 0, moveY: 0, speed: 0 },
+          { x: 10, y: 8, width: 2, moveX: 0, moveY: 0.6, speed: 0.022 },
+          { x: 20, y: 10, width: 3, moveX: 1.3, moveY: 0, speed: 0.017 },
+          { x: 30, y: 7, width: 2, moveX: -1.1, moveY: 0.4, speed: 0.019 },
+          { x: 46, y: 9, width: 2, moveX: 0.8, moveY: 0.5, speed: 0.02 },
+        ]
+      },
+
+      // Level 29 — FRACTURED MEMORY IV (no bottom ground — bouncer + hoppers)
+      {
+        isFracturedMemory: true,
+        bgTheme: 'void',
+        width: 52,
+        height: 17,
+        playerStart: { x: 2, y: 10 },
+        tiles: (() => {
+          const T = [];
+          T.push({ x: 7, y: 15, type: 1 }, { x: 10, y: 15, type: 1 }, { x: 13, y: 15, type: 1 }, { x: 16, y: 15, type: 1 });
+          T.push({ x: 22, y: 15, type: 1 }, { x: 25, y: 15, type: 1 }, { x: 28, y: 15, type: 1 }, { x: 31, y: 15, type: 1 });
+          T.push({ x: 38, y: 15, type: 1 }, { x: 41, y: 15, type: 1 }, { x: 44, y: 15, type: 1 });
+          T.push({ x: 16, y: 13, type: 1 }, { x: 18, y: 12, type: 11 });
+          T.push({ x: 28, y: 12, type: 1 }, { x: 30, y: 11, type: 14 });
+          T.push({ x: 36, y: 12, type: 1 }, { x: 38, y: 11, type: 3 });
+          T.push({ x: 44, y: 10, type: 1 }, { x: 46, y: 9, type: 1 }, { x: 48, y: 8, type: 5 });
+          return T;
+        })(),
+        movingPlatforms: [
+          { x: 0, y: 15, width: 6, moveX: 0, moveY: 0, speed: 0 },
+          { x: 8, y: 8, width: 2, moveX: 1, moveY: 0.35, speed: 0.021 },
+          { x: 22, y: 6, width: 2, moveX: 0, moveY: 0.65, speed: 0.023 },
+          { x: 34, y: 9, width: 3, moveX: -1.2, moveY: 0, speed: 0.016 },
+          { x: 42, y: 7, width: 2, moveX: 0.7, moveY: 0.5, speed: 0.02 },
+        ]
+      },
+
+      // Level 30 — FRACTURED MEMORY V (no bottom ground — factory bot + spiky finale)
+      {
+        isFracturedMemory: true,
+        bgTheme: 'void',
+        width: 58,
+        height: 17,
+        playerStart: { x: 2, y: 10 },
+        tiles: (() => {
+          const T = [];
+          T.push({ x: 7, y: 15, type: 1 }, { x: 10, y: 15, type: 1 }, { x: 13, y: 15, type: 1 }, { x: 16, y: 15, type: 1 });
+          T.push({ x: 24, y: 15, type: 1 }, { x: 27, y: 15, type: 1 }, { x: 30, y: 15, type: 1 }, { x: 33, y: 15, type: 1 });
+          T.push({ x: 40, y: 15, type: 1 }, { x: 43, y: 15, type: 1 }, { x: 46, y: 15, type: 1 }, { x: 49, y: 15, type: 1 });
+          T.push({ x: 18, y: 13, type: 1 }, { x: 20, y: 12, type: 22 });
+          T.push({ x: 28, y: 11, type: 1 }, { x: 30, y: 10, type: 16 });
+          T.push({ x: 38, y: 12, type: 1 }, { x: 40, y: 11, type: 3 });
+          T.push({ x: 46, y: 10, type: 1 }, { x: 48, y: 9, type: 1 }, { x: 50, y: 8, type: 1 }, { x: 52, y: 7, type: 5 });
+          return T;
+        })(),
+        movingPlatforms: [
+          { x: 0, y: 15, width: 6, moveX: 0, moveY: 0, speed: 0 },
+          { x: 9, y: 8, width: 2, moveX: 1.15, moveY: 0.3, speed: 0.019 },
+          { x: 24, y: 6, width: 2, moveX: 0, moveY: 0.7, speed: 0.022 },
+          { x: 36, y: 9, width: 3, moveX: -1.4, moveY: 0.2, speed: 0.017 },
+          { x: 50, y: 7, width: 2, moveX: 0.85, moveY: 0.55, speed: 0.02 },
+        ]
+      },
     ];
 
     // Boss Fight System
@@ -3180,7 +3512,28 @@
       }
     }
 
+    function getEnemyShotRect(tile) {
+      if (!tile || tile.shotDead) return null;
+      const pad = 4;
+      const inner = TILE_SIZE - 8;
+      if (tile.type === 3 || tile.type === 10 || tile.type === 22) {
+        const ex = tile.currentX !== undefined ? tile.currentX : tile.x * TILE_SIZE;
+        const gy = tile.y * TILE_SIZE;
+        return { x: ex + pad, y: gy + pad, width: inner, height: inner };
+      }
+      if (tile.type === 11 || tile.type === 14 || tile.type === 16) {
+        const ex = tile.currentX;
+        const ey = tile.currentY;
+        if (ex === undefined || ey === undefined) return null;
+        return { x: ex + pad, y: ey + pad, width: inner, height: inner };
+      }
+      return null;
+    }
+
     function updateBullets() {
+      const lv = levels[currentLevel];
+      const maxX = lv ? lv.width * TILE_SIZE + 80 : 1400;
+      const maxY = lv ? lv.height * TILE_SIZE + 80 : 900;
       // Update player bullets
       for (let i = bullets.length - 1; i >= 0; i--) {
         const bullet = bullets[i];
@@ -3188,7 +3541,7 @@
         bullet.y += bullet.vy;
 
         // Remove off-screen bullets
-        if (bullet.x < 0 || bullet.x > 1200 || bullet.y < 0 || bullet.y > 700) {
+        if (bullet.x < -40 || bullet.x > maxX || bullet.y < -40 || bullet.y > maxY) {
           bullets.splice(i, 1);
           continue;
         }
@@ -3216,6 +3569,28 @@
           cinderBoss.flashTimer = 7;
           bullets.splice(i, 1);
           AudioManager.playSound('boost');
+          continue;
+        }
+
+        if (lv && lv.isFracturedMemory && !lv.isMemoryChase) {
+          let hitEnemy = false;
+          lv.tiles.forEach(tile => {
+            if (hitEnemy) return;
+            const r = getEnemyShotRect(tile);
+            if (!r) return;
+            if (bullet.x < r.x + r.width &&
+                bullet.x + 8 > r.x &&
+                bullet.y < r.y + r.height &&
+                bullet.y + 8 > r.y) {
+              tile.shotDead = true;
+              hitEnemy = true;
+            }
+          });
+          if (hitEnemy) {
+            bullets.splice(i, 1);
+            AudioManager.playSound('boost');
+            continue;
+          }
         }
       }
     }
@@ -3236,7 +3611,7 @@
         vx: bulletVX,
         vy: 0
       });
-      AudioManager.playSound('jump');
+      AudioManager.playSound('shoot');
     }
 
     function renderBoss() {
@@ -3308,6 +3683,40 @@
         ctx.fillRect(bullet.x, bullet.y, 8, 4);
       });
 
+      ctx.restore();
+    }
+
+    function renderFracturedMemoryHints() {
+      if (!gameRunning) return;
+      const lv = levels[currentLevel];
+      if (!lv || !lv.isFracturedMemory || flyMode) return;
+      ctx.save();
+      ctx.textAlign = 'center';
+      ctx.shadowColor = '#000';
+      ctx.shadowBlur = 8;
+      const cx = canvas.width / 2;
+      // Chase level: draw above stamina / sprint HUD at bottom
+      const baseY = lv.isMemoryChase ? canvas.height - 118 : canvas.height - 52;
+      if (!lv.isMemoryChase) {
+        ctx.font = '11px "Press Start 2P"';
+        ctx.fillStyle = '#fde68a';
+        ctx.fillText('PRESS SPACE TO SHOOT', cx, baseY);
+        ctx.font = '10px "Press Start 2P"';
+        ctx.fillStyle = '#e9d5ff';
+        ctx.fillText('PRESS UP ARROW TWICE TO DOUBLE JUMP', cx, baseY + 22);
+        ctx.font = '8px "Press Start 2P"';
+        ctx.fillStyle = 'rgba(216, 180, 254, 0.9)';
+        ctx.fillText('W KEY TWICE IF USING WASD', cx, baseY + 40);
+      } else {
+        ctx.font = '10px "Press Start 2P"';
+        ctx.fillStyle = '#e9d5ff';
+        ctx.fillText('PRESS UP ARROW TWICE TO DOUBLE JUMP', cx, baseY);
+        ctx.font = '8px "Press Start 2P"';
+        ctx.fillStyle = 'rgba(216, 180, 254, 0.9)';
+        ctx.fillText('W KEY TWICE IF USING WASD', cx, baseY + 20);
+      }
+      ctx.shadowBlur = 0;
+      ctx.textAlign = 'left';
       ctx.restore();
     }
 
@@ -4456,7 +4865,7 @@
       // Input handling
       window.addEventListener('keydown', (e) => {
         keys[e.code] = true;
-        if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'KeyW', 'KeyA', 'KeyS', 'KeyD', 'Enter'].includes(e.code)) {
+        if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'KeyW', 'KeyA', 'KeyS', 'KeyD', 'Enter', 'KeyQ'].includes(e.code)) {
           if (gameRunning) e.preventDefault();
         }
       });
@@ -4466,6 +4875,8 @@
       document.getElementById('start-btn').addEventListener('click', showStoryIntro);
       document.getElementById('begin-btn').addEventListener('click', beginGame);
       document.getElementById('next-level-btn').addEventListener('click', nextLevel);
+      document.getElementById('memory-cutscene-continue').addEventListener('click', beginMemoryLevelAfterCutscene);
+      document.getElementById('level26-cutscene-continue').addEventListener('click', startMemoryChaseGameplay);
       document.getElementById('restart-btn').addEventListener('click', restartGame);
       document.getElementById('cheat-restart-btn').addEventListener('click', restartGame);
       document.getElementById('roast-restart-btn').addEventListener('click', restartGame);
@@ -4804,6 +5215,10 @@
       document.getElementById('start-screen').classList.add('hidden');
       document.getElementById('start-screen').classList.remove('flex');
       document.getElementById('hud').classList.remove('hidden');
+      document.getElementById('memory-cutscene').classList.add('hidden');
+      document.getElementById('memory-cutscene').classList.remove('flex');
+      document.getElementById('level26-cutscene').classList.add('hidden');
+      document.getElementById('level26-cutscene').classList.remove('flex');
       const practiceHud = document.getElementById('practice-hud');
       if (practiceMode) practiceHud.classList.remove('hidden');
       else practiceHud.classList.add('hidden');
@@ -4815,6 +5230,16 @@
       coinsEarnedThisRun = 0;
       playerInvulnFrames = 0;
       player2InvulnFrames = 0;
+      if (levelIndex === 25 && levels[25] && levels[25].isMemoryChase) {
+        document.getElementById('hud').classList.add('hidden');
+        gameRunning = false;
+        if (AudioManager.ctx && AudioManager.ctx.state === 'suspended') {
+          AudioManager.ctx.resume();
+        }
+        document.getElementById('level26-cutscene').classList.remove('hidden');
+        document.getElementById('level26-cutscene').classList.add('flex');
+        return;
+      }
       gameRunning = true;
       if (AudioManager.ctx && AudioManager.ctx.state === 'suspended') {
         AudioManager.ctx.resume();
@@ -4830,9 +5255,24 @@
       // Hide start screen if visible
       document.getElementById('start-screen').classList.add('hidden');
       document.getElementById('hud').classList.remove('hidden');
+      document.getElementById('memory-cutscene').classList.add('hidden');
+      document.getElementById('memory-cutscene').classList.remove('flex');
+      document.getElementById('level26-cutscene').classList.add('hidden');
+      document.getElementById('level26-cutscene').classList.remove('flex');
 
       // Set current level
       currentLevel = levelIndex;
+
+      if (levelIndex === 25 && levels[25] && levels[25].isMemoryChase) {
+        document.getElementById('hud').classList.add('hidden');
+        gameRunning = false;
+        if (AudioManager.ctx && AudioManager.ctx.state === 'suspended') {
+          AudioManager.ctx.resume();
+        }
+        document.getElementById('level26-cutscene').classList.remove('hidden');
+        document.getElementById('level26-cutscene').classList.add('flex');
+        return;
+      }
 
       // Start game
       gameRunning = true;
@@ -4913,6 +5353,10 @@
       document.getElementById('story-screen').classList.remove('flex');
       document.getElementById('level-complete').classList.add('hidden');
       document.getElementById('level-complete').classList.remove('flex');
+      document.getElementById('memory-cutscene').classList.add('hidden');
+      document.getElementById('memory-cutscene').classList.remove('flex');
+      document.getElementById('level26-cutscene').classList.add('hidden');
+      document.getElementById('level26-cutscene').classList.remove('flex');
       document.getElementById('game-complete').classList.add('hidden');
       document.getElementById('game-complete').classList.remove('flex');
       document.getElementById('name-input-modal').classList.add('hidden');
@@ -4961,6 +5405,10 @@
 
     function startGame() {
       document.getElementById('hud').classList.remove('hidden');
+      document.getElementById('memory-cutscene').classList.add('hidden');
+      document.getElementById('memory-cutscene').classList.remove('flex');
+      document.getElementById('level26-cutscene').classList.add('hidden');
+      document.getElementById('level26-cutscene').classList.remove('flex');
 
       // Show practice indicator in HUD if active
       const practiceHud = document.getElementById('practice-hud');
@@ -4990,6 +5438,7 @@
     
     function loadLevel(levelIndex) {
       const level = levels[levelIndex];
+      memoryChaser = null;
       player = {
         x: level.playerStart.x * TILE_SIZE,
         y: level.playerStart.y * TILE_SIZE,
@@ -5022,6 +5471,17 @@
         wasOnGround2 = false;
       }
       cameraX = 0;
+      playerVoidFallActive = false;
+      playerVoidFallTimer = 0;
+      playerFallSpin = 0;
+      player2VoidFallActive = false;
+      player2VoidFallTimer = 0;
+      player2FallSpin = 0;
+      level.tiles.forEach(t => {
+        if ([3, 10, 11, 14, 16, 22].includes(t.type)) t.shotDead = false;
+      });
+      fracturedJumpCharges = 2;
+      fractMemJwWasDown = false;
 
       // Initialize moving platforms
       level.movingPlatforms.forEach(p => {
@@ -5161,6 +5621,37 @@
         wardenMissiles = []; wardenDrones = []; wardenLasers = []; wardenConveyorTraps = []; wardenSparks = [];
         createWardenBoss();
         if (!AudioManager.muted) { AudioManager.stopBGM(); AudioManager.startWardenBossBGM(); }
+      } else if (levels[levelIndex].isMemoryChase) {
+        bossActive = false;
+        showShootTip = false;
+        boss = null;
+        bullets = [];
+        bossAttacks = [];
+        cinderBossActive = false;
+        cinderBoss = null;
+        cinderAttacks = [];
+        cinderPools = [];
+        frozenBossActive = false;
+        frozenBoss = null;
+        icicles = []; freezeBreaths = []; icicleWarnings = [];
+        wardenBossActive = false;
+        wardenBoss = null;
+        wardenMissiles = []; wardenDrones = []; wardenLasers = []; wardenConveyorTraps = []; wardenSparks = [];
+        const floorTop = level.height * TILE_SIZE - TILE_SIZE;
+        memoryChaser = {
+          x: -200,
+          y: floorTop - 94,
+          width: 120,
+          height: 94,
+          vx: 5.36
+        };
+        memoryStamina = 100;
+        memorySprintHintFrames = 0;
+        memoryChaserWarningFrames = 0;
+        if (!AudioManager.muted && gameRunning) {
+          AudioManager.stopBGM();
+          AudioManager.startMemoryChaseHorrorBGM();
+        }
       } else {
         // Reset all boss state for normal levels
         bossActive = false;
@@ -5179,7 +5670,9 @@
         // Choose music based on level theme
         if (!AudioManager.muted && gameRunning) {
           AudioManager.stopBGM();
-          if (levels[levelIndex].bgTheme === 'ice') {
+          if (levels[levelIndex].isFracturedMemory) {
+            AudioManager.startFracturedMemoryBGM();
+          } else if (levels[levelIndex].bgTheme === 'ice') {
             AudioManager.startFrostBGM();
           } else if (levels[levelIndex].bgTheme === 'factory') {
             AudioManager.startFactoryBGM();
@@ -5214,14 +5707,37 @@
       document.getElementById('timer-display').textContent = formatTime(levelElapsed);
     }
     
+    function beginMemoryLevelAfterCutscene() {
+      document.getElementById('memory-cutscene').classList.add('hidden');
+      document.getElementById('memory-cutscene').classList.remove('flex');
+      document.getElementById('level26-cutscene').classList.remove('hidden');
+      document.getElementById('level26-cutscene').classList.add('flex');
+    }
+
+    function startMemoryChaseGameplay() {
+      document.getElementById('level26-cutscene').classList.add('hidden');
+      document.getElementById('level26-cutscene').classList.remove('flex');
+      document.getElementById('hud').classList.remove('hidden');
+      const practiceHud = document.getElementById('practice-hud');
+      if (practiceMode) practiceHud.classList.remove('hidden');
+      else practiceHud.classList.add('hidden');
+      currentLevel = 25;
+      gameRunning = true;
+      if (AudioManager.ctx && AudioManager.ctx.state === 'suspended') {
+        AudioManager.ctx.resume();
+      }
+      loadLevel(currentLevel);
+      gameLoop();
+    }
+
     function nextLevel() {
       document.getElementById('level-complete').classList.remove('flex');
       document.getElementById('level-complete').classList.add('hidden');
       const lcLine = document.getElementById('level-coins-earned');
       if (lcLine) lcLine.classList.add('hidden');
       currentLevel++;
-      loadLevel(currentLevel);
       gameRunning = true;
+      loadLevel(currentLevel);
       gameLoop();
     }
     
@@ -5349,11 +5865,13 @@
     
     function die() {
       if (playerInvulnFrames > 0) return;
+      playerVoidFallActive = false;
       spawnDeathParticles(player.x, player.y, SKINS[selectedSkin]);
       triggerShake(10, 15);
 
       if (practiceMode) {
         // Instant respawn at last safe spot — no death count, no reload
+        levels[currentLevel].tiles.filter(t => t.type === TILE_COIN).forEach(t => { t.collected = false; });
         player.x = lastSafePos.x;
         player.y = lastSafePos.y;
         player.vx = 0;
@@ -5366,6 +5884,7 @@
 
       if (powerUpShieldCharges > 0) {
         powerUpShieldCharges--;
+        levels[currentLevel].tiles.filter(t => t.type === TILE_COIN).forEach(t => { t.collected = false; });
         player.x = lastSafePos.x;
         player.y = lastSafePos.y;
         player.vx = 0;
@@ -5432,6 +5951,13 @@
       }
 
       // Coins are only from pickups in the level — no bonus for clearing a stage.
+
+      if (currentLevel === 24) {
+        AudioManager.playSound('levelComplete');
+        document.getElementById('memory-cutscene').classList.remove('hidden');
+        document.getElementById('memory-cutscene').classList.add('flex');
+        return;
+      }
 
       if (currentLevel >= levels.length - 1) {
         // Game complete
@@ -5500,6 +6026,10 @@
     
     function update() {
       const level = levels[currentLevel];
+      if (flyMode) {
+        playerVoidFallActive = false;
+        player2VoidFallActive = false;
+      }
       if (playerInvulnFrames > 0) playerInvulnFrames--;
       if (twoPlayerMode && player2InvulnFrames > 0) player2InvulnFrames--;
 
@@ -5533,6 +6063,7 @@
 
       // Update enemies (type 3 — walker)
       level.tiles.filter(t => t.type === 3).forEach(e => {
+        if (e.shotDead) return;
         e.currentX += e.direction * (glitchMode ? 2.5 : 1);
         if (Math.abs(e.currentX - e.startX) > e.moveRange) {
           e.direction *= -1;
@@ -5541,6 +6072,7 @@
 
       // Update fast walkers (type 10 — 3× speed)
       level.tiles.filter(t => t.type === 10).forEach(e => {
+        if (e.shotDead) return;
         e.currentX += e.direction * (glitchMode ? 6 : 3);
         if (Math.abs(e.currentX - e.startX) > e.moveRange) {
           e.direction *= -1;
@@ -5549,6 +6081,7 @@
 
       // Update factory bots (type 22 — 2.5× speed, wider patrol)
       level.tiles.filter(t => t.type === 22).forEach(e => {
+        if (e.shotDead) return;
         e.currentX += e.direction * (glitchMode ? 5 : 2.5);
         if (Math.abs(e.currentX - e.startX) > e.moveRange) {
           e.direction *= -1;
@@ -5563,6 +6096,7 @@
 
       // Update bouncers (type 11 — figure-8 oscillation)
       level.tiles.filter(t => t.type === 11).forEach(e => {
+        if (e.shotDead) return;
         e.phase += 0.025;
         e.currentX = e.startX + Math.sin(e.phase) * TILE_SIZE * 2;
         e.currentY = e.startY + Math.sin(e.phase * 1.7) * TILE_SIZE * 1.5;
@@ -5570,6 +6104,7 @@
 
       // Update lava hoppers (type 14 — patrol + hop up/down)
       level.tiles.filter(t => t.type === 14).forEach(e => {
+        if (e.shotDead) return;
         e.hopPhase += 0.07;
         e.currentX += e.direction * 1.5;
         if (Math.abs(e.currentX - e.startX) > e.moveRange) e.direction *= -1;
@@ -5579,6 +6114,7 @@
 
       // Update spiky enemies (type 16 — chase player when nearby, bob vertically)
       level.tiles.filter(t => t.type === 16).forEach(e => {
+        if (e.shotDead) return;
         const px = player.x + player.width / 2;
         const ex = e.currentX + TILE_SIZE / 2;
         const dist = Math.abs(px - ex);
@@ -5691,7 +6227,7 @@
           continue;
         }
         // Hit player
-        if (!flyMode &&
+        if (!flyMode && !playerVoidFallActive &&
             sp.x > player.x && sp.x < player.x + player.width &&
             sp.y > player.y && sp.y < player.y + player.height) {
           shooterProjectiles.splice(i, 1);
@@ -5734,6 +6270,16 @@
         playerFacingRight = true;
       }
 
+      const memChase = !flyMode && level.isMemoryChase;
+      if (memChase) {
+        if (keys['KeyQ'] && memoryStamina > 0 && moveX !== 0) {
+          moveX *= 1.68;
+          memoryStamina = Math.max(0, memoryStamina - 1.05);
+        } else {
+          memoryStamina = Math.min(100, memoryStamina + 0.34);
+        }
+      }
+
       // Fly mode controls
       if (flyMode) {
         let moveY = 0;
@@ -5742,8 +6288,31 @@
         if (keys['Space']) moveY = -FLY_SPEED;
         player.vy = moveY;
       } else {
-        // Boss fight shooting (main boss, cinder boss, or frozen boss)
-        if (bossActive || cinderBossActive || frozenBossActive || wardenBossActive) {
+        // Fractured memory worlds: double jump; Space shoots only on non-chase memory stages
+        if (level.isFracturedMemory && !flyMode) {
+          if (player.onGround) fracturedJumpCharges = 2;
+          if (!level.isMemoryChase && keys['Space']) shootBullet();
+          const jw = keys['KeyW'] || (!twoPlayerMode && keys['ArrowUp']);
+          const jwEdge = jw && !fractMemJwWasDown;
+          fractMemJwWasDown = !!jw;
+          if (jw && player.onGround && fracturedJumpCharges > 0) {
+            player.vy = JUMP_FORCE * p1Jump;
+            player.onGround = false;
+            player.mimicTile = null;
+            fracturedJumpCharges--;
+            playerSquish = { x: 0.65, y: 1.4 };
+            AudioManager.playSound('jump');
+          } else if (!player.onGround && fracturedJumpCharges > 0) {
+            const airOk = jwEdge;
+            if (airOk) {
+              player.vy = JUMP_FORCE * p1Jump;
+              fracturedJumpCharges--;
+              player.mimicTile = null;
+              playerSquish = { x: 0.65, y: 1.4 };
+              AudioManager.playSound('jump');
+            }
+          }
+        } else if (bossActive || cinderBossActive || frozenBossActive || wardenBossActive) {
           if (keys['Space']) {
             shootBullet();
           }
@@ -5769,6 +6338,10 @@
         // Apply gravity (only when not flying)
         player.vy += GRAVITY;
         if (player.vy > 15) player.vy = 15;
+        if (playerVoidFallActive) {
+          player.vy += GRAVITY * 0.55;
+          if (player.vy > 24) player.vy = 24;
+        }
       }
       
       // Move with platform
@@ -5901,86 +6474,111 @@
         lastSafePos = { x: player.x, y: player.y };
       }
 
-      // Check hazards
-      vTiles.concat(hTiles).forEach(tile => {
-        if (tile.type === 2  && !flyMode) die(); // Spike
-        if (tile.type === 13 && !flyMode) die(); // Lava
-        if (tile.type === 21 && !flyMode) die(); // Acid
-        if (tile.type === 4 && !flyMode) { // Boost
-          player.vy = BOOST_FORCE;
-          player.onGround = false;
-          AudioManager.playSound('boost');
-        }
-        if (tile.type === 5) completeLevel(); // Goal
-        if (tile.type === 7 && !tile.activated) { // Checkpoint
-          tile.activated = true;
-          checkpointPos = { x: player.x, y: player.y };
-          lastSafePos = { x: player.x, y: player.y };
-          AudioManager.playSound('levelComplete');
-        }
-      });
+      // Check hazards (skipped while tumbling off the bottom)
+      if (!playerVoidFallActive) {
+        vTiles.concat(hTiles).forEach(tile => {
+          if (tile.type === 2  && !flyMode) die(); // Spike
+          if (tile.type === 13 && !flyMode) die(); // Lava
+          if (tile.type === 21 && !flyMode) die(); // Acid
+          if (tile.type === 4 && !flyMode) { // Boost
+            player.vy = BOOST_FORCE;
+            player.onGround = false;
+            AudioManager.playSound('boost');
+          }
+          if (tile.type === 5) completeLevel(); // Goal
+          if (tile.type === 7 && !tile.activated) { // Checkpoint
+            tile.activated = true;
+            checkpointPos = { x: player.x, y: player.y };
+            lastSafePos = { x: player.x, y: player.y };
+            AudioManager.playSound('levelComplete');
+          }
+        });
 
-      tryCollectCoins(player, level);
+        tryCollectCoins(player, level);
 
-      // Enemy collision (disabled in fly mode)
-      if (!flyMode) {
-        // Walker (3), fast walker (10), spiky (16), factory bot (22)
-        level.tiles.filter(t => t.type === 3 || t.type === 10 || t.type === 16 || t.type === 22).forEach(e => {
-          const ey16 = (e.type === 16 && e.currentY !== undefined) ? e.currentY : e.y * TILE_SIZE;
-          const enemyRect = { x: e.currentX + 4, y: ey16 + 4, width: TILE_SIZE - 8, height: TILE_SIZE - 8 };
-          if (rectIntersect(player, enemyRect)) die();
-        });
-        // Bouncer (11) — uses currentY too
-        level.tiles.filter(t => t.type === 11).forEach(e => {
-          const enemyRect = { x: e.currentX + 4, y: e.currentY + 4, width: TILE_SIZE - 8, height: TILE_SIZE - 8 };
-          if (rectIntersect(player, enemyRect)) die();
-        });
-        // Lava hopper (14) — uses currentX/currentY
-        level.tiles.filter(t => t.type === 14).forEach(e => {
-          const enemyRect = { x: e.currentX + 4, y: e.currentY + 4, width: TILE_SIZE - 8, height: TILE_SIZE - 8 };
-          if (rectIntersect(player, enemyRect)) die();
-        });
-        // Lava geyser (15) — fire column when active (3 tiles tall above tile)
-        level.tiles.filter(t => t.type === 15 && t.geyserActive).forEach(g => {
-          const fireRect = {
-            x: g.x * TILE_SIZE + 6,
-            y: (g.y - 3) * TILE_SIZE,
-            width: TILE_SIZE - 12,
-            height: TILE_SIZE * 3
-          };
-          if (rectIntersect(player, fireRect)) die();
-        });
+        // Enemy collision (disabled in fly mode)
+        if (!flyMode) {
+          // Walker (3), fast walker (10), spiky (16), factory bot (22)
+          level.tiles.filter(t => t.type === 3 || t.type === 10 || t.type === 16 || t.type === 22).forEach(e => {
+            if (e.shotDead) return;
+            const ey16 = (e.type === 16 && e.currentY !== undefined) ? e.currentY : e.y * TILE_SIZE;
+            const enemyRect = { x: e.currentX + 4, y: ey16 + 4, width: TILE_SIZE - 8, height: TILE_SIZE - 8 };
+            if (rectIntersect(player, enemyRect)) die();
+          });
+          // Bouncer (11) — uses currentY too
+          level.tiles.filter(t => t.type === 11).forEach(e => {
+            if (e.shotDead) return;
+            const enemyRect = { x: e.currentX + 4, y: e.currentY + 4, width: TILE_SIZE - 8, height: TILE_SIZE - 8 };
+            if (rectIntersect(player, enemyRect)) die();
+          });
+          // Lava hopper (14) — uses currentX/currentY
+          level.tiles.filter(t => t.type === 14).forEach(e => {
+            if (e.shotDead) return;
+            const enemyRect = { x: e.currentX + 4, y: e.currentY + 4, width: TILE_SIZE - 8, height: TILE_SIZE - 8 };
+            if (rectIntersect(player, enemyRect)) die();
+          });
+          // Lava geyser (15) — fire column when active (3 tiles tall above tile)
+          level.tiles.filter(t => t.type === 15 && t.geyserActive).forEach(g => {
+            const fireRect = {
+              x: g.x * TILE_SIZE + 6,
+              y: (g.y - 3) * TILE_SIZE,
+              width: TILE_SIZE - 12,
+              height: TILE_SIZE * 3
+            };
+            if (rectIntersect(player, fireRect)) die();
+          });
+        }
       }
 
-      // Fall death (disabled in fly mode)
+      // Fall death (disabled in fly mode) — tumble in the void before respawn
       if (!flyMode && player.y > level.height * TILE_SIZE) {
-        die();
+        if (!playerVoidFallActive) {
+          playerVoidFallActive = true;
+          playerVoidFallTimer = 0;
+          playerFallSpin = 0;
+        } else {
+          playerVoidFallTimer++;
+          playerFallSpin += 0.22;
+          playerSquish.x += (1.28 - playerSquish.x) * 0.07;
+          playerSquish.y += (0.68 - playerSquish.y) * 0.07;
+          if (playerVoidFallTimer >= 52 || player.y > level.height * TILE_SIZE + 400) {
+            playerVoidFallActive = false;
+            die();
+          }
+        }
       }
 
       // Update boss fight
       if (bossActive) {
         updateBoss();
-        updateBullets();
       }
       if (cinderBossActive) {
         updateCinderBoss();
-        updateBullets();
       }
       if (frozenBossActive) {
         updateFrozenBoss();
-        updateBullets();
       }
       if (wardenBossActive) {
         updateWardenBoss();
+      }
+      if (bossActive || cinderBossActive || frozenBossActive || wardenBossActive ||
+          (level.isFracturedMemory && !level.isMemoryChase)) {
         updateBullets();
       }
 
       // Player 2 update
-      if (twoPlayerMode) updatePlayer2();
-      if (twoPlayerMode) tryCollectCoins(player2, level);
+      if (twoPlayerMode && !level.isFracturedMemory) updatePlayer2();
+      if (twoPlayerMode && !level.isFracturedMemory) tryCollectCoins(player2, level);
+
+      if (level.isMemoryChase && gameRunning && memoryChaser) {
+        memoryChaser.x += memoryChaser.vx;
+        if (rectIntersect(player, memoryChaser)) die();
+        memorySprintHintFrames++;
+        memoryChaserWarningFrames++;
+      }
 
       // Camera follow — midpoint in 2P, P1 in solo
-      const focusX = twoPlayerMode
+      const focusX = (twoPlayerMode && !level.isFracturedMemory)
         ? (player.x + player2.x) / 2
         : player.x;
       const targetCameraX = focusX - canvas.width / 2;
@@ -5990,6 +6588,7 @@
     
     function die2() {
       if (player2InvulnFrames > 0) return;
+      player2VoidFallActive = false;
       spawnDeathParticles(player2.x, player2.y, SKINS[selectedSkin2]);
       triggerShake(8, 10);
       const lvl = levels[currentLevel];
@@ -6096,6 +6695,10 @@
         }
         player2.vy += GRAVITY;
         if (player2.vy > 15) player2.vy = 15;
+        if (player2VoidFallActive) {
+          player2.vy += GRAVITY * 0.55;
+          if (player2.vy > 24) player2.vy = 24;
+        }
       }
 
       // Move with platform
@@ -6182,63 +6785,83 @@
         }
       });
 
-      // Hazard checks
-      vTiles2.concat(hTiles2).forEach(tile => {
-        if (tile.type === 2  && !flyMode) die2(); // Spike
-        if (tile.type === 13 && !flyMode) die2(); // Lava
-        if (tile.type === 21 && !flyMode) die2(); // Acid
-        if (tile.type === 4  && !flyMode) { player2.vy = BOOST_FORCE; player2.onGround = false; AudioManager.playSound('boost'); }
-        if (tile.type === 5)  completeLevel(); // Goal
-        if (tile.type === 7 && !tile.activated) {
-          tile.activated = true;
-          checkpointPos = { x: player2.x, y: player2.y };
-          AudioManager.playSound('levelComplete');
-        }
-      });
-
-      // Enemy collision (disabled in fly mode)
-      if (!flyMode) {
-        level.tiles.filter(t => t.type === 3 || t.type === 10 || t.type === 16).forEach(e => {
-          const ey16p2 = (e.type === 16 && e.currentY !== undefined) ? e.currentY : e.y * TILE_SIZE;
-          if (rectIntersect(player2, { x: e.currentX + 4, y: ey16p2 + 4, width: TILE_SIZE - 8, height: TILE_SIZE - 8 })) die2();
-        });
-        level.tiles.filter(t => t.type === 11).forEach(e => {
-          if (rectIntersect(player2, { x: e.currentX + 4, y: e.currentY + 4, width: TILE_SIZE - 8, height: TILE_SIZE - 8 })) die2();
-        });
-        level.tiles.filter(t => t.type === 14).forEach(e => {
-          if (rectIntersect(player2, { x: e.currentX + 4, y: e.currentY + 4, width: TILE_SIZE - 8, height: TILE_SIZE - 8 })) die2();
-        });
-        level.tiles.filter(t => t.type === 15 && t.geyserActive).forEach(g => {
-          if (rectIntersect(player2, { x: g.x * TILE_SIZE + 6, y: (g.y - 3) * TILE_SIZE, width: TILE_SIZE - 12, height: TILE_SIZE * 3 })) die2();
+      // Hazard checks (skipped while tumbling off the bottom)
+      if (!player2VoidFallActive) {
+        vTiles2.concat(hTiles2).forEach(tile => {
+          if (tile.type === 2  && !flyMode) die2(); // Spike
+          if (tile.type === 13 && !flyMode) die2(); // Lava
+          if (tile.type === 21 && !flyMode) die2(); // Acid
+          if (tile.type === 4  && !flyMode) { player2.vy = BOOST_FORCE; player2.onGround = false; AudioManager.playSound('boost'); }
+          if (tile.type === 5)  completeLevel(); // Goal
+          if (tile.type === 7 && !tile.activated) {
+            tile.activated = true;
+            checkpointPos = { x: player2.x, y: player2.y };
+            AudioManager.playSound('levelComplete');
+          }
         });
 
-        // Boss attacks hit P2
-        if (bossActive) {
-          for (let i = bossAttacks.length - 1; i >= 0; i--) {
-            const attack = bossAttacks[i];
-            if (rectIntersect(player2, { x: attack.x, y: attack.y, width: attack.size, height: attack.size })) {
-              bossAttacks.splice(i, 1);
-              die2();
-            }
-          }
-        }
-        if (cinderBossActive) {
-          for (let i = cinderAttacks.length - 1; i >= 0; i--) {
-            if (rectIntersect(player2, { x: cinderAttacks[i].x - 6, y: cinderAttacks[i].y - 6, width: 12, height: 12 })) {
-              cinderAttacks.splice(i, 1);
-              die2();
-            }
-          }
-          cinderPools.forEach(pool => {
-            const dx = (player2.x + player2.width / 2) - pool.x;
-            const dy = (player2.y + player2.height / 2) - pool.y;
-            if (Math.sqrt(dx * dx + dy * dy) < pool.radius + 8) die2();
+        // Enemy collision (disabled in fly mode)
+        if (!flyMode) {
+          level.tiles.filter(t => t.type === 3 || t.type === 10 || t.type === 16).forEach(e => {
+            if (e.shotDead) return;
+            const ey16p2 = (e.type === 16 && e.currentY !== undefined) ? e.currentY : e.y * TILE_SIZE;
+            if (rectIntersect(player2, { x: e.currentX + 4, y: ey16p2 + 4, width: TILE_SIZE - 8, height: TILE_SIZE - 8 })) die2();
           });
+          level.tiles.filter(t => t.type === 11).forEach(e => {
+            if (e.shotDead) return;
+            if (rectIntersect(player2, { x: e.currentX + 4, y: e.currentY + 4, width: TILE_SIZE - 8, height: TILE_SIZE - 8 })) die2();
+          });
+          level.tiles.filter(t => t.type === 14).forEach(e => {
+            if (e.shotDead) return;
+            if (rectIntersect(player2, { x: e.currentX + 4, y: e.currentY + 4, width: TILE_SIZE - 8, height: TILE_SIZE - 8 })) die2();
+          });
+          level.tiles.filter(t => t.type === 15 && t.geyserActive).forEach(g => {
+            if (rectIntersect(player2, { x: g.x * TILE_SIZE + 6, y: (g.y - 3) * TILE_SIZE, width: TILE_SIZE - 12, height: TILE_SIZE * 3 })) die2();
+          });
+
+          // Boss attacks hit P2
+          if (bossActive) {
+            for (let i = bossAttacks.length - 1; i >= 0; i--) {
+              const attack = bossAttacks[i];
+              if (rectIntersect(player2, { x: attack.x, y: attack.y, width: attack.size, height: attack.size })) {
+                bossAttacks.splice(i, 1);
+                die2();
+              }
+            }
+          }
+          if (cinderBossActive) {
+            for (let i = cinderAttacks.length - 1; i >= 0; i--) {
+              if (rectIntersect(player2, { x: cinderAttacks[i].x - 6, y: cinderAttacks[i].y - 6, width: 12, height: 12 })) {
+                cinderAttacks.splice(i, 1);
+                die2();
+              }
+            }
+            cinderPools.forEach(pool => {
+              const dx = (player2.x + player2.width / 2) - pool.x;
+              const dy = (player2.y + player2.height / 2) - pool.y;
+              if (Math.sqrt(dx * dx + dy * dy) < pool.radius + 8) die2();
+            });
+          }
         }
       }
 
       // Fall death (disabled in fly mode)
-      if (!flyMode && player2.y > level.height * TILE_SIZE) die2();
+      if (!flyMode && player2.y > level.height * TILE_SIZE) {
+        if (!player2VoidFallActive) {
+          player2VoidFallActive = true;
+          player2VoidFallTimer = 0;
+          player2FallSpin = 0;
+        } else {
+          player2VoidFallTimer++;
+          player2FallSpin += 0.22;
+          p2Squish.x += (1.28 - p2Squish.x) * 0.07;
+          p2Squish.y += (0.68 - p2Squish.y) * 0.07;
+          if (player2VoidFallTimer >= 52 || player2.y > level.height * TILE_SIZE + 400) {
+            player2VoidFallActive = false;
+            die2();
+          }
+        }
+      }
     }
 
     function shootBullet2() {
@@ -6276,7 +6899,197 @@
              a.y < b.y + b.height &&
              a.y + a.height > b.y;
     }
-    
+
+    function renderMemoryChaser(now) {
+      if (!memoryChaser) return;
+      const m = memoryChaser;
+      const pulse = 0.9 + 0.1 * Math.sin(now / 100);
+      ctx.save();
+      ctx.fillStyle = `rgba(12,2,18,${pulse})`;
+      ctx.fillRect(m.x, m.y + 16, m.width, m.height - 20);
+      for (let i = 0; i < 16; i++) {
+        const sx = m.x + 5 + i * 7;
+        const sh = 22 + (i % 5) * 9 + Math.sin(now / 160 + i * 0.7) * 5;
+        ctx.fillStyle = i % 2 ? '#5c0a22' : '#8b1532';
+        ctx.beginPath();
+        ctx.moveTo(sx - 3.5, m.y + 22);
+        ctx.lineTo(sx, m.y + 22 - sh);
+        ctx.lineTo(sx + 3.5, m.y + 22);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.fillStyle = '#0f0206';
+      ctx.fillRect(m.x + m.width - 32, m.y + 22, 30, 38);
+      for (let j = 0; j < 6; j++) {
+        ctx.fillStyle = '#f5f5f5';
+        ctx.beginPath();
+        ctx.moveTo(m.x + m.width - 30 + j * 5, m.y + 36);
+        ctx.lineTo(m.x + m.width - 27 + j * 5, m.y + 52);
+        ctx.lineTo(m.x + m.width - 24 + j * 5, m.y + 36);
+        ctx.fill();
+      }
+      ctx.shadowColor = '#ff0066';
+      ctx.shadowBlur = 26;
+      ctx.fillStyle = 'rgba(255,0,80,0.12)';
+      ctx.fillRect(m.x - 4, m.y - 6, m.width + 8, m.height + 10);
+      ctx.shadowBlur = 0;
+      ctx.restore();
+    }
+
+    function renderMemoryChaseHUD() {
+      const lvl = levels[currentLevel];
+      if (!lvl.isMemoryChase || !gameRunning) return;
+      const barW = 160;
+      const barH = 9;
+      const bx = (canvas.width - barW) / 2;
+      const by = canvas.height - 40;
+      ctx.save();
+      // Start-of-chase warning sign (monster approaching from the left)
+      const warnMax = 110;
+      if (memoryChaserWarningFrames < warnMax) {
+        const tw = memoryChaserWarningFrames;
+        const pulse = 0.82 + 0.18 * Math.sin(tw * 0.42);
+        let alpha = pulse;
+        if (tw > warnMax - 45) alpha *= Math.max(0, 1 - (tw - (warnMax - 45)) / 45);
+        ctx.globalAlpha = Math.min(1, alpha);
+        const px = 10;
+        const py = canvas.height / 2 - 78;
+        const pw = 132;
+        const ph = 148;
+        ctx.fillStyle = '#0a0a0a';
+        ctx.fillRect(px, py, pw, ph);
+        ctx.strokeStyle = '#facc15';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(px + 1, py + 1, pw - 2, ph - 2);
+        for (let i = 0; i < 8; i++) {
+          const stripe = (tw + i * 3) % 8 < 4;
+          ctx.fillStyle = stripe ? '#facc15' : '#171717';
+          ctx.fillRect(px + 4 + i * 15, py + 4, 8, 12);
+          ctx.fillRect(px + 4 + i * 15, py + ph - 16, 8, 12);
+        }
+        const cx = px + pw / 2;
+        const triTop = py + 18;
+        const triBot = py + 62;
+        ctx.fillStyle = '#facc15';
+        ctx.beginPath();
+        ctx.moveTo(cx, triTop);
+        ctx.lineTo(cx - 30, triBot);
+        ctx.lineTo(cx + 30, triBot);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = '#0a0a0a';
+        ctx.font = 'bold 30px Arial Black, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('!', cx, (triTop + triBot) / 2 + 4);
+        ctx.font = '7px "Press Start 2P", monospace';
+        ctx.fillStyle = '#fef08a';
+        ctx.fillText('SPIKE COLOSSUS', cx, py + 78);
+        ctx.fillStyle = '#fca5a5';
+        ctx.fillText('DETECTED', cx, py + 94);
+        ctx.fillStyle = '#fde047';
+        ctx.fillText('← BEHIND YOU', cx, py + 110);
+        ctx.fillStyle = '#a8a29e';
+        ctx.font = '6px "Press Start 2P", monospace';
+        ctx.fillText('DO NOT STOP', cx, py + 128);
+        ctx.globalAlpha = 1;
+      }
+      ctx.font = '7px "Press Start 2P", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = 'rgba(0,0,0,0.65)';
+      ctx.fillRect(bx - 2, by - 14, barW + 4, barH + 20);
+      ctx.strokeStyle = 'rgba(196,181,253,0.9)';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(bx, by, barW, barH);
+      ctx.fillStyle = 'rgba(30,20,40,0.9)';
+      ctx.fillRect(bx + 1, by + 1, barW - 2, barH - 2);
+      const fillW = (barW - 4) * (memoryStamina / 100);
+      ctx.fillStyle = memoryStamina < 22 ? '#fb7185' : '#c4b5fd';
+      ctx.fillRect(bx + 2, by + 2, Math.max(0, fillW), barH - 4);
+      ctx.fillStyle = '#e9d5ff';
+      ctx.fillText('STAMINA', canvas.width / 2, by - 4);
+      const holdF = 3 * 60;
+      const fadeF = 40;
+      if (memorySprintHintFrames < holdF + fadeF) {
+        let a = 1;
+        if (memorySprintHintFrames >= holdF) {
+          a = Math.max(0, 1 - (memorySprintHintFrames - holdF) / fadeF);
+        }
+        ctx.globalAlpha = a;
+        ctx.fillStyle = '#fef08a';
+        ctx.font = '8px "Press Start 2P", monospace';
+        ctx.fillText('PRESS "Q" TO SPRINT', canvas.width / 2, canvas.height - 58);
+        ctx.globalAlpha = 1;
+      }
+      ctx.restore();
+    }
+
+    function renderFracturedMemoryAbstractBG(now, camX) {
+      const w = canvas.width;
+      const h = canvas.height;
+      for (let i = 0; i < 6; i++) {
+        const ox = (((i * 283 + now * 0.018) % (w + 240)) + w + 240) % (w + 240) - 120 - camX * 0.04;
+        const oy = h * (0.08 + (i * 0.19) % 0.72) + Math.sin(now / 1600 + i * 1.7) * 48;
+        const rr = 70 + i * 42;
+        const g = ctx.createRadialGradient(ox, oy, 0, ox, oy, rr);
+        g.addColorStop(0, `rgba(${100 + i * 28}, 30, ${160 + i * 22}, ${0.1 + (i % 3) * 0.04})`);
+        g.addColorStop(0.55, 'rgba(40, 10, 70, 0.06)');
+        g.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, w, h);
+      }
+      ctx.strokeStyle = 'rgba(196, 181, 253, 0.14)';
+      ctx.lineWidth = 1.2;
+      for (let s = 0; s < 24; s++) {
+        const sx = ((s * 103 - camX * (0.035 + (s % 4) * 0.018)) % (w + 100) + w + 100) % (w + 100) - 50;
+        const sy = (s * 71 + Math.sin(now / 2000 + s * 1.3) * 36) % h;
+        const rot = now / 6500 + s * 0.4;
+        ctx.save();
+        ctx.translate(sx, sy);
+        ctx.rotate(rot);
+        ctx.beginPath();
+        ctx.moveTo(-22, 12);
+        ctx.lineTo(0, -32);
+        ctx.lineTo(24, 10);
+        ctx.closePath();
+        ctx.stroke();
+        ctx.restore();
+      }
+      ctx.globalAlpha = 0.045 + 0.035 * Math.sin(now / 500);
+      for (let b = 0; b < 10; b++) {
+        const yb = ((b * 151 + now * 0.12) % h);
+        ctx.fillStyle = b % 2 ? '#c4b5fd' : '#f472b6';
+        ctx.fillRect(0, yb, w, 2 + (b % 4));
+      }
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = 'rgba(45, 5, 52, 0.4)';
+      for (let k = 0; k < 5; k++) {
+        const bx = ((k * 380 + 40 - camX * 0.055) % (w + 320)) - 40;
+        const by = h * 0.52 + Math.sin(now / 2200 + k * 2.1) * 55;
+        ctx.beginPath();
+        ctx.moveTo(bx, by + 50);
+        for (let t = 0; t <= 7; t++) {
+          const ang = (t / 7) * Math.PI * 2;
+          const rad = 52 + Math.sin(now / 800 + k + ang * 3) * 22;
+          ctx.lineTo(bx + Math.cos(ang) * rad, by + Math.sin(ang) * rad * 0.65);
+        }
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.strokeStyle = 'rgba(244, 114, 182, 0.08)';
+      ctx.lineWidth = 1;
+      for (let g = 0; g < 14; g++) {
+        const x1 = ((g * 173 - camX * 0.1) % w + w) % w;
+        const y1 = (g * 97 + Math.sin(now / 900 + g) * 20) % h;
+        const x2 = x1 + 60 + (g % 5) * 20;
+        const y2 = y1 + 40 + (g % 3) * 15;
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.bezierCurveTo(x1 + 80, y1 - 30, x2 - 40, y2 + 50, x2, y2);
+        ctx.stroke();
+      }
+    }
+
     function render() {
       const level = levels[currentLevel];
 
@@ -6403,14 +7216,17 @@
         ctx.lineTo(canvas.width, canvas.height); ctx.closePath(); ctx.fill();
 
       } else if (bgTheme === 'void') {
-        // Floating void wisps
-        ctx.fillStyle = '#120630';
-        ctx.beginPath(); ctx.moveTo(0, canvas.height);
-        for (let px = 0; px <= canvas.width; px += 8) {
-          const wx = px + cameraX * 0.08;
-          ctx.lineTo(px, canvas.height * 0.6 + Math.sin(wx * 0.003) * 60 + Math.sin(wx * 0.007 + 1) * 25);
+        if (level.isFracturedMemory) {
+          renderFracturedMemoryAbstractBG(now, cameraX);
+        } else {
+          ctx.fillStyle = '#120630';
+          ctx.beginPath(); ctx.moveTo(0, canvas.height);
+          for (let px = 0; px <= canvas.width; px += 8) {
+            const wx = px + cameraX * 0.08;
+            ctx.lineTo(px, canvas.height * 0.6 + Math.sin(wx * 0.003) * 60 + Math.sin(wx * 0.007 + 1) * 25);
+          }
+          ctx.lineTo(canvas.width, canvas.height); ctx.closePath(); ctx.fill();
         }
-        ctx.lineTo(canvas.width, canvas.height); ctx.closePath(); ctx.fill();
 
       } else if (bgTheme === 'ice') {
         // Snowy mountain peaks (far)
@@ -6521,6 +7337,7 @@
             break;
             
           case 3: // Enemy
+            if (tile.shotDead) break;
             const ex = tile.currentX || x;
             ctx.fillStyle = glitchMode ? '#ff2200' : '#a855f7';
             if (glitchMode) { ctx.shadowColor = '#ff0000'; ctx.shadowBlur = 8; }
@@ -6614,6 +7431,7 @@
             break;
 
           case 10: { // Fast walker — hot red, spiky look
+            if (tile.shotDead) break;
             const fx = tile.currentX || x;
             ctx.fillStyle = '#dc2626';
             ctx.shadowColor = '#ff4444';
@@ -6643,6 +7461,7 @@
           }
 
           case 11: { // Bouncer — cyan, floats and oscillates
+            if (tile.shotDead) break;
             const bx = tile.currentX !== undefined ? tile.currentX : x;
             const by = tile.currentY !== undefined ? tile.currentY : y;
             ctx.fillStyle = '#06b6d4';
@@ -6782,6 +7601,7 @@
           }
 
           case 14: { // Lava Hopper — orange frog-like enemy, hops up and down
+            if (tile.shotDead) break;
             const hx = tile.currentX !== undefined ? tile.currentX : x;
             const hy = tile.currentY !== undefined ? tile.currentY : y;
             const hopT = Date.now();
@@ -6876,6 +7696,7 @@
           }
 
           case 16: { // Spiky Enemy — untouchable from ANY direction, chases + bobs
+            if (tile.shotDead) break;
             const sx = tile.currentX !== undefined ? tile.currentX : x;
             const sy = tile.currentY !== undefined ? tile.currentY : y;
             // Body — dark crimson
@@ -7065,6 +7886,7 @@
           }
 
           case 22: { // Factory Bot — mechanical robot enemy
+            if (tile.shotDead) break;
             const ex = tile.currentX !== undefined ? tile.currentX : x;
             const ey = tile.y * TILE_SIZE;
             const facingRight = (tile.direction || 1) > 0;
@@ -7125,19 +7947,37 @@
 
       // Draw moving platforms
       level.movingPlatforms.forEach(plat => {
-        ctx.fillStyle = '#60a5fa';
-        ctx.fillRect(plat.currentX, plat.currentY, plat.width * TILE_SIZE, TILE_SIZE);
-        ctx.fillStyle = '#93c5fd';
-        ctx.fillRect(plat.currentX, plat.currentY, plat.width * TILE_SIZE, 4);
+        if (level.isFracturedMemory) {
+          ctx.fillStyle = '#5b21b6';
+          ctx.fillRect(plat.currentX, plat.currentY, plat.width * TILE_SIZE, TILE_SIZE);
+          ctx.fillStyle = '#c4b5fd';
+          ctx.fillRect(plat.currentX, plat.currentY, plat.width * TILE_SIZE, 4);
+          ctx.strokeStyle = 'rgba(244, 114, 182, 0.45)';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(plat.currentX + 0.5, plat.currentY + 0.5, plat.width * TILE_SIZE - 1, TILE_SIZE - 1);
+        } else {
+          ctx.fillStyle = '#60a5fa';
+          ctx.fillRect(plat.currentX, plat.currentY, plat.width * TILE_SIZE, TILE_SIZE);
+          ctx.fillStyle = '#93c5fd';
+          ctx.fillRect(plat.currentX, plat.currentY, plat.width * TILE_SIZE, 4);
+        }
       });
+
+      if (level.isMemoryChase && memoryChaser) {
+        renderMemoryChaser(now);
+      }
       
       // Draw Player 2 (behind P1)
-      if (twoPlayerMode && player2.x !== undefined) {
+      if (twoPlayerMode && player2.x !== undefined && !level.isFracturedMemory) {
         const skin2 = SKINS[selectedSkin2];
         ctx.save();
         const foot2CX = player2.x + player2.width / 2;
         const foot2Y  = player2.y + player2.height;
         ctx.translate(foot2CX, foot2Y);
+        if (player2VoidFallActive) {
+          const tumble2 = player2FallSpin * 0.09 + Math.sin(player2FallSpin) * 0.28;
+          ctx.rotate(tumble2);
+        }
         ctx.scale(p2Squish.x, p2Squish.y);
         ctx.translate(-player2.width / 2, -player2.height);
         if (!fillPremiumPlayerBody(ctx, skin2, player2.width, player2.height, now)) {
@@ -7180,6 +8020,10 @@
       const footCX = player.x + player.width / 2;
       const footY  = player.y + player.height;
       ctx.translate(footCX, footY);
+      if (playerVoidFallActive) {
+        const tumble = playerFallSpin * 0.09 + Math.sin(playerFallSpin) * 0.28;
+        ctx.rotate(tumble);
+      }
       ctx.scale(playerSquish.x, playerSquish.y);
       ctx.translate(-player.width / 2, -player.height);
       // Body (+ premium shaders)
@@ -7239,10 +8083,20 @@
       renderFrozenBoss();
       renderWardenBoss();
 
+      if (level.isFracturedMemory && !level.isMemoryChase && bullets.length) {
+        ctx.fillStyle = '#e879f9';
+        ctx.shadowColor = '#f0abfc';
+        ctx.shadowBlur = 10;
+        bullets.forEach(b => ctx.fillRect(b.x, b.y, 8, 4));
+        ctx.shadowBlur = 0;
+      }
+
       ctx.restore(); // end camera transform
 
       // Draw boss UI (outside camera transform)
       renderBossUI();
+      renderMemoryChaseHUD();
+      renderFracturedMemoryHints();
 
       ctx.restore(); // end screen shake transform
 
