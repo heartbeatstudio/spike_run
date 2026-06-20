@@ -147,6 +147,7 @@
     </div>
     <button id="open-shop-btn" class="game-font text-xs text-amber-400 hover:text-amber-300 border border-amber-700 hover:border-amber-500 px-4 py-2 rounded-lg transition-colors mb-3">SHOP</button>
     <button type="button" id="open-progress-level-select-btn" class="game-font text-xs text-cyan-400 hover:text-cyan-300 border border-cyan-700 hover:border-cyan-500 px-4 py-2 rounded-lg transition-colors mb-3">LEVEL SELECT</button>
+    <button type="button" id="open-achievements-btn" class="game-font text-xs text-violet-400 hover:text-violet-300 border border-violet-700 hover:border-violet-500 px-4 py-2 rounded-lg transition-colors mb-3">ACHIEVEMENTS</button>
     <button id="practice-toggle" class="game-font text-xs text-gray-500 hover:text-yellow-400 border border-gray-700 hover:border-yellow-600 px-4 py-2 rounded-lg transition-colors mb-5">PRACTICE MODE: OFF</button>
     <button id="start-btn" class="game-font text-sm bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white px-8 py-4 rounded-lg transition-all transform hover:scale-105">START GAME</button>
     <div id="controls-hint" class="mt-6 game-font text-xs text-gray-500 text-center px-4">
@@ -167,6 +168,8 @@
    <canvas id="game-canvas" class="bg-gray-900"></canvas><!-- HUD -->
    <div id="hud" class="absolute top-4 left-4 right-4 flex justify-between items-start game-font text-xs hidden">
     <div class="bg-black/70 px-4 py-2 rounded-lg"><span class="text-gray-400">LEVEL</span> <span id="level-display" class="text-yellow-400 ml-2">1</span>
+    </div>
+    <div id="hearts-box" class="bg-black/70 px-4 py-2 rounded-lg"><span class="text-gray-400">HP</span> <span id="hearts-display" class="text-pink-400 ml-2">♥♥♥</span>
     </div>
     <div class="bg-black/70 px-4 py-2 rounded-lg"><span class="text-gray-400">TIME</span> <span id="timer-display" class="text-cyan-400 ml-2">0:00.0</span>
     </div>
@@ -260,6 +263,13 @@
      <!-- Filled by script -->
     </div>
     <button id="close-shop-btn" class="game-font text-sm bg-gradient-to-r from-gray-600 to-gray-500 hover:from-gray-500 hover:to-gray-400 text-white px-8 py-4 rounded-lg">BACK</button>
+   </div><!-- Achievements -->
+   <div id="achievements-screen" class="absolute inset-0 flex-col items-center justify-center bg-gradient-to-b from-gray-900 via-violet-950/50 to-gray-900 z-50 hidden overflow-y-auto py-8 px-4">
+    <h2 class="game-font text-xl text-violet-400 mb-2">ACHIEVEMENTS</h2>
+    <p id="achievements-progress-line" class="game-font text-[10px] text-gray-400 mb-4 text-center"></p>
+    <p class="game-font text-[9px] text-gray-500 mb-6 text-center max-w-md leading-relaxed">Normal trophies show how to earn them. Secret trophies stay hidden until you unlock them.</p>
+    <div id="achievements-list" class="w-full max-w-lg flex flex-col gap-4 mb-8"></div>
+    <button type="button" id="close-achievements-btn" class="game-font text-sm bg-gradient-to-r from-gray-600 to-gray-500 hover:from-gray-500 hover:to-gray-400 text-white px-8 py-4 rounded-lg">BACK</button>
    </div><!-- Progress level select (unlocked by beating prior levels) -->
    <div id="progress-level-select" class="absolute inset-0 flex-col items-center justify-center bg-black/95 z-50 hidden overflow-y-auto py-8">
     <h2 class="game-font text-2xl text-cyan-400 mb-2">LEVEL SELECT</h2>
@@ -321,6 +331,7 @@
     const COIN_PICKUP_VALUE = 10; // wallet credit per coin tile collected
     const GRAVITY = 0.8;
     const JUMP_FORCE = -14;
+    const MOON_BOOT_DOUBLE_AIR_MULT = 1.14; // second / air jump with Moon Boots
     const MOVE_SPEED = 5;
     const BOOST_FORCE = -20;
     const SPRING_FORCE = -22; // slightly stronger than boost
@@ -374,6 +385,108 @@
 
     const COIN_STORAGE_KEY = 'spikeRunnerCoins';
     const OWNED_PREMIUM_SKINS_KEY = 'spikeRunnerOwnedPremiumSkins';
+    const ACHIEVEMENT_STORAGE_KEY = 'spikeRunnerAchievementsV1';
+
+    const ACHIEVEMENT_DEFS = [
+      { id: 'first_contact', title: 'FIRST CONTACT', desc: 'Clear level 1 without practice or cheats.', secret: false },
+      { id: 'void_emperor', title: 'THRONE BREAKER', desc: 'Defeat the Void Emperor (level 10).', secret: false },
+      { id: 'marathon', title: 'END OF THE RUN', desc: 'Beat the final stage without cheats or practice.', secret: false },
+      { id: 'coin_hoarder', title: 'COIN HOARDER', desc: 'Reach at least 400 coins in your wallet.', secret: false },
+      { id: 'stubborn', title: 'STILL HERE', desc: 'Reach 20 deaths in one run (no practice mode).', secret: false },
+      { id: 'duo_begin', title: 'DUO DEPLOY', desc: 'Clear level 1 in two-player mode.', secret: false },
+      { id: 'ember_down', title: 'EMBER\'S END', desc: 'Defeat the Cinder Doppelgänger (level 15).', secret: false },
+      { id: 'frost_bitten', title: 'COLD SNAP', desc: 'Defeat the Frozen Torturer (level 20).', secret: false },
+      { id: 'warden_fall', title: 'FACTORY RESET', desc: 'Defeat the Mechanical Warden (level 25).', secret: false },
+      { id: 'chase_escape', title: 'OUTRUN IT', desc: 'Survive the Fractured Dream chase (level 30).', secret: false },
+      { id: 'practice_round', title: 'TRAINING DAY', desc: 'Clear any level in Practice Mode.', secret: false },
+      { id: 'market_visitor', title: 'OPEN FOR BUSINESS', desc: 'Buy something from the Shop.', secret: false },
+      { id: 'supply_drop', title: 'LOADOUT', desc: 'Buy any power-up from the Shop.', secret: false },
+      { id: 'mega_hoard', title: 'DRAGON HOARD', desc: 'Reach at least 800 coins in your wallet.', secret: false },
+      { id: 'wardrobe_complete', title: 'FULL CLOSET', desc: 'Own every premium skin from the Shop.', secret: false },
+      { id: 'silent_run', title: 'SILENCE PLEASE', desc: 'Turn sound off from the HUD.', secret: false },
+      { id: 'hall_of_fame', title: 'ON THE BOARD', desc: 'Submit a score to the leaderboard.', secret: false },
+      { id: 'debug_menu', title: 'BACKDOOR', desc: 'Open the hidden level select.', secret: true },
+      { id: 'flight_risk', title: 'WE HAVE LIFT-OFF', desc: 'Activate fly mode.', secret: true },
+      { id: 'broken_world', title: 'CHAOS THEORY', desc: 'Unlock permanent glitch mode.', secret: true },
+      { id: 'sky_tyrant', title: 'ROC SLAYER', desc: 'Defeat the Sky Spire Roc.', secret: true },
+      { id: 'sand_scourge', title: "DESERT'S END", desc: 'Defeat the Cactus Titan.', secret: true },
+      { id: 'field_medic', title: 'FIELD MEDIC', desc: 'Grab a floating boss medkit heal.', secret: true },
+      { id: 'cheat_first', title: 'HOLLOW WIN', desc: 'Beat the game once while using cheats.', secret: true },
+      { id: 'cheat_second', title: 'NAME ON THE LIST', desc: 'Take the second cheat-ending.', secret: true },
+      { id: 'cheat_third', title: 'INCIDENT REPORT', desc: 'Reach the third cheat-ending.', secret: true },
+      { id: 'cheat_four', title: 'POINT OF NO RETURN', desc: 'See the fourth cheat-ending.', secret: true },
+    ];
+
+    let achievementUnlockTimes = {};
+
+    function loadAchievementUnlocks() {
+      try {
+        const raw = localStorage.getItem(ACHIEVEMENT_STORAGE_KEY);
+        achievementUnlockTimes = raw ? JSON.parse(raw) : {};
+        if (!achievementUnlockTimes || typeof achievementUnlockTimes !== 'object') achievementUnlockTimes = {};
+      } catch {
+        achievementUnlockTimes = {};
+      }
+    }
+
+    function saveAchievementUnlocks() {
+      try {
+        localStorage.setItem(ACHIEVEMENT_STORAGE_KEY, JSON.stringify(achievementUnlockTimes));
+      } catch (_) {}
+    }
+
+    function unlockAchievement(id) {
+      if (achievementUnlockTimes[id]) return;
+      if (!ACHIEVEMENT_DEFS.some(d => d.id === id)) return;
+      achievementUnlockTimes[id] = Date.now();
+      saveAchievementUnlocks();
+      const panel = document.getElementById('achievements-screen');
+      if (panel && !panel.classList.contains('hidden')) renderAchievementsScreen();
+    }
+
+    function renderAchievementsScreen() {
+      const list = document.getElementById('achievements-list');
+      const progLine = document.getElementById('achievements-progress-line');
+      if (!list || !progLine) return;
+      const total = ACHIEVEMENT_DEFS.length;
+      const unlocked = ACHIEVEMENT_DEFS.filter(d => achievementUnlockTimes[d.id]).length;
+      progLine.textContent = `${unlocked} / ${total} unlocked`;
+
+      const normal = ACHIEVEMENT_DEFS.filter(d => !d.secret);
+      const secret = ACHIEVEMENT_DEFS.filter(d => d.secret);
+
+      function row(def) {
+        const done = !!achievementUnlockTimes[def.id];
+        const showSecret = def.secret && !done;
+        const title = showSecret ? '???' : def.title;
+        const desc = showSecret ? 'Secret achievement — unlock to reveal.' : def.desc;
+        const border = done ? 'border-green-600/60 bg-green-950/20' : 'border-gray-700 bg-black/40';
+        const icon = done ? '✓' : showSecret ? '★' : '○';
+        const titleColor = done ? 'text-green-400' : showSecret ? 'text-fuchsia-400/90' : 'text-gray-300';
+        return `<div class="rounded-lg border px-4 py-3 ${border}">
+          <div class="flex items-start gap-3">
+            <span class="game-font text-[10px] mt-0.5 shrink-0">${icon}</span>
+            <div class="min-w-0">
+              <p class="game-font text-[10px] ${titleColor} mb-1">${title}</p>
+              <p class="game-font text-[8px] text-gray-500 leading-relaxed">${desc}</p>
+            </div>
+          </div>
+        </div>`;
+      }
+
+      list.innerHTML = `
+        <div>
+          <p class="game-font text-[9px] text-cyan-500/90 mb-2 tracking-wide">NORMAL</p>
+          <div class="flex flex-col gap-2">${normal.map(row).join('')}</div>
+        </div>
+        <div class="mt-2">
+          <p class="game-font text-[9px] text-fuchsia-500/90 mb-2 tracking-wide">SECRET</p>
+          <div class="flex flex-col gap-2">${secret.map(row).join('')}</div>
+        </div>
+      `;
+    }
+
+    loadAchievementUnlocks();
 
     function wipeNonMuteSaveData() {
       [COIN_STORAGE_KEY, OWNED_PREMIUM_SKINS_KEY, 'spikeRunnerSkin', 'spikeRunnerSkin2'].forEach(k => localStorage.removeItem(k));
@@ -386,19 +499,22 @@
     let coinsEarnedThisRun = 0;
 
     let powerUpShieldCharges = 0;
-    let powerUpReviveCharges = 0;
     let powerUpSpeedRunsQueued = 0;
     let powerUpHighJumpRunsQueued = 0;
+    /** Which level index currently has Moon Boots (-1 = none). One shop charge applies to one level only. */
+    let moonBootActiveLevelIndex = -1;
     let runSpeedMult = 1;
     let runJumpMult = 1;
     let playerInvulnFrames = 0;
     let player2InvulnFrames = 0;
+    const MAX_HEARTS = 3;
+    let playerHearts = MAX_HEARTS;
+    let player2Hearts = MAX_HEARTS;
 
     const SHOP_POWERUPS = [
       { id: 'shield', name: 'SHIELD', price: 42, desc: 'Next lethal hit: rewind to last safe spot, level unchanged.' },
-      { id: 'revive', name: 'PHOENIX', price: 68, desc: 'Next death: same respawn, but does not add to death count.' },
       { id: 'speed', name: 'SPEED RUN', price: 52, desc: 'Next start from title: faster move speed for that campaign.' },
-      { id: 'jump', name: 'MOON BOOTS', price: 48, desc: 'Next start from title: higher jumps for that campaign.' },
+      { id: 'jump', name: 'MOON BOOTS', price: 48, desc: 'Next stage you play: higher jumps plus double jump — lasts that level only.' },
     ];
 
     function isSkinUnlocked(skinIndex) {
@@ -421,6 +537,8 @@
       const n = Math.floor(delta);
       if (n <= 0) return;
       setCoins(getCoins() + n);
+      if (getCoins() >= 400) unlockAchievement('coin_hoarder');
+      if (getCoins() >= 800) unlockAchievement('mega_hoard');
     }
 
     function tryCollectCoins(playerRect, level) {
@@ -461,7 +579,6 @@
       if (!el) return;
       const parts = [];
       if (powerUpShieldCharges) parts.push(`SHIELD ×${powerUpShieldCharges}`);
-      if (powerUpReviveCharges) parts.push(`PHOENIX ×${powerUpReviveCharges}`);
       if (powerUpSpeedRunsQueued) parts.push(`SPEED ×${powerUpSpeedRunsQueued}`);
       if (powerUpHighJumpRunsQueued) parts.push(`JUMP ×${powerUpHighJumpRunsQueued}`);
       el.textContent = parts.length ? parts.join(' · ') : 'NO POWER-UPS';
@@ -532,6 +649,8 @@
             }
             setCoins(getCoins() - price);
             ownedPremiumSkins.add(index);
+            unlockAchievement('market_visitor');
+            if ([6, 7, 8].every(i => ownedPremiumSkins.has(i))) unlockAchievement('wardrobe_complete');
             AudioManager.playSound('coin');
             applyPremiumSkinLockUI();
             renderShopItems();
@@ -550,7 +669,6 @@
       SHOP_POWERUPS.forEach(pu => {
         const stock =
           pu.id === 'shield' ? powerUpShieldCharges :
-          pu.id === 'revive' ? powerUpReviveCharges :
           pu.id === 'speed' ? powerUpSpeedRunsQueued :
           powerUpHighJumpRunsQueued;
         const row = document.createElement('div');
@@ -569,9 +687,10 @@
           }
           setCoins(getCoins() - pu.price);
           if (pu.id === 'shield') powerUpShieldCharges++;
-          else if (pu.id === 'revive') powerUpReviveCharges++;
           else if (pu.id === 'speed') powerUpSpeedRunsQueued++;
           else if (pu.id === 'jump') powerUpHighJumpRunsQueued++;
+          unlockAchievement('market_visitor');
+          unlockAchievement('supply_drop');
           AudioManager.playSound('coin');
           updatePowerUpDisplays();
           renderShopItems();
@@ -734,6 +853,11 @@
     let memoryChaserWarningFrames = 0;
     let fracturedJumpCharges = 2;
     let fractMemJwWasDown = false;
+    /** Moon Boots: double-jump charges on non–fractured-memory stages (P1 / P2 separate). */
+    let moonBootChargesP1 = 0;
+    let moonBootChargesP2 = 0;
+    let moonBootJwWasDown = false;
+    let moonBootP2UpWasDown = false;
 
     function formatTime(ms) {
       const totalSec = ms / 1000;
@@ -759,7 +883,7 @@
     const BULLET_SPEED = 12;
     let shootTipTimer = 0;
     let showShootTip = false;
-    let skyCroissant = null; // rare heal pickup for level 35 boss
+    let bossMedkit = null; // floating heal pickup during sky boss (35) & desert boss (40)
 
     // Cinder Doppelganger mini-boss (Level 13)
     let cinderBossActive = false;
@@ -2195,6 +2319,7 @@
         this.muted = !this.muted;
 
         if (this.muted) {
+          unlockAchievement('silent_run');
           this.bgmGain.gain.value = 0;
           this.sfxGain.gain.value = 0;
         } else {
@@ -3811,8 +3936,8 @@
         y: skyBoss ? 220 : (cactusBoss ? 38 : 300),
         width: skyBoss ? 180 : (cactusBoss ? Math.max(900, arenaW - 72) : 64),
         height: skyBoss ? 110 : (cactusBoss ? Math.max(420, arenaH - 180) : 64),
-        hp: skyBoss ? 120 : (cactusBoss ? 260 : 30),
-        maxHP: skyBoss ? 120 : (cactusBoss ? 260 : 30),
+        hp: 30,
+        maxHP: 30,
         vx: 0,
         vy: 0,
         phase: 0,
@@ -3831,7 +3956,7 @@
       bossActive = true;
       bullets = [];
       bossAttacks = [];
-      skyCroissant = null;
+      bossMedkit = null;
       showShootTip = true;
       shootTipTimer = 0;
     }
@@ -3933,16 +4058,16 @@
 
       // Boss attacks based on HP phase
       if (boss.isSkyTyrant) {
-        if (boss.hp > 80) {
+        if (boss.hp > 20) {
           boss.attackCooldown = 1700;
-        } else if (boss.hp > 40) {
+        } else if (boss.hp > 10) {
           boss.attackCooldown = 1250;
         } else {
           boss.attackCooldown = 850;
         }
       } else if (boss.isCactusTitan) {
-        if (boss.hp > 170) boss.attackCooldown = 1100;
-        else if (boss.hp > 90) boss.attackCooldown = 860;
+        if (boss.hp > 20) boss.attackCooldown = 1100;
+        else if (boss.hp > 10) boss.attackCooldown = 860;
         else boss.attackCooldown = 640;
       } else {
         if (boss.hp > 20) {
@@ -4203,7 +4328,7 @@
             player.onPlatform = null;
             bullets = [];
             bossAttacks = []; // reassign THEN break to avoid iterating stale reference
-            skyCroissant = null;
+            bossMedkit = null;
             boss.smashing = false;      // cancel any in-progress smash to prevent cascading setTimeouts
             boss.smashVelocity = 0;
             break;
@@ -4211,36 +4336,47 @@
         }
       }
 
-      // Level 35 sky boss: very rare floating croissant (heals +5 HP)
-      if (boss.isSkyTyrant) {
-        if (!skyCroissant && Math.random() < 0.50) {
+      // Floating medkits: sky boss (level 35) & desert boss (level 40); +5 HP on pickup
+      if (boss.isSkyTyrant || boss.isCactusTitan) {
+        if (!bossMedkit && Math.random() < 0.50) {
           const levelPxW = (levels[currentLevel]?.width || 44) * TILE_SIZE;
-          skyCroissant = {
-            x: 120 + Math.random() * Math.max(260, levelPxW - 260),
-            y: 170 + Math.random() * 110,
+          const levelPxH = (levels[currentLevel]?.height || 22) * TILE_SIZE;
+          let mx;
+          let my;
+          if (boss.isSkyTyrant) {
+            mx = 120 + Math.random() * Math.max(260, levelPxW - 260);
+            my = 170 + Math.random() * 110;
+          } else {
+            mx = 80 + Math.random() * Math.max(200, levelPxW - 160);
+            my = 96 + Math.random() * Math.min(260, Math.max(80, levelPxH - 320));
+          }
+          bossMedkit = {
+            x: mx,
+            y: my,
             vx: (Math.random() < 0.5 ? -1 : 1) * (0.55 + Math.random() * 0.35),
             phase: Math.random() * Math.PI * 2,
             life: 1200
           };
         }
-        if (skyCroissant) {
-          skyCroissant.phase += 0.06;
-          skyCroissant.x += skyCroissant.vx;
-          skyCroissant.y += Math.sin(skyCroissant.phase) * 0.7;
-          skyCroissant.life--;
+        if (bossMedkit) {
+          bossMedkit.phase += 0.06;
+          bossMedkit.x += bossMedkit.vx;
+          bossMedkit.y += Math.sin(bossMedkit.phase) * 0.7;
+          bossMedkit.life--;
           const levelPxW = (levels[currentLevel]?.width || 44) * TILE_SIZE;
-          if (skyCroissant.x < 56 || skyCroissant.x > levelPxW - 56) {
-            skyCroissant.vx *= -1;
-            skyCroissant.x = Math.max(56, Math.min(levelPxW - 56, skyCroissant.x));
+          if (bossMedkit.x < 56 || bossMedkit.x > levelPxW - 56) {
+            bossMedkit.vx *= -1;
+            bossMedkit.x = Math.max(56, Math.min(levelPxW - 56, bossMedkit.x));
           }
-          if (skyCroissant.life <= 0) {
-            skyCroissant = null;
+          if (bossMedkit.life <= 0) {
+            bossMedkit = null;
           } else {
-            const cRect = { x: skyCroissant.x - 11, y: skyCroissant.y - 8, width: 22, height: 16 };
+            const cRect = { x: bossMedkit.x - 11, y: bossMedkit.y - 9, width: 22, height: 18 };
             if (rectIntersect(player, cRect)) {
               playerHP = Math.min(10, playerHP + 5);
               AudioManager.playSound('coin');
-              skyCroissant = null;
+              unlockAchievement('field_medic');
+              bossMedkit = null;
             }
           }
         }
@@ -4249,7 +4385,7 @@
       // Check if boss defeated
       if (boss.hp <= 0 && bossActive) {
         bossActive = false;
-        skyCroissant = null;
+        bossMedkit = null;
         showShootTip = false;
 
         // Play victory sound
@@ -4286,6 +4422,53 @@
         return { x: ex + pad, y: ey + pad, width: inner, height: inner };
       }
       return null;
+    }
+
+    /** Bullet colors tuned to stand out against each level's sky / bgTheme gradient. */
+    function getPlayerBulletPaint(level) {
+      const lv = level || levels[currentLevel];
+      if (!lv) {
+        return { fill: '#5eead4', stroke: '#0f172a', glow: '#99f6e4', lw: 1 };
+      }
+      if (lv.isFracturedMemory && !lv.isMemoryChase) {
+        return { fill: '#e879f9', stroke: '#581c87', glow: '#f0abfc', lw: 1 };
+      }
+      const bgTheme = lv.bgTheme || 'space';
+      switch (bgTheme) {
+        case 'skyland':
+          return { fill: '#7c3aed', stroke: '#ffffff', glow: '#c4b5fd', lw: 1 };
+        case 'desert':
+          return { fill: '#1e40af', stroke: '#fffbeb', glow: '#60a5fa', lw: 1 };
+        case 'ice':
+          return { fill: '#fef08a', stroke: '#0c4a6e', glow: '#fde047', lw: 1 };
+        case 'volcano':
+        case 'cave':
+        case 'factory':
+          return { fill: '#22d3ee', stroke: '#1e1b4b', glow: '#67e8f9', lw: 1 };
+        case 'cyber':
+          return { fill: '#fb7185', stroke: '#042f2e', glow: '#fda4af', lw: 1 };
+        case 'void':
+          return { fill: '#fde047', stroke: '#3730a3', glow: '#fef08a', lw: 1 };
+        default:
+          return { fill: '#5eead4', stroke: '#0f172a', glow: '#99f6e4', lw: 1 };
+      }
+    }
+
+    function drawPlayerBullets(ctx, level) {
+      if (!bullets.length) return;
+      const p = getPlayerBulletPaint(level);
+      ctx.save();
+      bullets.forEach(bullet => {
+        ctx.shadowColor = p.glow;
+        ctx.shadowBlur = 8;
+        ctx.fillStyle = p.fill;
+        ctx.fillRect(bullet.x, bullet.y, 8, 4);
+        ctx.strokeStyle = p.stroke;
+        ctx.lineWidth = p.lw;
+        ctx.strokeRect(bullet.x + 0.5, bullet.y + 0.5, 7, 3);
+      });
+      ctx.shadowBlur = 0;
+      ctx.restore();
     }
 
     function updateBullets() {
@@ -4594,33 +4777,23 @@
         }
       });
 
-      // Rare floating croissant pickup (sky boss only)
-      if (skyCroissant) {
-        const cx = skyCroissant.x;
-        const cy = skyCroissant.y;
+      // Rare floating medkit pickup (sky & desert boss fights)
+      if (bossMedkit) {
+        const cx = bossMedkit.x;
+        const cy = bossMedkit.y;
         ctx.save();
         ctx.translate(cx, cy);
-        ctx.rotate(Math.sin(Date.now() / 500 + skyCroissant.phase) * 0.08);
-        ctx.fillStyle = '#f59e0b';
-        ctx.beginPath();
-        ctx.arc(-5, 0, 8, Math.PI * 0.22, Math.PI * 1.78);
-        ctx.arc(5, 0, 8, Math.PI * 1.22, Math.PI * 0.78, true);
-        ctx.closePath();
-        ctx.fill();
-        ctx.fillStyle = '#fde68a';
-        ctx.beginPath();
-        ctx.arc(-4, -1, 5.5, Math.PI * 0.26, Math.PI * 1.7);
-        ctx.arc(4, -1, 5.5, Math.PI * 1.2, Math.PI * 0.8, true);
-        ctx.closePath();
-        ctx.fill();
+        ctx.rotate(Math.sin(Date.now() / 500 + bossMedkit.phase) * 0.06);
+        ctx.fillStyle = '#dc2626';
+        ctx.fillRect(-11, -9, 22, 18);
+        ctx.strokeStyle = '#991b1b';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(-11, -9, 22, 18);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(-8, -3, 16, 6);
+        ctx.fillRect(-3, -7, 6, 14);
         ctx.restore();
       }
-
-      // Draw player bullets
-      ctx.fillStyle = '#00ffff';
-      bullets.forEach(bullet => {
-        ctx.fillRect(bullet.x, bullet.y, 8, 4);
-      });
 
       ctx.restore();
     }
@@ -5013,12 +5186,6 @@
       ctx.fillText('THE CINDER DOPPELGANGER', x + width / 2, y - 14);
       ctx.shadowBlur = 0;
       ctx.restore();
-
-      // Draw player bullets
-      ctx.fillStyle = '#00ffff';
-      bullets.forEach(bullet => {
-        ctx.fillRect(bullet.x, bullet.y, 8, 4);
-      });
     }
     // ────────────────────────────────────────────────────────────────────────
 
@@ -5407,9 +5574,6 @@
         ctx.fillStyle = `rgba(100,180,255,${Math.min(1, player.freezeTimer / 80) * 0.45})`;
         ctx.fillRect(player.x, player.y, player.width, player.height);
       }
-
-      ctx.fillStyle = '#00ffff';
-      bullets.forEach(b => ctx.fillRect(b.x, b.y, 8, 4));
     }
     // ─────────────────────────────────────────────────────────────────────────
 
@@ -5788,10 +5952,6 @@
         ctx.fillRect(hbX + i * (hbW / 10) + 1, hbY + hbH + 16, hbW / 10 - 3, 8);
       }
       ctx.shadowBlur = 0;
-
-      // Player bullets visible as orange
-      ctx.fillStyle = '#ffaa00';
-      bullets.forEach(b => ctx.fillRect(b.x, b.y, 8, 4));
     }
 
     // Initialize Game
@@ -5911,6 +6071,20 @@
         document.getElementById('start-screen').classList.add('flex');
       });
 
+      document.getElementById('open-achievements-btn').addEventListener('click', () => {
+        document.getElementById('start-screen').classList.add('hidden');
+        document.getElementById('start-screen').classList.remove('flex');
+        document.getElementById('achievements-screen').classList.remove('hidden');
+        document.getElementById('achievements-screen').classList.add('flex');
+        renderAchievementsScreen();
+      });
+      document.getElementById('close-achievements-btn').addEventListener('click', () => {
+        document.getElementById('achievements-screen').classList.add('hidden');
+        document.getElementById('achievements-screen').classList.remove('flex');
+        document.getElementById('start-screen').classList.remove('hidden');
+        document.getElementById('start-screen').classList.add('flex');
+      });
+
       // Leaderboard handlers
       document.getElementById('submit-score-btn').addEventListener('click', async () => {
         const playerName = document.getElementById('player-name-input').value.trim() || 'Anonymous';
@@ -5940,12 +6114,15 @@
         if (result.error) {
           rankDisplay.textContent = 'Failed to submit score';
           rankDisplay.className = 'game-font text-xs text-red-400 mb-8';
-        } else if (result.rank) {
-          const isTopTen = result.rank <= 10;
-          rankDisplay.textContent = `Global Rank: #${result.rank}${isTopTen ? ' - Top 10!' : ''}`;
-          rankDisplay.className = isTopTen ?
-            'game-font text-xs text-green-400 mb-8' :
-            'game-font text-xs text-yellow-400 mb-8';
+        } else {
+          unlockAchievement('hall_of_fame');
+          if (result.rank) {
+            const isTopTen = result.rank <= 10;
+            rankDisplay.textContent = `Global Rank: #${result.rank}${isTopTen ? ' - Top 10!' : ''}`;
+            rankDisplay.className = isTopTen ?
+              'game-font text-xs text-green-400 mb-8' :
+              'game-font text-xs text-yellow-400 mb-8';
+          }
         }
 
         // Clear input for next time
@@ -6036,6 +6213,7 @@
           if (secretCode.includes(SECRET_TRIGGER)) {
             secretCode = '';
             toggleLevelSelect();
+            unlockAchievement('debug_menu');
           }
 
           // Check for fly mode hack
@@ -6065,6 +6243,15 @@
       document.getElementById('close-progress-level-select').addEventListener('click', () => closeProgressLevelSelect());
       window.addEventListener('keydown', (e) => {
         if (e.code !== 'Escape') return;
+        const ach = document.getElementById('achievements-screen');
+        if (ach && !ach.classList.contains('hidden')) {
+          ach.classList.add('hidden');
+          ach.classList.remove('flex');
+          document.getElementById('start-screen').classList.remove('hidden');
+          document.getElementById('start-screen').classList.add('flex');
+          e.preventDefault();
+          return;
+        }
         const prog = document.getElementById('progress-level-select');
         if (!prog.classList.contains('hidden')) {
           closeProgressLevelSelect();
@@ -6164,6 +6351,7 @@
       playerInvulnFrames = 0;
       player2InvulnFrames = 0;
       gameRunning = true;
+      moonBootActiveLevelIndex = -1;
       if (AudioManager.ctx && AudioManager.ctx.state === 'suspended') {
         AudioManager.ctx.resume();
       }
@@ -6181,6 +6369,7 @@
 
       // Set current level
       currentLevel = levelIndex;
+      moonBootActiveLevelIndex = -1;
 
       // Start game
       gameRunning = true;
@@ -6199,7 +6388,10 @@
 
     function toggleFlyMode() {
       flyMode = !flyMode;
-      if (flyMode) cheatUsed = true;
+      if (flyMode) {
+        cheatUsed = true;
+        unlockAchievement('flight_risk');
+      }
 
       // Visual feedback
       const hud = document.getElementById('hud');
@@ -6269,6 +6461,8 @@
       document.getElementById('leaderboard-screen').classList.remove('flex');
       document.getElementById('shop-screen').classList.add('hidden');
       document.getElementById('shop-screen').classList.remove('flex');
+      document.getElementById('achievements-screen').classList.add('hidden');
+      document.getElementById('achievements-screen').classList.remove('flex');
       document.getElementById('level-select').classList.add('hidden');
       document.getElementById('level-select').classList.remove('flex');
       document.getElementById('progress-level-select').classList.add('hidden');
@@ -6297,10 +6491,6 @@
         powerUpSpeedRunsQueued--;
         runSpeedMult = 1.28;
       }
-      if (powerUpHighJumpRunsQueued > 0) {
-        powerUpHighJumpRunsQueued--;
-        runJumpMult = 1.16;
-      }
       updatePowerUpDisplays();
       document.getElementById('story-screen').classList.remove('flex');
       document.getElementById('story-screen').classList.add('hidden');
@@ -6326,6 +6516,7 @@
       playerInvulnFrames = 0;
       player2InvulnFrames = 0;
       gameRunning = true;
+      moonBootActiveLevelIndex = -1;
 
       // Unlock audio on user interaction
       if (AudioManager.ctx && AudioManager.ctx.state === 'suspended') {
@@ -6336,6 +6527,10 @@
       gameLoop();
     }
     
+    function isBossFightLevel(level) {
+      return !!(level && (level.isBoss || level.isMinionBoss || level.isIceBoss || level.isFactoryBoss));
+    }
+
     function loadLevel(levelIndex) {
       const level = levels[levelIndex];
       if (level.bgTheme === 'desert') {
@@ -6345,7 +6540,7 @@
         });
       }
       memoryChaser = null;
-      skyCroissant = null;
+      bossMedkit = null;
       player = {
         x: level.playerStart.x * TILE_SIZE,
         y: level.playerStart.y * TILE_SIZE,
@@ -6389,6 +6584,22 @@
       });
       fracturedJumpCharges = 2;
       fractMemJwWasDown = false;
+      playerHearts = MAX_HEARTS;
+      player2Hearts = MAX_HEARTS;
+      moonBootChargesP1 = 0;
+      moonBootChargesP2 = 0;
+      moonBootJwWasDown = false;
+      moonBootP2UpWasDown = false;
+
+      runJumpMult = 1;
+      if (moonBootActiveLevelIndex === levelIndex) {
+        runJumpMult = 1.16;
+      } else if (powerUpHighJumpRunsQueued > 0) {
+        powerUpHighJumpRunsQueued--;
+        moonBootActiveLevelIndex = levelIndex;
+        runJumpMult = 1.16;
+        updatePowerUpDisplays();
+      }
 
       // Initialize moving platforms
       level.movingPlatforms.forEach(p => {
@@ -6405,6 +6616,8 @@
         e.currentX = e.startX;
         e.direction = 1;
         e.moveRange = TILE_SIZE * 1.5;
+        e.walkPhase = Math.random() * Math.PI * 2;
+        e.turnSquash = 0;
       });
 
       // Initialize fast walkers (type 10)
@@ -6413,6 +6626,8 @@
         e.currentX = e.startX;
         e.direction = 1;
         e.moveRange = TILE_SIZE * 2;
+        e.walkPhase = Math.random() * Math.PI * 2;
+        e.turnSquash = 0;
       });
 
       // Initialize bouncers (type 11) — oscillate X and Y
@@ -6650,6 +6865,16 @@
       document.getElementById('level-display').textContent = currentLevel + 1;
       document.getElementById('death-display').textContent = deaths;
       updateCoinDisplays();
+
+      const heartsBox = document.getElementById('hearts-box');
+      const level = levels[currentLevel];
+      if (level && !isBossFightLevel(level)) {
+        heartsBox.classList.remove('hidden');
+        document.getElementById('hearts-display').textContent =
+          '♥'.repeat(Math.max(0, playerHearts)) + '♡'.repeat(Math.max(0, MAX_HEARTS - playerHearts));
+      } else {
+        heartsBox.classList.add('hidden');
+      }
     }
 
     function updateTimer() {
@@ -6680,7 +6905,10 @@
       document.getElementById('roast-screen-3').classList.add('hidden');
       document.getElementById('roast-screen-4').classList.remove('flex');
       document.getElementById('roast-screen-4').classList.add('hidden');
-      if (cheatCount >= 3) glitchMode = true;
+      if (cheatCount >= 3) {
+        glitchMode = true;
+        unlockAchievement('broken_world');
+      }
       cheatUsed = false;
       runSpeedMult = 1;
       runJumpMult = 1;
@@ -6828,12 +7056,25 @@
         return;
       }
 
-      let skipDeathStat = false;
-      if (powerUpReviveCharges > 0) {
-        powerUpReviveCharges--;
-        skipDeathStat = true;
+      if (!isBossFightLevel(levels[currentLevel]) && playerHearts > 1) {
+        playerHearts--;
+        levels[currentLevel].tiles.filter(t => t.type === TILE_COIN).forEach(t => { t.collected = false; });
+        player.x = lastSafePos.x;
+        player.y = lastSafePos.y;
+        player.vx = 0;
+        player.vy = 0;
+        player.onGround = false;
+        player.onPlatform = null;
+        player.mimicTile = null;
+        playerSquish = { x: 1.5, y: 0.5 };
+        playerInvulnFrames = 100;
+        AudioManager.playSound('death');
+        updateHUD();
+        return;
       }
-      if (!skipDeathStat) deaths++;
+
+      deaths++;
+      if (!practiceMode && deaths >= 20) unlockAchievement('stubborn');
       updateHUD();
       AudioManager.playSound('death');
 
@@ -6865,6 +7106,8 @@
     function completeLevel() {
       gameRunning = false;
 
+      if (practiceMode) unlockAchievement('practice_round');
+
       // Record level time
       const finishTime = Date.now() - levelStartTime;
       levelTimes[currentLevel] = finishTime;
@@ -6876,6 +7119,18 @@
           levels.length - 1,
           Math.max(maxSelectableLevelIndex, currentLevel + 1)
         );
+        if (currentLevel === 0) {
+          unlockAchievement('first_contact');
+          if (twoPlayerMode) unlockAchievement('duo_begin');
+        }
+        if (currentLevel === 9) unlockAchievement('void_emperor');
+        if (currentLevel === 14) unlockAchievement('ember_down');
+        if (currentLevel === 19) unlockAchievement('frost_bitten');
+        if (currentLevel === 24) unlockAchievement('warden_fall');
+        if (currentLevel === 29 && levels[29] && levels[29].isMemoryChase) unlockAchievement('chase_escape');
+        if (currentLevel === 34) unlockAchievement('sky_tyrant');
+        if (currentLevel === 39) unlockAchievement('sand_scourge');
+        if (currentLevel >= levels.length - 1) unlockAchievement('marathon');
       }
 
       // Coins are only from pickups in the level — no bonus for clearing a stage.
@@ -6884,6 +7139,10 @@
         // Game complete
         if (cheatUsed) {
           cheatCount++;
+          if (cheatCount === 1) unlockAchievement('cheat_first');
+          if (cheatCount === 2) unlockAchievement('cheat_second');
+          if (cheatCount === 3) unlockAchievement('cheat_third');
+          if (cheatCount >= 4) unlockAchievement('cheat_four');
           if (cheatCount >= 4) {
             document.getElementById('roast-screen-4').classList.remove('hidden');
             document.getElementById('roast-screen-4').classList.add('flex');
@@ -6991,19 +7250,27 @@
       // Update enemies (type 3 — walker)
       level.tiles.filter(t => t.type === 3).forEach(e => {
         if (e.shotDead) return;
-        e.currentX += e.direction * (glitchMode ? 2.5 : 1);
+        const speed3 = glitchMode ? 2.5 : 1;
+        e.currentX += e.direction * speed3;
+        e.walkPhase = (e.walkPhase || 0) + speed3 * 0.12;
         if (Math.abs(e.currentX - e.startX) > e.moveRange) {
           e.direction *= -1;
+          e.turnSquash = 1;
         }
+        e.turnSquash = Math.max(0, (e.turnSquash || 0) - 0.08);
       });
 
       // Update fast walkers (type 10 — 3× speed)
       level.tiles.filter(t => t.type === 10).forEach(e => {
         if (e.shotDead) return;
-        e.currentX += e.direction * (glitchMode ? 6 : 3);
+        const speed10 = glitchMode ? 6 : 3;
+        e.currentX += e.direction * speed10;
+        e.walkPhase = (e.walkPhase || 0) + speed10 * 0.12;
         if (Math.abs(e.currentX - e.startX) > e.moveRange) {
           e.direction *= -1;
+          e.turnSquash = 1;
         }
+        e.turnSquash = Math.max(0, (e.turnSquash || 0) - 0.08);
       });
 
       // Update factory bots (type 22 — 2.5× speed, wider patrol)
@@ -7221,6 +7488,7 @@
       // Player movement (P1: WASD always; arrow keys only in single-player)
       const p1Spd = flyMode ? 1 : runSpeedMult;
       const p1Jump = flyMode ? 1 : runJumpMult;
+      if (player.onGround && runJumpMult > 1 && !level.isFracturedMemory) moonBootChargesP1 = 2;
       let moveX = 0;
       if (keys['KeyA'] || (!twoPlayerMode && keys['ArrowLeft'])) {
         moveX = -MOVE_SPEED * p1Spd;
@@ -7266,7 +7534,7 @@
           } else if (!player.onGround && fracturedJumpCharges > 0) {
             const airOk = jwEdge;
             if (airOk) {
-              player.vy = JUMP_FORCE * p1Jump;
+              player.vy = JUMP_FORCE * p1Jump * (runJumpMult > 1 ? MOON_BOOT_DOUBLE_AIR_MULT : 1);
               fracturedJumpCharges--;
               player.mimicTile = null;
               playerSquish = { x: 0.65, y: 1.4 };
@@ -7277,8 +7545,25 @@
           if (keys['Space']) {
             shootBullet();
           }
-          // Jump with W/Up during boss fights (P1 only uses ArrowUp in single-player)
-          if ((keys['KeyW'] || (!twoPlayerMode && keys['ArrowUp'])) && player.onGround) {
+          const jb = keys['KeyW'] || (!twoPlayerMode && keys['ArrowUp']);
+          const jbEdge = jb && !moonBootJwWasDown;
+          moonBootJwWasDown = !!jb;
+          if (runJumpMult > 1) {
+            if (jb && player.onGround && moonBootChargesP1 > 0) {
+              player.vy = JUMP_FORCE * p1Jump;
+              player.onGround = false;
+              player.mimicTile = null;
+              moonBootChargesP1--;
+              playerSquish = { x: 0.65, y: 1.4 };
+              AudioManager.playSound('jump');
+            } else if (!player.onGround && moonBootChargesP1 > 0 && jbEdge) {
+              player.vy = JUMP_FORCE * p1Jump * MOON_BOOT_DOUBLE_AIR_MULT;
+              moonBootChargesP1--;
+              player.mimicTile = null;
+              playerSquish = { x: 0.65, y: 1.4 };
+              AudioManager.playSound('jump');
+            }
+          } else if (jb && player.onGround) {
             player.vy = JUMP_FORCE * p1Jump;
             player.onGround = false;
             player.mimicTile = null;
@@ -7286,8 +7571,26 @@
             AudioManager.playSound('jump');
           }
         } else {
-          // Normal jump
-          if ((keys['Space'] || keys['KeyW'] || (!twoPlayerMode && keys['ArrowUp'])) && player.onGround) {
+          // Normal levels — Moon Boots add a double jump (extra mid-air jump)
+          if (runJumpMult > 1) {
+            const jn = keys['Space'] || keys['KeyW'] || (!twoPlayerMode && keys['ArrowUp']);
+            const jnEdge = jn && !moonBootJwWasDown;
+            moonBootJwWasDown = !!jn;
+            if (jn && player.onGround && moonBootChargesP1 > 0) {
+              player.vy = JUMP_FORCE * p1Jump;
+              player.onGround = false;
+              player.mimicTile = null;
+              moonBootChargesP1--;
+              playerSquish = { x: 0.65, y: 1.4 };
+              AudioManager.playSound('jump');
+            } else if (!player.onGround && moonBootChargesP1 > 0 && jnEdge) {
+              player.vy = JUMP_FORCE * p1Jump * MOON_BOOT_DOUBLE_AIR_MULT;
+              moonBootChargesP1--;
+              player.mimicTile = null;
+              playerSquish = { x: 0.65, y: 1.4 };
+              AudioManager.playSound('jump');
+            }
+          } else if ((keys['Space'] || keys['KeyW'] || (!twoPlayerMode && keys['ArrowUp'])) && player.onGround) {
             player.vy = JUMP_FORCE * p1Jump;
             player.onGround = false;
             player.mimicTile = null;
@@ -7577,12 +7880,27 @@
         return;
       }
 
-      let skipDeathStat = false;
-      if (powerUpReviveCharges > 0) {
-        powerUpReviveCharges--;
-        skipDeathStat = true;
+      if (!isBossFightLevel(lvl) && player2Hearts > 1) {
+        player2Hearts--;
+        if (checkpointPos) {
+          player2.x = checkpointPos.x + TILE_SIZE;
+          player2.y = checkpointPos.y;
+        } else {
+          player2.x = (lvl.playerStart.x + 1) * TILE_SIZE;
+          player2.y = lvl.playerStart.y * TILE_SIZE;
+        }
+        player2.vx = 0;
+        player2.vy = 0;
+        player2.onGround = false;
+        player2.onPlatform = null;
+        player2InvulnFrames = 100;
+        AudioManager.playSound('death');
+        updateHUD();
+        return;
       }
-      if (!skipDeathStat) deaths++;
+
+      deaths++;
+      if (!practiceMode && deaths >= 20) unlockAchievement('stubborn');
       updateHUD();
       AudioManager.playSound('death');
       if (checkpointPos) {
@@ -7612,6 +7930,7 @@
       // Movement: Arrow keys
       const p2Spd = flyMode ? 1 : runSpeedMult;
       const p2Jump = flyMode ? 1 : runJumpMult;
+      if (player2.onGround && runJumpMult > 1 && !level.isFracturedMemory) moonBootChargesP2 = 2;
       let moveX = 0;
       if (keys['ArrowLeft'])  { moveX = -MOVE_SPEED * p2Spd; p2FacingRight = false; }
       if (keys['ArrowRight']) { moveX =  MOVE_SPEED * p2Spd; p2FacingRight = true;  }
@@ -7639,10 +7958,28 @@
         if (keys['ArrowDown']) moveY =  FLY_SPEED;
         player2.vy = moveY;
       } else {
-        // Shoot in boss fights (Enter key)
-        if (bossActive || cinderBossActive || frozenBossActive || wardenBossActive) {
+        // Shoot in boss fights (Enter key); Moon Boots → double jump (↑ edge for air jump)
+        if (bossActive || cinderBossActive || frozenBossActive || wardenBossActive || level.isSkyBoss) {
           if (keys['Enter']) shootBullet2();
-          if (keys['ArrowUp'] && player2.onGround) {
+          const up2 = keys['ArrowUp'];
+          const up2Edge = up2 && !moonBootP2UpWasDown;
+          moonBootP2UpWasDown = !!up2;
+          if (runJumpMult > 1) {
+            if (up2 && player2.onGround && moonBootChargesP2 > 0) {
+              player2.vy = JUMP_FORCE * p2Jump;
+              player2.onGround = false;
+              player2.mimicTile = null;
+              moonBootChargesP2--;
+              p2Squish = { x: 0.65, y: 1.4 };
+              AudioManager.playSound('jump');
+            } else if (!player2.onGround && moonBootChargesP2 > 0 && up2Edge) {
+              player2.vy = JUMP_FORCE * p2Jump * MOON_BOOT_DOUBLE_AIR_MULT;
+              moonBootChargesP2--;
+              player2.mimicTile = null;
+              p2Squish = { x: 0.65, y: 1.4 };
+              AudioManager.playSound('jump');
+            }
+          } else if (up2 && player2.onGround) {
             player2.vy = JUMP_FORCE * p2Jump;
             player2.onGround = false;
             player2.mimicTile = null;
@@ -7650,7 +7987,25 @@
             AudioManager.playSound('jump');
           }
         } else {
-          if (keys['ArrowUp'] && player2.onGround) {
+          if (runJumpMult > 1) {
+            const up2 = keys['ArrowUp'];
+            const up2Edge = up2 && !moonBootP2UpWasDown;
+            moonBootP2UpWasDown = !!up2;
+            if (up2 && player2.onGround && moonBootChargesP2 > 0) {
+              player2.vy = JUMP_FORCE * p2Jump;
+              player2.onGround = false;
+              player2.mimicTile = null;
+              moonBootChargesP2--;
+              p2Squish = { x: 0.65, y: 1.4 };
+              AudioManager.playSound('jump');
+            } else if (!player2.onGround && moonBootChargesP2 > 0 && up2Edge) {
+              player2.vy = JUMP_FORCE * p2Jump * MOON_BOOT_DOUBLE_AIR_MULT;
+              moonBootChargesP2--;
+              player2.mimicTile = null;
+              p2Squish = { x: 0.65, y: 1.4 };
+              AudioManager.playSound('jump');
+            }
+          } else if (keys['ArrowUp'] && player2.onGround) {
             player2.vy = JUMP_FORCE * p2Jump;
             player2.onGround = false;
             player2.mimicTile = null;
@@ -8137,6 +8492,74 @@
       }
     }
 
+    /** Giant glass dome when SHIELD power-up is stocked (shared charges). */
+    function getShieldDomeLayout(bodyW, bodyH, now) {
+      const pulse = 0.5 + 0.5 * Math.sin(now / 180);
+      const cx = bodyW / 2;
+      const base = Math.max(bodyW, bodyH);
+      const rx = base * 2.35 + 14 + pulse * 10;
+      const ry = base * 2.55 + 18 + pulse * 12;
+      const cy = bodyH * 0.42;
+      return { cx, cy, rx, ry, pulse };
+    }
+
+    /** Inner glass fill — draw before the runner sprite. */
+    function drawShieldDomeGlass(ctx, bodyW, bodyH, now) {
+      if (powerUpShieldCharges <= 0) return;
+      const { cx, cy, rx, ry, pulse } = getShieldDomeLayout(bodyW, bodyH, now);
+
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+
+      const fillGrad = ctx.createRadialGradient(cx, cy - ry * 0.35, Math.max(bodyW, bodyH) * 0.15, cx, cy, Math.max(rx, ry));
+      fillGrad.addColorStop(0, `rgba(224, 242, 254, ${0.22 + pulse * 0.08})`);
+      fillGrad.addColorStop(0.45, `rgba(56, 189, 248, ${0.14 + pulse * 0.06})`);
+      fillGrad.addColorStop(0.82, `rgba(14, 165, 233, ${0.06})`);
+      fillGrad.addColorStop(1, 'rgba(8, 145, 178, 0)');
+      ctx.fillStyle = fillGrad;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.shadowBlur = 0;
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = 0.35 + 0.15 * pulse;
+      const glossY = cy - ry * 0.72;
+      ctx.beginPath();
+      ctx.arc(cx - rx * 0.28, glossY, rx * 0.22, Math.PI * 0.15, Math.PI * 0.65);
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    /** Outer rim glow — draw after the runner so the edge reads in front. */
+    function drawShieldDomeRim(ctx, bodyW, bodyH, now) {
+      if (powerUpShieldCharges <= 0) return;
+      const { cx, cy, rx, ry, pulse } = getShieldDomeLayout(bodyW, bodyH, now);
+
+      ctx.save();
+      ctx.shadowColor = '#67e8f9';
+      ctx.shadowBlur = 22 + 14 * pulse;
+      ctx.strokeStyle = '#ecfeff';
+      ctx.lineWidth = 3;
+      ctx.globalAlpha = 0.55 + 0.25 * pulse;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.shadowBlur = 12 + 8 * pulse;
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 1.5;
+      ctx.globalAlpha = 0.45;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, rx - 6, ry - 7, 0, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
     function render() {
       const level = levels[currentLevel];
 
@@ -8491,27 +8914,56 @@
             ctx.shadowBlur = 0;
             break;
             
-          case 3: // Enemy
+          case 3: { // Enemy — walks with leg bob, turn squash, direction-aware eyes
             if (tile.shotDead) break;
             const ex = tile.currentX || x;
+            const phase3 = tile.walkPhase || 0;
+            const squash3 = tile.turnSquash || 0;
+            const cx3 = ex + TILE_SIZE / 2;
+            const cy3 = y + TILE_SIZE / 2 + Math.sin(phase3) * 1.5;
+            const r3 = TILE_SIZE / 2 - 4;
+            const legSwing3 = Math.sin(phase3) * 4;
+            // Legs
+            ctx.strokeStyle = glitchMode ? '#ff2200' : '#7e22ce';
+            ctx.lineWidth = 3;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(cx3 - 5, cy3 + 6);
+            ctx.lineTo(cx3 - 5 + legSwing3, y + TILE_SIZE - 1);
+            ctx.moveTo(cx3 + 5, cy3 + 6);
+            ctx.lineTo(cx3 + 5 - legSwing3, y + TILE_SIZE - 1);
+            ctx.stroke();
+            // Body (squashes on direction turn)
+            ctx.save();
+            ctx.translate(cx3, cy3);
+            ctx.scale(1 + squash3 * 0.3, 1 - squash3 * 0.22);
             ctx.fillStyle = glitchMode ? '#ff2200' : '#a855f7';
             if (glitchMode) { ctx.shadowColor = '#ff0000'; ctx.shadowBlur = 8; }
             ctx.beginPath();
-            ctx.arc(ex + TILE_SIZE/2, y + TILE_SIZE/2, TILE_SIZE/2 - 4, 0, Math.PI * 2);
+            ctx.arc(0, 0, r3, 0, Math.PI * 2);
             ctx.fill();
             ctx.shadowBlur = 0;
-            // Eyes
+            // Eyes — blink, pupils glance in travel direction
+            const blink3 = Math.sin(now / 420 + tile.x * 1.7) > 0.94;
+            const look3 = (tile.direction || 1) * 1.5;
             ctx.fillStyle = glitchMode ? '#ffff00' : '#fff';
-            ctx.beginPath();
-            ctx.arc(ex + TILE_SIZE/3, y + TILE_SIZE/3, 4, 0, Math.PI * 2);
-            ctx.arc(ex + TILE_SIZE*2/3, y + TILE_SIZE/3, 4, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = '#000';
-            ctx.beginPath();
-            ctx.arc(ex + TILE_SIZE/3, y + TILE_SIZE/3, 2, 0, Math.PI * 2);
-            ctx.arc(ex + TILE_SIZE*2/3, y + TILE_SIZE/3, 2, 0, Math.PI * 2);
-            ctx.fill();
+            if (blink3) {
+              ctx.fillRect(-TILE_SIZE/6 - 4, -TILE_SIZE/6 - 1, 8, 2);
+              ctx.fillRect(TILE_SIZE/6 - 4, -TILE_SIZE/6 - 1, 8, 2);
+            } else {
+              ctx.beginPath();
+              ctx.arc(-TILE_SIZE/6, -TILE_SIZE/6, 4, 0, Math.PI * 2);
+              ctx.arc(TILE_SIZE/6, -TILE_SIZE/6, 4, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.fillStyle = '#000';
+              ctx.beginPath();
+              ctx.arc(-TILE_SIZE/6 + look3, -TILE_SIZE/6, 2, 0, Math.PI * 2);
+              ctx.arc(TILE_SIZE/6 + look3, -TILE_SIZE/6, 2, 0, Math.PI * 2);
+              ctx.fill();
+            }
+            ctx.restore();
             break;
+          }
             
           case 4: // Boost
             ctx.fillStyle = '#22c55e';
@@ -8585,33 +9037,53 @@
             ctx.shadowBlur = 0;
             break;
 
-          case 10: { // Fast walker — hot red, spiky look
+          case 10: { // Fast walker — hot red, spiky, sprints with scissoring legs
             if (tile.shotDead) break;
             const fx = tile.currentX || x;
+            const phase10 = tile.walkPhase || 0;
+            const squash10 = tile.turnSquash || 0;
+            const cx10 = fx + TILE_SIZE / 2;
+            const cy10 = y + TILE_SIZE / 2 + Math.sin(phase10) * 2;
+            const legSwing10 = Math.sin(phase10) * 6;
+            // Legs (fast scissor stride)
+            ctx.strokeStyle = '#7f1d1d';
+            ctx.lineWidth = 3;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(cx10 - 5, cy10 + 7);
+            ctx.lineTo(cx10 - 5 + legSwing10, y + TILE_SIZE - 1);
+            ctx.moveTo(cx10 + 5, cy10 + 7);
+            ctx.lineTo(cx10 + 5 - legSwing10, y + TILE_SIZE - 1);
+            ctx.stroke();
+            ctx.save();
+            ctx.translate(cx10, cy10);
+            ctx.scale(1 + squash10 * 0.3, 1 - squash10 * 0.22);
             ctx.fillStyle = '#dc2626';
             ctx.shadowColor = '#ff4444';
             ctx.shadowBlur = 6;
             ctx.beginPath();
-            ctx.arc(fx + TILE_SIZE/2, y + TILE_SIZE/2, TILE_SIZE/2 - 3, 0, Math.PI * 2);
+            ctx.arc(0, 0, TILE_SIZE/2 - 3, 0, Math.PI * 2);
             ctx.fill();
             ctx.shadowBlur = 0;
-            // Spiky outline (4 spikes)
+            // Spiky outline (4 spikes), independently spinning
             ctx.fillStyle = '#ff6666';
             for (let sp = 0; sp < 4; sp++) {
-              const sa = (sp * Math.PI / 2) + Date.now() / 300;
+              const sa = (sp * Math.PI / 2) + now / 300;
               ctx.beginPath();
-              ctx.moveTo(fx + TILE_SIZE/2 + Math.cos(sa) * 10, y + TILE_SIZE/2 + Math.sin(sa) * 10);
-              ctx.lineTo(fx + TILE_SIZE/2 + Math.cos(sa) * 15, y + TILE_SIZE/2 + Math.sin(sa) * 15);
-              ctx.lineTo(fx + TILE_SIZE/2 + Math.cos(sa + 0.3) * 10, y + TILE_SIZE/2 + Math.sin(sa + 0.3) * 10);
+              ctx.moveTo(Math.cos(sa) * 10, Math.sin(sa) * 10);
+              ctx.lineTo(Math.cos(sa) * 15, Math.sin(sa) * 15);
+              ctx.lineTo(Math.cos(sa + 0.3) * 10, Math.sin(sa + 0.3) * 10);
               ctx.closePath(); ctx.fill();
             }
-            // Eyes (angry)
+            // Eyes (angry, pupils dart in travel direction)
+            const look10 = (tile.direction || 1) * 2;
             ctx.fillStyle = '#fff';
-            ctx.fillRect(fx + 7, y + 9, 7, 5);
-            ctx.fillRect(fx + 18, y + 9, 7, 5);
+            ctx.fillRect(-TILE_SIZE/2 + 7, -TILE_SIZE/2 + 9, 7, 5);
+            ctx.fillRect(-TILE_SIZE/2 + 18, -TILE_SIZE/2 + 9, 7, 5);
             ctx.fillStyle = '#000';
-            ctx.fillRect(fx + 10, y + 10, 3, 3);
-            ctx.fillRect(fx + 21, y + 10, 3, 3);
+            ctx.fillRect(-TILE_SIZE/2 + 10 + look10, -TILE_SIZE/2 + 10, 3, 3);
+            ctx.fillRect(-TILE_SIZE/2 + 21 + look10, -TILE_SIZE/2 + 10, 3, 3);
+            ctx.restore();
             break;
           }
 
@@ -9261,6 +9733,7 @@
         }
         ctx.scale(p2Squish.x, p2Squish.y);
         ctx.translate(-player2.width / 2, -player2.height);
+        drawShieldDomeGlass(ctx, player2.width, player2.height, now);
         if (!fillPremiumPlayerBody(ctx, skin2, player2.width, player2.height, now)) {
           ctx.fillStyle = skin2.color;
           ctx.fillRect(0, 0, player2.width, player2.height);
@@ -9291,6 +9764,7 @@
         ctx.fillStyle = '#000';
         ctx.fillRect(6, 8, 3, 3);
         ctx.fillRect(player2.width - 8, 8, 3, 3);
+        drawShieldDomeRim(ctx, player2.width, player2.height, now);
         ctx.restore();
       }
 
@@ -9307,6 +9781,7 @@
       }
       ctx.scale(playerSquish.x, playerSquish.y);
       ctx.translate(-player.width / 2, -player.height);
+      drawShieldDomeGlass(ctx, player.width, player.height, now);
       // Body (+ premium shaders)
       if (!fillPremiumPlayerBody(ctx, skin, player.width, player.height, now)) {
         ctx.fillStyle = skin.color;
@@ -9337,6 +9812,7 @@
         ctx.fillText('P1', player.width / 2, player.height - 1);
         ctx.textAlign = 'left';
       }
+      drawShieldDomeRim(ctx, player.width, player.height, now);
       ctx.restore();
 
       // Draw particles (world space, inside camera transform)
@@ -9364,13 +9840,7 @@
       renderFrozenBoss();
       renderWardenBoss();
 
-      if (level.isFracturedMemory && !level.isMemoryChase && bullets.length) {
-        ctx.fillStyle = '#e879f9';
-        ctx.shadowColor = '#f0abfc';
-        ctx.shadowBlur = 10;
-        bullets.forEach(b => ctx.fillRect(b.x, b.y, 8, 4));
-        ctx.shadowBlur = 0;
-      }
+      if (bullets.length) drawPlayerBullets(ctx, level);
 
       ctx.restore(); // end camera transform
 
