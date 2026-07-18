@@ -228,6 +228,11 @@
     <p style="font-family:Georgia,serif;font-size:1.05rem;color:#aaa;margin-bottom:16px;line-height:1.8;">YOU ARE AN IDIOT.<br>A CHEATING, UNREPENTANT,<br>IRREDEEMABLE IDIOT.</p>
     <p style="font-family:Georgia,serif;font-size:0.9rem;color:#555;margin-bottom:28px;line-height:1.8;font-style:italic;">clicking the button below will not bring the game back.<br>you did this to yourself.</p>
     <button id="roast4-btn" style="font-family:'Press Start 2P',monospace;font-size:0.6rem;background:#110000;color:#ff0000;border:1px solid #ff0000;padding:12px 28px;cursor:pointer;border-radius:6px;">accept your fate</button>
+   </div><!-- Final escape cinematic (after Iron Thorn Relic) -->
+   <div id="escape-scene" class="absolute inset-0 flex-col items-center justify-center z-50 hidden" style="background:radial-gradient(ellipse at center,#3f2a14 0%,#1a0f08 55%,#0a0604 100%);text-align:center;padding:40px;">
+    <p id="escape-scene-line" class="game-font text-sm md:text-base text-amber-200 mb-8 leading-relaxed max-w-xl px-4" style="text-shadow:0 0 18px rgba(251,191,36,0.35);transition:opacity 0.2s ease;">THE IRON THORN CRUMBLES...</p>
+    <p class="game-font text-[10px] text-stone-500 mb-6 tracking-widest">SPIKE REALM — EPILOGUE</p>
+    <button id="escape-continue-btn" class="game-font text-xs bg-gradient-to-r from-amber-800 to-yellow-700 hover:from-amber-700 hover:to-yellow-600 text-amber-50 px-8 py-4 rounded-lg border border-amber-500/40 hidden">CONTINUE</button>
    </div><!-- Game Complete -->
    <div id="game-complete" class="absolute inset-0 flex-col items-center justify-center bg-gradient-to-b from-gray-900 via-green-900 to-gray-900 z-40 hidden">
     <h2 class="game-font text-3xl text-yellow-400 mb-4">🏆 YOU WIN! 🏆</h2>
@@ -320,6 +325,11 @@
      <button class="level-select-btn game-font text-sm bg-gradient-to-r from-amber-700 to-yellow-600 hover:from-amber-600 hover:to-yellow-500 text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105" data-level="37">38</button>
      <button class="level-select-btn game-font text-sm bg-gradient-to-r from-amber-700 to-yellow-600 hover:from-amber-600 hover:to-yellow-500 text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105" data-level="38">39</button>
      <button class="level-select-btn game-font text-sm bg-gradient-to-r from-amber-700 to-yellow-600 hover:from-amber-600 hover:to-yellow-500 text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105" data-level="39">40</button>
+     <button class="level-select-btn game-font text-sm bg-gradient-to-r from-red-950 to-rose-800 hover:from-red-900 hover:to-rose-700 text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105" data-level="40">41</button>
+     <button class="level-select-btn game-font text-sm bg-gradient-to-r from-red-950 to-rose-800 hover:from-red-900 hover:to-rose-700 text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105" data-level="41">42</button>
+     <button class="level-select-btn game-font text-sm bg-gradient-to-r from-red-950 to-rose-800 hover:from-red-900 hover:to-rose-700 text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105" data-level="42">43</button>
+     <button class="level-select-btn game-font text-sm bg-gradient-to-r from-red-950 to-rose-800 hover:from-red-900 hover:to-rose-700 text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105" data-level="43">44</button>
+     <button class="level-select-btn game-font text-sm bg-gradient-to-r from-red-950 to-rose-800 hover:from-red-900 hover:to-rose-700 text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105" data-level="44">45</button>
     </div>
     <button id="close-level-select" class="game-font text-xs text-gray-500 hover:text-gray-300">ESC TO CLOSE</button>
    </div>
@@ -407,9 +417,11 @@
       { id: 'hall_of_fame', title: 'ON THE BOARD', desc: 'Submit a score to the leaderboard.', secret: false },
       { id: 'debug_menu', title: 'BACKDOOR', desc: 'Open the hidden level select.', secret: true },
       { id: 'flight_risk', title: 'WE HAVE LIFT-OFF', desc: 'Activate fly mode.', secret: true },
+      { id: 'holy_water', title: 'BLESSED BULLET', desc: 'Use holy water during a boss fight.', secret: true },
       { id: 'broken_world', title: 'CHAOS THEORY', desc: 'Unlock permanent glitch mode.', secret: true },
       { id: 'sky_tyrant', title: 'ROC SLAYER', desc: 'Defeat the Sky Spire Roc.', secret: true },
       { id: 'sand_scourge', title: "DESERT'S END", desc: 'Defeat the Cactus Titan.', secret: true },
+      { id: 'spike_crown', title: 'CROWN OF THORNS', desc: 'Defeat the Iron Thorn Relic (level 45).', secret: false },
       { id: 'field_medic', title: 'FIELD MEDIC', desc: 'Grab a floating boss medkit heal.', secret: true },
       { id: 'cheat_first', title: 'HOLLOW WIN', desc: 'Beat the game once while using cheats.', secret: true },
       { id: 'cheat_second', title: 'NAME ON THE LIST', desc: 'Take the second cheat-ending.', secret: true },
@@ -883,7 +895,20 @@
     const BULLET_SPEED = 12;
     let shootTipTimer = 0;
     let showShootTip = false;
-    let bossMedkit = null; // floating heal pickup during sky boss (35) & desert boss (40)
+    let bossMedkit = null; // floating heal pickup during sky/desert/spike bosses
+    let holyWaterFlash = 0; // frames of holy-water screen flash
+
+    // Final boss escape sequence (level 45 after Iron Thorn Relic falls)
+    let spikeEscapeActive = false;
+    let spikeEscapeTimer = 0;
+    let spikeEscapeExit = null; // { x, y, width, height } pixel rect
+    let spikeEscapeDebris = [];
+    let spikeEscapeCaption = '';
+    let spikeEscapeBossFade = 1;
+    let spikeEscapeFinished = false;
+    let spikeEscapeCollapseX = 0; // chasing collapse front (pixels)
+    let spikeEscapeRespawnX = 2; // tile x for soft-fail respawn
+    let spikeBossArenaBackup = null; // restore L45 after escape mutates it
 
     // Cinder Doppelganger mini-boss (Level 13)
     let cinderBossActive = false;
@@ -2127,6 +2152,77 @@
         this.playDesertBGMLoop();
       },
 
+      // Spike Realm — tense metallic dread
+      playSpikeWorldBGMLoop() {
+        if (!this.ctx || this.muted) return;
+        if (this.ctx.state === 'suspended') this.ctx.resume();
+        const now = this.ctx.currentTime;
+        const b = 60 / 132; // 132 BPM
+        this.bgmOscillators = [];
+
+        const lead = [
+          { note: 110.0, dur: 0.5 }, { note: 130.81, dur: 0.25 }, { note: 146.83, dur: 0.25 },
+          { note: 130.81, dur: 0.5 }, { note: 98.0, dur: 0.5 },
+          { note: 116.54, dur: 0.5 }, { note: 146.83, dur: 0.25 }, { note: 164.81, dur: 0.25 },
+          { note: 146.83, dur: 0.5 }, { note: 110.0, dur: 0.5 },
+        ];
+        const pulse = [55.0, 55.0, 61.74, 55.0, 49.0, 55.0, 61.74, 73.42];
+
+        let t = 0;
+        lead.forEach(n => {
+          const st = now + t * b;
+          const et = st + n.dur * b;
+          const osc = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(n.note * 2, st);
+          g.gain.setValueAtTime(0, st);
+          g.gain.linearRampToValueAtTime(0.055, st + 0.02);
+          g.gain.exponentialRampToValueAtTime(0.001, et);
+          osc.connect(g); g.connect(this.bgmGain);
+          osc.start(st); osc.stop(et + 0.02);
+          this.bgmOscillators.push(osc);
+          t += n.dur;
+        });
+
+        pulse.forEach((f, i) => {
+          const st = now + i * b * 0.5;
+          const osc = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(f, st);
+          g.gain.setValueAtTime(0, st);
+          g.gain.linearRampToValueAtTime(0.09, st + 0.01);
+          g.gain.exponentialRampToValueAtTime(0.001, st + b * 0.42);
+          osc.connect(g); g.connect(this.bgmGain);
+          osc.start(st); osc.stop(st + b * 0.5);
+          this.bgmOscillators.push(osc);
+        });
+
+        for (let i = 0; i < 32; i++) {
+          const st = now + i * b * 0.25;
+          const osc = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(2200 + (i % 6) * 140, st);
+          g.gain.setValueAtTime(0, st);
+          g.gain.linearRampToValueAtTime(i % 4 === 0 ? 0.028 : 0.012, st + 0.001);
+          g.gain.exponentialRampToValueAtTime(0.001, st + 0.04);
+          osc.connect(g); g.connect(this.bgmGain);
+          osc.start(st); osc.stop(st + 0.045);
+          this.bgmOscillators.push(osc);
+        }
+
+        this.bgmTimeout = setTimeout(() => this.playSpikeWorldBGMLoop(), t * b * 1000);
+      },
+
+      startSpikeWorldBGM() {
+        if (!this.ctx || this.muted) return;
+        if (this.ctx.state === 'suspended') this.ctx.resume();
+        this.stopBGM();
+        this.playSpikeWorldBGMLoop();
+      },
+
       // Desert boss music — heavier, more aggressive than normal desert theme
       playDesertBossBGMLoop() {
         if (!this.ctx || this.muted) return;
@@ -2195,6 +2291,220 @@
         if (this.ctx.state === 'suspended') this.ctx.resume();
         this.stopBGM();
         this.playDesertBossBGMLoop();
+      },
+
+      // Iron Thorn Relic — death-funk groove (minor key, syncopated bass + clav stabs)
+      playSpikeBossBGMLoop() {
+        if (!this.ctx || this.muted) return;
+        if (this.ctx.state === 'suspended') this.ctx.resume();
+        const now = this.ctx.currentTime;
+        const bpm = 98;
+        const b = 60 / bpm; // 16th = b/4
+        const s = b / 4;
+        this.bgmOscillators = [];
+        const loopBeats = 32; // 8 bars
+
+        const D1=36.71, D2=73.42, F2=87.31, G2=98, A2=110, Bb2=116.54, C3=130.81;
+        const D3=146.83, F3=174.61, G3=196, A3=220, Bb3=233.08, C4=261.63;
+        const D4=293.66, E4=329.63, F4=349.23, G4=392, A4=440, Bb4=466.16, C5=523.25, D5=587.33;
+
+        const voice = (freq, start, dur, type, vol, opts = {}) => {
+          if (!(freq > 0) || dur <= 0.001) return;
+          const st = start, et = st + Math.max(dur, 0.02);
+          const osc = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          const filter = this.ctx.createBiquadFilter();
+          osc.type = type;
+          osc.frequency.setValueAtTime(freq, st);
+          filter.type = opts.filter || 'lowpass';
+          filter.frequency.setValueAtTime(opts.cut || 2200, st);
+          if (opts.wah) {
+            filter.frequency.setValueAtTime(opts.cut || 600, st);
+            filter.frequency.linearRampToValueAtTime(opts.wah, st + dur * 0.35);
+            filter.frequency.linearRampToValueAtTime(opts.cut || 600, et);
+            filter.Q.setValueAtTime(6, st);
+          } else {
+            filter.Q.setValueAtTime(opts.q || 0.8, st);
+          }
+          const atk = Math.min(opts.atk || 0.012, dur * 0.35);
+          const sustainAt = Math.min(Math.max(atk + 0.01, dur * 0.45), dur * 0.85);
+          const peak = vol;
+          const sust = Math.max(0.0001, peak * (opts.sustain ?? 0.55));
+          g.gain.setValueAtTime(0.0001, st);
+          g.gain.linearRampToValueAtTime(peak, st + atk);
+          g.gain.linearRampToValueAtTime(sust, st + sustainAt);
+          g.gain.exponentialRampToValueAtTime(0.0001, et);
+          osc.connect(filter); filter.connect(g); g.connect(this.bgmGain);
+          osc.start(st); osc.stop(et + 0.03);
+          this.bgmOscillators.push(osc);
+        };
+
+        // Funky syncopated bass line (16ths) — Dm death strut
+        // Pattern repeats every 8 beats (2 bars), 4 times
+        const bassPat = [
+          {n:D2,d:2},{n:D2,d:1},{n:D3,d:1},{n:0,d:1},{n:D2,d:1},{n:F2,d:1},{n:D2,d:1},
+          {n:0,d:1},{n:A2,d:1},{n:D2,d:2},{n:C3,d:1},{n:Bb2,d:1},{n:A2,d:1},{n:G2,d:1},
+          {n:D2,d:2},{n:D2,d:1},{n:D3,d:1},{n:0,d:1},{n:D2,d:1},{n:F2,d:1},{n:G2,d:1},
+          {n:A2,d:1},{n:0,d:1},{n:Bb2,d:2},{n:A2,d:1},{n:G2,d:1},{n:F2,d:1},{n:D2,d:1}
+        ];
+        for (let rep = 0; rep < 4; rep++) {
+          let t16 = 0;
+          bassPat.forEach(n => {
+            const st = now + (rep * 32 + t16) * s;
+            if (n.n > 0) {
+              voice(n.n, st, n.d * s * 0.92, 'sawtooth', 0.12, { cut: 420, atk: 0.008, sustain: 0.4 });
+              voice(n.n * 2, st, n.d * s * 0.55, 'triangle', 0.04, { cut: 700, atk: 0.006 });
+            }
+            t16 += n.d;
+          });
+        }
+
+        // Clav / wah stabs — death-funk horn hits
+        const clav = [
+          // bar 1-2
+          {n:D4,t:0,d:2},{n:F4,t:4,d:2},{n:A4,t:8,d:3},{n:G4,t:12,d:2},
+          {n:F4,t:16,d:2},{n:D4,t:20,d:2},{n:C4,t:24,d:2},{n:A3,t:28,d:3},
+          // bar 3-4
+          {n:Bb3,t:32,d:2},{n:D4,t:36,d:2},{n:F4,t:40,d:3},{n:E4,t:44,d:2},
+          {n:D4,t:48,d:2},{n:F4,t:52,d:2},{n:A4,t:56,d:2},{n:Bb4,t:60,d:3},
+          // bar 5-6 rise
+          {n:A4,t:64,d:2},{n:G4,t:68,d:2},{n:F4,t:72,d:2},{n:D4,t:76,d:2},
+          {n:F4,t:80,d:2},{n:A4,t:84,d:2},{n:D5,t:88,d:3},{n:C5,t:92,d:2},
+          // bar 7-8 resolve
+          {n:Bb4,t:96,d:2},{n:A4,t:100,d:2},{n:G4,t:104,d:2},{n:F4,t:108,d:2},
+          {n:D4,t:112,d:4},{n:A3,t:118,d:2},{n:D4,t:122,d:4}
+        ];
+        clav.forEach(n => {
+          const st = now + n.t * s;
+          voice(n.n, st, n.d * s * 0.85, 'square', 0.055, { cut: 900, wah: 2800, atk: 0.01, sustain: 0.35 });
+          voice(n.n * 1.5, st, n.d * s * 0.7, 'triangle', 0.025, { cut: 1800, atk: 0.012 });
+        });
+
+        // Ghost-note hi-hat chatter (16ths, offbeat accents)
+        for (let i = 0; i < loopBeats * 4; i++) {
+          const st = now + i * s;
+          const accent = (i % 4 === 2) ? 0.028 : ((i % 2 === 1) ? 0.014 : 0.008);
+          voice(6500 + (i % 5) * 400, st, s * 0.35, 'square', accent, { cut: 9000, filter: 'highpass', atk: 0.002, sustain: 0.15 });
+        }
+
+        // Kick on 1 + "and" of 2 feel (funk pocket)
+        for (let bar = 0; bar < 8; bar++) {
+          const base = now + bar * b * 4;
+          [[0, 0.055], [6, 0.04], [10, 0.045], [14, 0.035]].forEach(([sixteenth, vol]) => {
+            const st = base + sixteenth * s;
+            voice(D1, st, 0.09, 'sine', vol, { cut: 160, atk: 0.003, sustain: 0.25 });
+            voice(80, st, 0.05, 'triangle', vol * 0.5, { cut: 280, atk: 0.002 });
+          });
+          // Snare / rim on 2 and 4
+          [4, 12].forEach(sixteenth => {
+            const st = base + sixteenth * s;
+            voice(180, st, 0.06, 'square', 0.035, { cut: 900, atk: 0.002, sustain: 0.2 });
+            voice(3200, st, 0.04, 'square', 0.02, { cut: 5000, filter: 'bandpass', atk: 0.001 });
+          });
+        }
+
+        // Dark pad under the groove
+        voice(D2, now, loopBeats * b, 'sine', 0.028, { cut: 200, atk: 0.5, sustain: 0.9 });
+        voice(A2, now, loopBeats * b, 'sine', 0.016, { cut: 260, atk: 0.55, sustain: 0.9 });
+        voice(F3, now + 8 * b, 8 * b, 'sawtooth', 0.012, { cut: 500, atk: 0.3, sustain: 0.7 });
+
+        this.bgmTimeout = setTimeout(() => this.playSpikeBossBGMLoop(), loopBeats * b * 1000);
+      },
+
+      startSpikeBossBGM() {
+        if (!this.ctx || this.muted) return;
+        if (this.ctx.state === 'suspended') this.ctx.resume();
+        this.stopBGM();
+        try {
+          this.playSpikeBossBGMLoop();
+        } catch (e) {
+          console.error('[SpikeRunner] spike boss BGM failed:', e);
+        }
+      },
+
+      // Escape chase — urgent rising theme after the Relic falls
+      playSpikeEscapeBGMLoop() {
+        if (!this.ctx || this.muted) return;
+        if (this.ctx.state === 'suspended') this.ctx.resume();
+        const now = this.ctx.currentTime;
+        const b = 60 / 138;
+        this.bgmOscillators = [];
+
+        const C3=130.81, D3=146.83, E3=164.81, F3=174.61, G3=196, A3=220, B3=246.94;
+        const C4=261.63, D4=293.66, E4=329.63, F4=349.23, G4=392, A4=440, B4=493.88, C5=523.25, D5=587.33, E5=659.25, G5=783.99;
+
+        const hit = (freq, start, dur, type, vol, cut) => {
+          const st = start, et = st + dur;
+          const osc = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          const filter = this.ctx.createBiquadFilter();
+          osc.type = type;
+          osc.frequency.setValueAtTime(freq, st);
+          filter.type = 'lowpass';
+          filter.frequency.setValueAtTime(cut || 2800, st);
+          g.gain.setValueAtTime(0.0001, st);
+          g.gain.linearRampToValueAtTime(vol, st + 0.015);
+          g.gain.exponentialRampToValueAtTime(0.0001, et);
+          osc.connect(filter); filter.connect(g); g.connect(this.bgmGain);
+          osc.start(st); osc.stop(et + 0.02);
+          this.bgmOscillators.push(osc);
+        };
+
+        const lead = [
+          {n:C4,d:0.5},{n:E4,d:0.5},{n:G4,d:0.5},{n:C5,d:0.5},
+          {n:B4,d:0.5},{n:G4,d:0.5},{n:E4,d:0.5},{n:C4,d:0.5},
+          {n:D4,d:0.5},{n:F4,d:0.5},{n:A4,d:0.5},{n:D5,d:0.5},
+          {n:C5,d:0.5},{n:A4,d:0.5},{n:F4,d:0.5},{n:D4,d:0.5},
+          {n:E4,d:0.5},{n:G4,d:0.5},{n:B4,d:0.5},{n:E5,d:0.5},
+          {n:D5,d:0.5},{n:B4,d:0.5},{n:G4,d:0.5},{n:E4,d:0.5},
+          {n:F4,d:0.5},{n:A4,d:0.5},{n:C5,d:1},
+          {n:D5,d:1},{n:C5,d:1},{n:G4,d:1},{n:C5,d:1},
+          // Second phrase — higher urgency
+          {n:E5,d:0.5},{n:D5,d:0.5},{n:C5,d:0.5},{n:G4,d:0.5},
+          {n:A4,d:0.5},{n:B4,d:0.5},{n:C5,d:1},
+          {n:D5,d:0.5},{n:E5,d:0.5},{n:G5,d:1},
+          {n:E5,d:1},{n:C5,d:1},{n:G4,d:1},{n:C4,d:5}
+        ];
+        const bass = [
+          C3,C3,G3,G3, C3,C3,G3,G3,
+          D3,D3,A3,A3, D3,D3,A3,A3,
+          E3,E3,B3,B3, E3,E3,B3,B3,
+          F3,F3,C4,C4, G3,G3,C3,C3
+        ];
+
+        let t = 0;
+        lead.forEach(n => {
+          const st = now + t * b;
+          hit(n.n, st, n.d * b * 0.88, 'triangle', 0.065, 3200);
+          hit(n.n * 2.01, st, n.d * b * 0.7, 'sine', 0.022, 5000);
+          t += n.d;
+        });
+        const loopBeats = t;
+
+        bass.forEach((f, i) => {
+          const st = now + i * b;
+          hit(f, st, b * 0.82, 'sine', 0.1, 420);
+          hit(f * 2, st, b * 0.4, 'square', 0.018, 900);
+        });
+
+        for (let i = 0; i < loopBeats; i++) {
+          if (i % 2 === 1) {
+            const st = now + i * b + b * 0.5;
+            hit(G4, st, b * 0.18, 'square', 0.012, 2400);
+          }
+        }
+
+        hit(C3, now, loopBeats * b, 'sine', 0.025, 200);
+        hit(G3, now + loopBeats * b * 0.5, loopBeats * b * 0.5, 'sine', 0.02, 260);
+
+        this.bgmTimeout = setTimeout(() => this.playSpikeEscapeBGMLoop(), loopBeats * b * 1000);
+      },
+
+      startSpikeEscapeBGM() {
+        if (!this.ctx || this.muted) return;
+        if (this.ctx.state === 'suspended') this.ctx.resume();
+        this.stopBGM();
+        this.playSpikeEscapeBGMLoop();
       },
 
       // Mechanical Warden boss music — D minor, 160 BPM, industrial/aggressive
@@ -3922,6 +4232,243 @@
         ],
         movingPlatforms: []
       },
+
+      // Level 41 — SPIKE REALM I (long iron road — fair intro, still sharp)
+      {
+        isSpikeWorld: true,
+        bgTheme: 'spikeworld',
+        width: 120,
+        height: 20,
+        playerStart: { x: 2, y: 16 },
+        tiles: (() => {
+          const T = [];
+          for (let i = 0; i < 12; i++) T.push({ x: i, y: 18, type: 1 });
+          for (let i = 12; i < 120; i++) T.push({ x: i, y: 19, type: 2 });
+          for (let i = 8; i < 118; i++) T.push({ x: i, y: 1, type: 2, spikeDir: 'down' });
+          // 3–4 wide pads, 2-tile gaps; early stretch is clean
+          const pads = [
+            [14, 17], [19, 17], [24, 16], [29, 16], [34, 15], [39, 15], [44, 14],
+            [49, 14], [54, 13], [59, 13], [64, 12], [69, 12], [74, 11], [79, 11],
+            [84, 10], [89, 10], [94, 9], [99, 9], [104, 8], [109, 8], [114, 7]
+          ];
+          pads.forEach(([px, py], i) => {
+            T.push({ x: px, y: py, type: 1 }, { x: px + 1, y: py, type: 1 }, { x: px + 2, y: py, type: 1 });
+            if (i % 3 === 0) T.push({ x: px + 3, y: py, type: 1 }); // occasional wider pad
+          });
+          // Spikes under jumps (pit), not in the landing lane — late section only
+          [[55, 14], [70, 13], [85, 11], [100, 10]].forEach(([sx, sy]) => {
+            T.push({ x: sx, y: sy, type: 2 });
+          });
+          T.push({ x: 40, y: 14, type: 3 });
+          T.push({ x: 50, y: 13, type: 12 });
+          T.push({ x: 75, y: 10, type: 12 });
+          T.push({ x: 95, y: 8, type: 3 });
+          T.push({ x: 110, y: 7, type: 12 });
+          T.push({ x: 6, y: 17, type: 7 }, { x: 49, y: 13, type: 7 }, { x: 89, y: 9, type: 7 });
+          T.push({ x: 30, y: 15, type: TILE_COIN }, { x: 60, y: 12, type: TILE_COIN },
+                 { x: 90, y: 9, type: TILE_COIN }, { x: 115, y: 6, type: TILE_COIN });
+          T.push({ x: 116, y: 6, type: 1 }, { x: 117, y: 6, type: 1 }, { x: 118, y: 6, type: 5 });
+          return T;
+        })(),
+        movingPlatforms: [
+          { x: 36, y: 13, width: 2, moveX: 0.7, moveY: 0.15, speed: 0.012 },
+          { x: 76, y: 9, width: 2, moveX: -0.7, moveY: 0.18, speed: 0.012 }
+        ]
+      },
+
+      // Level 42 — SPIKE REALM II (long climb — forgiving early, sharper late)
+      {
+        isSpikeWorld: true,
+        bgTheme: 'spikeworld',
+        width: 130,
+        height: 21,
+        playerStart: { x: 2, y: 17 },
+        tiles: (() => {
+          const T = [];
+          for (let i = 0; i < 11; i++) T.push({ x: i, y: 19, type: 1 });
+          for (let i = 11; i < 130; i++) T.push({ x: i, y: 20, type: 2 });
+          for (let i = 6; i < 128; i++) T.push({ x: i, y: 1, type: 2, spikeDir: 'down' });
+          // Short side markers below the path
+          for (let y = 18; y <= 19; y++) {
+            T.push({ x: 22, y, type: 2, spikeDir: 'right' });
+            T.push({ x: 26, y, type: 2, spikeDir: 'left' });
+          }
+          for (let y = 14; y <= 15; y++) {
+            T.push({ x: 58, y, type: 2, spikeDir: 'right' });
+            T.push({ x: 62, y, type: 2, spikeDir: 'left' });
+          }
+          for (let y = 10; y <= 11; y++) {
+            T.push({ x: 94, y, type: 2, spikeDir: 'right' });
+            T.push({ x: 98, y, type: 2, spikeDir: 'left' });
+          }
+          const pads = [
+            [13, 18], [18, 18], [23, 17], [28, 17], [33, 16], [38, 16], [43, 15],
+            [48, 15], [53, 14], [58, 13], [63, 13], [68, 12], [73, 12], [78, 11],
+            [83, 11], [88, 10], [93, 9], [98, 9], [103, 8], [108, 8], [113, 7],
+            [118, 7], [123, 6]
+          ];
+          pads.forEach(([px, py], i) => {
+            T.push({ x: px, y: py, type: 1 }, { x: px + 1, y: py, type: 1 }, { x: px + 2, y: py, type: 1 });
+            if (i % 4 === 0) T.push({ x: px + 3, y: py, type: 1 });
+          });
+          // Mid/late pit spikes only
+          [[54, 15], [69, 13], [84, 12], [104, 9], [119, 8]].forEach(([sx, sy]) => {
+            T.push({ x: sx, y: sy, type: 2 });
+          });
+          T.push({ x: 44, y: 14, type: 3 });
+          T.push({ x: 49, y: 14, type: 12 });
+          T.push({ x: 74, y: 11, type: 12 });
+          T.push({ x: 99, y: 8, type: 3 });
+          T.push({ x: 114, y: 6, type: 12 });
+          T.push({ x: 5, y: 18, type: 7 }, { x: 53, y: 13, type: 7 }, { x: 98, y: 8, type: 7 });
+          T.push({ x: 34, y: 15, type: TILE_COIN }, { x: 69, y: 11, type: TILE_COIN },
+                 { x: 104, y: 7, type: TILE_COIN }, { x: 124, y: 5, type: TILE_COIN });
+          T.push({ x: 125, y: 5, type: 1 }, { x: 126, y: 5, type: 1 }, { x: 127, y: 5, type: 5 });
+          return T;
+        })(),
+        movingPlatforms: [
+          { x: 40, y: 13, width: 2, moveX: 0.75, moveY: 0.15, speed: 0.012 },
+          { x: 78, y: 9, width: 2, moveX: -0.7, moveY: 0.18, speed: 0.012 },
+          { x: 110, y: 6, width: 2, moveX: 0.65, moveY: 0.2, speed: 0.011 }
+        ]
+      },
+
+      // Level 43 — SPIKE REALM III (hanging thorns high above; path stays clear)
+      {
+        isSpikeWorld: true,
+        bgTheme: 'spikeworld',
+        width: 140,
+        height: 22,
+        playerStart: { x: 2, y: 18 },
+        tiles: (() => {
+          const T = [];
+          for (let i = 0; i < 10; i++) T.push({ x: i, y: 20, type: 1 });
+          for (let i = 10; i < 140; i++) T.push({ x: i, y: 21, type: 2 });
+          for (let i = 5; i < 138; i++) T.push({ x: i, y: 1, type: 2, spikeDir: 'down' });
+          // Curtains higher so jump arcs stay safe
+          for (let i = 20; i < 32; i++) T.push({ x: i, y: 5, type: 2, spikeDir: 'down' });
+          for (let i = 50; i < 62; i++) T.push({ x: i, y: 4, type: 2, spikeDir: 'down' });
+          for (let i = 80; i < 94; i++) T.push({ x: i, y: 3, type: 2, spikeDir: 'down' });
+          for (let i = 110; i < 124; i++) T.push({ x: i, y: 2, type: 2, spikeDir: 'down' });
+          const pads = [
+            [12, 19], [17, 19], [22, 18], [27, 18], [32, 17], [37, 17], [42, 16],
+            [47, 16], [52, 15], [57, 15], [62, 14], [67, 14], [72, 13], [77, 13],
+            [82, 12], [87, 12], [92, 11], [97, 11], [102, 10], [107, 10], [112, 9],
+            [117, 9], [122, 8], [127, 8], [132, 7]
+          ];
+          pads.forEach(([px, py], i) => {
+            T.push({ x: px, y: py, type: 1 }, { x: px + 1, y: py, type: 1 }, { x: px + 2, y: py, type: 1 });
+            if (i % 3 === 1) T.push({ x: px + 3, y: py, type: 1 });
+          });
+          [[53, 16], [68, 15], [83, 13], [98, 12], [113, 10], [128, 9]].forEach(([sx, sy]) => {
+            T.push({ x: sx, y: sy, type: 2 });
+          });
+          T.push({ x: 43, y: 15, type: 3 });
+          T.push({ x: 48, y: 15, type: 12 });
+          T.push({ x: 73, y: 12, type: 12 });
+          T.push({ x: 98, y: 10, type: 3 });
+          T.push({ x: 118, y: 8, type: 12 });
+          T.push({ x: 4, y: 19, type: 7 }, { x: 57, y: 14, type: 7 }, { x: 102, y: 9, type: 7 });
+          T.push({ x: 33, y: 16, type: TILE_COIN }, { x: 68, y: 13, type: TILE_COIN },
+                 { x: 103, y: 9, type: TILE_COIN }, { x: 133, y: 6, type: TILE_COIN });
+          T.push({ x: 134, y: 6, type: 1 }, { x: 135, y: 6, type: 1 }, { x: 136, y: 6, type: 5 });
+          return T;
+        })(),
+        movingPlatforms: [
+          { x: 36, y: 15, width: 2, moveX: 0.7, moveY: 0.15, speed: 0.012 },
+          { x: 72, y: 11, width: 2, moveX: -0.7, moveY: 0.18, speed: 0.012 },
+          { x: 108, y: 8, width: 2, moveX: 0.65, moveY: 0.2, speed: 0.011 }
+        ]
+      },
+
+      // Level 44 — SPIKE REALM IV (longer pressure, still a clear lane)
+      {
+        isSpikeWorld: true,
+        bgTheme: 'spikeworld',
+        width: 150,
+        height: 22,
+        playerStart: { x: 2, y: 18 },
+        tiles: (() => {
+          const T = [];
+          for (let i = 0; i < 10; i++) T.push({ x: i, y: 20, type: 1 });
+          for (let i = 10; i < 150; i++) T.push({ x: i, y: 21, type: 2 });
+          for (let i = 4; i < 148; i++) T.push({ x: i, y: 1, type: 2, spikeDir: 'down' });
+          const gates = [
+            { L: 32, R: 36, y0: 18, y1: 19 },
+            { L: 62, R: 66, y0: 15, y1: 16 },
+            { L: 96, R: 100, y0: 12, y1: 13 },
+            { L: 126, R: 130, y0: 9, y1: 10 }
+          ];
+          gates.forEach(g => {
+            for (let y = g.y0; y <= g.y1; y++) {
+              T.push({ x: g.L, y, type: 2, spikeDir: 'right' });
+              T.push({ x: g.R, y, type: 2, spikeDir: 'left' });
+            }
+          });
+          const pads = [
+            [12, 19], [17, 19], [22, 18], [27, 18], [32, 17], [37, 17], [42, 16],
+            [47, 16], [52, 15], [57, 15], [62, 14], [67, 14], [72, 13], [77, 13],
+            [82, 12], [87, 12], [92, 11], [97, 11], [102, 10], [107, 10], [112, 9],
+            [117, 9], [122, 8], [127, 8], [132, 7], [137, 7], [142, 6]
+          ];
+          pads.forEach(([px, py], i) => {
+            T.push({ x: px, y: py, type: 1 }, { x: px + 1, y: py, type: 1 }, { x: px + 2, y: py, type: 1 });
+            if (i % 3 === 0) T.push({ x: px + 3, y: py, type: 1 });
+          });
+          // Challenge spikes start mid-level (under gaps)
+          [[53, 16], [68, 15], [83, 13], [98, 12], [113, 10], [128, 9], [138, 8]].forEach(([sx, sy]) => {
+            T.push({ x: sx, y: sy, type: 2 });
+          });
+          T.push({ x: 43, y: 15, type: 3 });
+          T.push({ x: 48, y: 15, type: 12 });
+          T.push({ x: 73, y: 12, type: 12 });
+          T.push({ x: 88, y: 11, type: 3 });
+          T.push({ x: 103, y: 9, type: 12 });
+          T.push({ x: 118, y: 8, type: 12 });
+          T.push({ x: 133, y: 6, type: 12 });
+          T.push({ x: 4, y: 19, type: 7 }, { x: 57, y: 14, type: 7 },
+                 { x: 102, y: 9, type: 7 }, { x: 132, y: 6, type: 7 });
+          T.push({ x: 28, y: 17, type: TILE_COIN }, { x: 68, y: 13, type: TILE_COIN },
+                 { x: 108, y: 9, type: TILE_COIN }, { x: 143, y: 5, type: TILE_COIN });
+          T.push({ x: 144, y: 5, type: 1 }, { x: 145, y: 5, type: 1 }, { x: 146, y: 5, type: 1 },
+                 { x: 147, y: 5, type: 5 });
+          return T;
+        })(),
+        movingPlatforms: [
+          { x: 45, y: 14, width: 2, moveX: 0.7, moveY: 0.15, speed: 0.011 },
+          { x: 80, y: 10, width: 2, moveX: -0.7, moveY: 0.18, speed: 0.011 },
+          { x: 115, y: 7, width: 2, moveX: 0.65, moveY: 0.18, speed: 0.011 }
+        ]
+      },
+
+      // Level 45 — SPIKE REALM V (final boss — Iron Thorn Relic)
+      {
+        isBoss: true,
+        isSpikeBoss: true,
+        isSpikeWorld: true,
+        bgTheme: 'spikeworld',
+        width: 48,
+        height: 22,
+        playerStart: { x: 4, y: 18 },
+        tiles: [
+          // Arena shell
+          ...Array(48).fill().map((_, i) => ({ x: i, y: 21, type: 1 })),
+          ...Array(22).fill().map((_, i) => ({ x: 0, y: i, type: 1 })),
+          ...Array(22).fill().map((_, i) => ({ x: 47, y: i, type: 1 })),
+          ...Array(48).fill().map((_, i) => ({ x: i, y: 0, type: 1 })),
+          // Combat platforms
+          ...Array(8).fill().map((_, i) => ({ x: 3 + i, y: 18, type: 1 })),
+          ...Array(6).fill().map((_, i) => ({ x: 14 + i, y: 16, type: 1 })),
+          ...Array(6).fill().map((_, i) => ({ x: 24 + i, y: 14, type: 1 })),
+          ...Array(6).fill().map((_, i) => ({ x: 34 + i, y: 16, type: 1 })),
+          ...Array(5).fill().map((_, i) => ({ x: 10 + i, y: 12, type: 1 })),
+          ...Array(5).fill().map((_, i) => ({ x: 28 + i, y: 11, type: 1 })),
+          ...Array(4).fill().map((_, i) => ({ x: 20 + i, y: 9, type: 1 })),
+          { x: 16, y: 15, type: 12 }, { x: 26, y: 13, type: 12 }, { x: 36, y: 15, type: 12 },
+          { x: 12, y: 11, type: 12 }, { x: 30, y: 10, type: 12 }
+        ],
+        movingPlatforms: []
+      },
     ];
 
     // Boss Fight System
@@ -3929,20 +4476,23 @@
       const lv = levels[currentLevel] || {};
       const skyBoss = !!lv.isSkyBoss;
       const cactusBoss = !!lv.isDesertBoss;
+      const spikeBoss = !!lv.isSpikeBoss;
       const arenaW = (lv.width || 44) * TILE_SIZE;
       const arenaH = (lv.height || 22) * TILE_SIZE;
+      const spikeHP = 72;
       boss = {
-        x: skyBoss ? 980 : (cactusBoss ? 36 : 800),
-        y: skyBoss ? 220 : (cactusBoss ? 38 : 300),
-        width: skyBoss ? 180 : (cactusBoss ? Math.max(900, arenaW - 72) : 64),
-        height: skyBoss ? 110 : (cactusBoss ? Math.max(420, arenaH - 180) : 64),
-        hp: 30,
-        maxHP: 30,
+        x: skyBoss ? 980 : (cactusBoss ? 36 : (spikeBoss ? arenaW * 0.55 : 800)),
+        y: skyBoss ? 220 : (cactusBoss ? 38 : (spikeBoss ? 160 : 300)),
+        width: skyBoss ? 180 : (cactusBoss ? Math.max(900, arenaW - 72) : (spikeBoss ? 156 : 64)),
+        height: skyBoss ? 110 : (cactusBoss ? Math.max(420, arenaH - 180) : (spikeBoss ? 156 : 64)),
+        hp: spikeBoss ? spikeHP : 30,
+        maxHP: spikeBoss ? spikeHP : 30,
         vx: 0,
         vy: 0,
         phase: 0,
-        attackTimer: skyBoss ? 500 : (cactusBoss ? 250 : 0),
-        attackCooldown: skyBoss ? 1800 : (cactusBoss ? 1150 : 2000),
+        combatPhase: 0,
+        attackTimer: skyBoss ? 500 : (cactusBoss ? 250 : (spikeBoss ? 400 : 0)),
+        attackCooldown: skyBoss ? 1800 : (cactusBoss ? 1150 : (spikeBoss ? 900 : 2000)),
         movePattern: 0,
         moveTimer: 0,
         smashing: false,
@@ -3950,15 +4500,43 @@
         smashStartY: 300,
         flashTimer: 0,
         isSkyTyrant: skyBoss,
-        isCactusTitan: cactusBoss
+        isCactusTitan: cactusBoss,
+        isSpikeColossus: spikeBoss,
+        phaseBanner: 0
       };
-      playerHP = 10;
+      playerHP = spikeBoss ? 12 : 10;
       bossActive = true;
       bullets = [];
       bossAttacks = [];
       bossMedkit = null;
       showShootTip = true;
       shootTipTimer = 0;
+    }
+
+    function getSpikeBossCombatPhase() {
+      if (!boss || !boss.isSpikeColossus) return 0;
+      const r = boss.hp / boss.maxHP;
+      if (r > 0.86) return 0;
+      if (r > 0.72) return 1;
+      if (r > 0.58) return 2;
+      if (r > 0.44) return 3;
+      if (r > 0.30) return 4;
+      if (r > 0.16) return 5;
+      return 6;
+    }
+
+    function spikeBossAttackPool(phase) {
+      // More attack IDs unlock as phases escalate (0–16)
+      const pools = [
+        [0, 1, 2, 3, 5],
+        [0, 1, 2, 3, 5, 6, 7],
+        [0, 1, 2, 3, 5, 6, 7, 8, 9],
+        [0, 1, 2, 5, 6, 7, 8, 9, 10, 11],
+        [1, 2, 5, 6, 7, 8, 9, 10, 11, 12, 13],
+        [1, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+      ];
+      return pools[Math.min(phase, pools.length - 1)];
     }
 
     function updateBoss() {
@@ -3994,8 +4572,11 @@
         boss.vx = 0;
 
         // Check if boss hit the ground (y > 500)
-        if (boss.y >= 500) {
-          boss.y = 500;
+        const smashFloor = boss.isSpikeColossus
+          ? ((levels[currentLevel]?.height || 22) * TILE_SIZE - boss.height - 40)
+          : 500;
+        if (boss.y >= smashFloor) {
+          boss.y = smashFloor;
           boss.smashing = false;
           boss.smashVelocity = 0;
 
@@ -4017,8 +4598,9 @@
           triggerShake(18, 25);
 
           // Boss bounces back up
+          const riseY = boss.smashStartY || (boss.isSpikeColossus ? 160 : 300);
           setTimeout(() => {
-            boss.y = boss.smashStartY || 300;
+            if (boss) boss.y = riseY;
           }, 500);
         }
       } else {
@@ -4044,12 +4626,14 @@
         // Keep boss in bounds
         const levelPxW = (levels[currentLevel]?.width || 40) * TILE_SIZE;
         const levelPxH = (levels[currentLevel]?.height || 22) * TILE_SIZE;
-        const minX = boss.isSkyTyrant ? 620 : (boss.isCactusTitan ? 18 : 400);
+        const minX = boss.isSkyTyrant ? 620 : (boss.isCactusTitan ? 18 : (boss.isSpikeColossus ? 80 : 400));
         const maxX = boss.isSkyTyrant
           ? Math.max(minX + 200, levelPxW - 320)
-          : (boss.isCactusTitan ? Math.max(minX + 8, levelPxW - boss.width - 18) : 900);
-        const minY = boss.isSkyTyrant ? 70 : (boss.isCactusTitan ? 16 : 100);
-        const maxY = boss.isSkyTyrant ? 300 : (boss.isCactusTitan ? Math.max(minY + 8, levelPxH - boss.height - 84) : 400);
+          : (boss.isCactusTitan ? Math.max(minX + 8, levelPxW - boss.width - 18)
+            : (boss.isSpikeColossus ? Math.max(minX + 40, levelPxW - boss.width - 80) : 900));
+        const minY = boss.isSkyTyrant ? 70 : (boss.isCactusTitan ? 16 : (boss.isSpikeColossus ? 60 : 100));
+        const maxY = boss.isSkyTyrant ? 300 : (boss.isCactusTitan ? Math.max(minY + 8, levelPxH - boss.height - 84)
+          : (boss.isSpikeColossus ? Math.max(minY + 40, levelPxH - boss.height - 120) : 400));
         if (boss.x < minX) boss.x = minX;
         if (boss.x > maxX) boss.x = maxX;
         if (boss.y < minY) boss.y = minY;
@@ -4057,7 +4641,18 @@
       }
 
       // Boss attacks based on HP phase
-      if (boss.isSkyTyrant) {
+      if (boss.isSpikeColossus) {
+        const prevPhase = boss.combatPhase || 0;
+        boss.combatPhase = getSpikeBossCombatPhase();
+        if (boss.combatPhase > prevPhase) {
+          boss.phaseBanner = 180;
+          triggerShake(10 + boss.combatPhase * 2, 16);
+          AudioManager.playSound('boost');
+        }
+        if (boss.phaseBanner > 0) boss.phaseBanner--;
+        const cds = [980, 860, 760, 680, 600, 520, 420];
+        boss.attackCooldown = cds[boss.combatPhase] || 420;
+      } else if (boss.isSkyTyrant) {
         if (boss.hp > 20) {
           boss.attackCooldown = 1700;
         } else if (boss.hp > 10) {
@@ -4082,9 +4677,15 @@
       // Trigger attacks
       if (boss.attackTimer > boss.attackCooldown) {
         boss.attackTimer = 0;
-        const attackType = boss.isCactusTitan
-          ? [0, 1, 2, 3, 5, 6, 7, 8, 9, 10][Math.floor(Math.random() * 10)]
-          : Math.floor(Math.random() * (boss.isSkyTyrant ? 8 : 5));
+        let attackType;
+        if (boss.isSpikeColossus) {
+          const pool = spikeBossAttackPool(boss.combatPhase);
+          attackType = pool[Math.floor(Math.random() * pool.length)];
+        } else if (boss.isCactusTitan) {
+          attackType = [0, 1, 2, 3, 5, 6, 7, 8, 9, 10][Math.floor(Math.random() * 10)];
+        } else {
+          attackType = Math.floor(Math.random() * (boss.isSkyTyrant ? 8 : 5));
+        }
 
         if (attackType === 0) {
           // Spiral attack
@@ -4103,7 +4704,7 @@
           // Aimed shot at player
           const dx = player.x - boss.x;
           const dy = player.y - boss.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
+          const dist = Math.sqrt(dx * dx + dy * dy) || 1;
           bossAttacks.push({
             x: boss.x + boss.width / 2,
             y: boss.y + boss.height / 2,
@@ -4128,8 +4729,9 @@
           // Rain attack
           for (let i = 0; i < 3; i++) {
             const levelPxW = (levels[currentLevel]?.width || 40) * TILE_SIZE;
-            const rainMin = boss.isSkyTyrant ? 420 : 400;
-            const rainSpan = boss.isSkyTyrant ? Math.max(500, levelPxW - 700) : 600;
+            const rainMin = boss.isSkyTyrant ? 420 : (boss.isSpikeColossus ? 60 : 400);
+            const rainSpan = boss.isSkyTyrant ? Math.max(500, levelPxW - 700)
+              : (boss.isSpikeColossus ? Math.max(400, levelPxW - 140) : 600);
             bossAttacks.push({
               x: rainMin + Math.random() * rainSpan,
               y: 50,
@@ -4143,7 +4745,7 @@
           // SMASH ATTACK - Boss slams down
           boss.smashing = true;
           boss.smashStartY = boss.y;
-          boss.smashVelocity = 15;
+          boss.smashVelocity = boss.isSpikeColossus ? 18 : 15;
         } else if (boss.isSkyTyrant && attackType === 5) {
           // Feather spread (spike feathers from wings)
           for (let i = 0; i < 12; i++) {
@@ -4263,6 +4865,181 @@
               type: 'thornStorm'
             });
           }
+        } else if (boss.isSpikeColossus && attackType === 5) {
+          // Vintage needle fan
+          for (let i = 0; i < 14; i++) {
+            const angle = -Math.PI * 0.92 + (i / 13) * Math.PI * 0.84;
+            bossAttacks.push({
+              x: boss.x + boss.width / 2,
+              y: boss.y + boss.height * 0.42,
+              vx: Math.cos(angle) * 6.4,
+              vy: Math.sin(angle) * 5.6,
+              size: 10,
+              type: 'vintageNeedle'
+            });
+          }
+        } else if (boss.isSpikeColossus && attackType === 6) {
+          // Rusted saw blades (horizontal)
+          const levelPxW = (levels[currentLevel]?.width || 48) * TILE_SIZE;
+          for (let i = 0; i < 6; i++) {
+            bossAttacks.push({
+              x: levelPxW - 40,
+              y: 90 + i * 70,
+              vx: -6.8 - (i % 2) * 0.8,
+              vy: Math.sin(i) * 0.8,
+              size: 14,
+              type: 'rustSaw',
+              spin: 0
+            });
+          }
+        } else if (boss.isSpikeColossus && attackType === 7) {
+          // Floor spike geysers
+          const levelPxH = (levels[currentLevel]?.height || 22) * TILE_SIZE;
+          const yBase = levelPxH - 70;
+          for (let i = 0; i < 10; i++) {
+            bossAttacks.push({
+              x: 70 + i * 130,
+              y: yBase,
+              vx: 0,
+              vy: -7.2 - (i % 3) * 0.6,
+              size: 13,
+              type: 'spikeGeyser'
+            });
+          }
+        } else if (boss.isSpikeColossus && attackType === 8) {
+          // Ceiling drop spikes
+          const levelPxW = (levels[currentLevel]?.width || 48) * TILE_SIZE;
+          for (let i = 0; i < 9; i++) {
+            bossAttacks.push({
+              x: 80 + Math.random() * Math.max(200, levelPxW - 160),
+              y: 40 - i * 18,
+              vx: (Math.random() - 0.5) * 1.2,
+              vy: 7.4,
+              size: 12,
+              type: 'dropSpike'
+            });
+          }
+        } else if (boss.isSpikeColossus && attackType === 9) {
+          // Cross-pattern bolts
+          const cx = boss.x + boss.width / 2;
+          const cy = boss.y + boss.height / 2;
+          const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
+          dirs.forEach(([dx, dy]) => {
+            const len = Math.sqrt(dx * dx + dy * dy);
+            bossAttacks.push({
+              x: cx, y: cy,
+              vx: (dx / len) * 6.2,
+              vy: (dy / len) * 6.2,
+              size: 11,
+              type: 'crossBolt'
+            });
+          });
+        } else if (boss.isSpikeColossus && attackType === 10) {
+          // Expanding antique ring
+          for (let i = 0; i < 22; i++) {
+            const angle = (i / 22) * Math.PI * 2;
+            bossAttacks.push({
+              x: boss.x + boss.width / 2,
+              y: boss.y + boss.height / 2,
+              vx: Math.cos(angle) * 5.4,
+              vy: Math.sin(angle) * 5.4,
+              size: 9,
+              type: 'antiqueRing'
+            });
+          }
+        } else if (boss.isSpikeColossus && attackType === 11) {
+          // Boomerang scrap metal
+          for (let i = 0; i < 4; i++) {
+            const dir = i % 2 ? 1 : -1;
+            bossAttacks.push({
+              x: boss.x + boss.width / 2,
+              y: boss.y + 40 + i * 28,
+              vx: dir * 7.2,
+              vy: -1.2 + i * 0.4,
+              size: 12,
+              type: 'scrapBoom',
+              life: 90,
+              turn: dir
+            });
+          }
+        } else if (boss.isSpikeColossus && attackType === 12) {
+          // Triple aimed volley
+          for (let v = 0; v < 3; v++) {
+            const dx = player.x - (boss.x + boss.width / 2);
+            const dy = player.y - (boss.y + boss.height / 2) + (v - 1) * 40;
+            const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+            bossAttacks.push({
+              x: boss.x + boss.width / 2,
+              y: boss.y + boss.height / 2,
+              vx: (dx / dist) * (5.2 + v * 0.4),
+              vy: (dy / dist) * (5.2 + v * 0.4),
+              size: 11,
+              type: 'vintageNeedle'
+            });
+          }
+        } else if (boss.isSpikeColossus && attackType === 13) {
+          // Side spike columns
+          const levelPxW = (levels[currentLevel]?.width || 48) * TILE_SIZE;
+          for (let i = 0; i < 7; i++) {
+            bossAttacks.push({
+              x: 48,
+              y: 80 + i * 55,
+              vx: 6.5,
+              vy: 0,
+              size: 11,
+              type: 'sideColumn'
+            });
+            bossAttacks.push({
+              x: levelPxW - 48,
+              y: 100 + i * 55,
+              vx: -6.5,
+              vy: 0,
+              size: 11,
+              type: 'sideColumn'
+            });
+          }
+        } else if (boss.isSpikeColossus && attackType === 14) {
+          // Homing rusty bolts
+          for (let i = 0; i < 5; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            bossAttacks.push({
+              x: boss.x + boss.width / 2,
+              y: boss.y + boss.height / 2,
+              vx: Math.cos(angle) * 3.2,
+              vy: Math.sin(angle) * 3.2,
+              size: 10,
+              type: 'homingRust',
+              life: 160
+            });
+          }
+        } else if (boss.isSpikeColossus && attackType === 15) {
+          // Ground crawl spikes
+          const levelPxH = (levels[currentLevel]?.height || 22) * TILE_SIZE;
+          const floorY = levelPxH - 52;
+          for (let i = 0; i < 8; i++) {
+            bossAttacks.push({
+              x: 60 + i * 160,
+              y: floorY,
+              vx: (i % 2 ? -3.4 : 3.4),
+              vy: 0,
+              size: 14,
+              type: 'crawlSpike'
+            });
+          }
+        } else if (boss.isSpikeColossus && attackType === 16) {
+          // Sepia shatter burst (dense)
+          for (let i = 0; i < 28; i++) {
+            const angle = (i / 28) * Math.PI * 2 + Math.random() * 0.2;
+            const spd = 4.2 + Math.random() * 3.4;
+            bossAttacks.push({
+              x: boss.x + boss.width / 2,
+              y: boss.y + boss.height / 2,
+              vx: Math.cos(angle) * spd,
+              vy: Math.sin(angle) * spd,
+              size: 8 + (i % 3),
+              type: 'sepiaShard'
+            });
+          }
         }
       }
 
@@ -4289,6 +5066,35 @@
             attack.vy = -Math.abs(attack.vy) * 0.72;
             attack.bounces--;
           }
+        } else if (attack.type === 'scrapBoom') {
+          attack.life--;
+          attack.vy += 0.12;
+          if (attack.life < 45) attack.vx += -attack.turn * 0.35;
+          if (attack.life <= 0) {
+            bossAttacks.splice(i, 1);
+            continue;
+          }
+        } else if (attack.type === 'homingRust') {
+          attack.life--;
+          const dx = (player.x + player.width / 2) - attack.x;
+          const dy = (player.y + player.height / 2) - attack.y;
+          const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+          attack.vx += (dx / dist) * 0.18;
+          attack.vy += (dy / dist) * 0.18;
+          const spd = Math.sqrt(attack.vx * attack.vx + attack.vy * attack.vy) || 1;
+          const maxSpd = 5.2;
+          if (spd > maxSpd) {
+            attack.vx = (attack.vx / spd) * maxSpd;
+            attack.vy = (attack.vy / spd) * maxSpd;
+          }
+          if (attack.life <= 0) {
+            bossAttacks.splice(i, 1);
+            continue;
+          }
+        } else if (attack.type === 'rustSaw') {
+          attack.spin = (attack.spin || 0) + 0.35;
+        } else if (attack.type === 'spikeGeyser') {
+          attack.vy += 0.22;
         }
 
         // Remove off-screen attacks (except shockwaves)
@@ -4313,7 +5119,7 @@
             // Respawn player in boss fight
             deaths++;
             updateHUD();
-            playerHP = 10;
+            playerHP = boss.isSpikeColossus ? 12 : 10;
             boss.hp = boss.maxHP;
 
             spawnDeathParticles(player.x, player.y, SKINS[selectedSkin]);
@@ -4336,8 +5142,8 @@
         }
       }
 
-      // Floating medkits: sky boss (level 35) & desert boss (level 40); +5 HP on pickup
-      if (boss.isSkyTyrant || boss.isCactusTitan) {
+      // Floating medkits: sky, desert, and spike final bosses; +5 HP on pickup
+      if (boss.isSkyTyrant || boss.isCactusTitan || boss.isSpikeColossus) {
         if (!bossMedkit && Math.random() < 0.50) {
           const levelPxW = (levels[currentLevel]?.width || 44) * TILE_SIZE;
           const levelPxH = (levels[currentLevel]?.height || 22) * TILE_SIZE;
@@ -4346,6 +5152,9 @@
           if (boss.isSkyTyrant) {
             mx = 120 + Math.random() * Math.max(260, levelPxW - 260);
             my = 170 + Math.random() * 110;
+          } else if (boss.isSpikeColossus) {
+            mx = 90 + Math.random() * Math.max(220, levelPxW - 180);
+            my = 120 + Math.random() * Math.min(220, Math.max(80, levelPxH - 280));
           } else {
             mx = 80 + Math.random() * Math.max(200, levelPxW - 160);
             my = 96 + Math.random() * Math.min(260, Math.max(80, levelPxH - 320));
@@ -4373,7 +5182,7 @@
           } else {
             const cRect = { x: bossMedkit.x - 11, y: bossMedkit.y - 9, width: 22, height: 18 };
             if (rectIntersect(player, cRect)) {
-              playerHP = Math.min(10, playerHP + 5);
+              playerHP = Math.min(boss.isSpikeColossus ? 12 : 10, playerHP + 5);
               AudioManager.playSound('coin');
               unlockAchievement('field_medic');
               bossMedkit = null;
@@ -4384,6 +5193,7 @@
 
       // Check if boss defeated
       if (boss.hp <= 0 && bossActive) {
+        const wasSpike = !!boss.isSpikeColossus;
         bossActive = false;
         bossMedkit = null;
         showShootTip = false;
@@ -4391,19 +5201,277 @@
         // Play victory sound
         AudioManager.playSound('levelComplete');
 
-        // Spawn goal tile in the center of the arena (only if it doesn't exist)
-        const level = levels[currentLevel];
-        const goalExists = level.tiles.some(t => t.type === 5);
-        if (!goalExists) {
-          const goalX = boss.isCactusTitan ? Math.max(3, Math.floor((level.width || 44) / 2)) : 19;
-          const goalY = boss.isCactusTitan ? Math.max(3, (level.height || 22) - 4) : 19;
-          level.tiles.push({
-            x: goalX,
-            y: goalY,
-            type: 5
-          });
+        if (wasSpike) {
+          startSpikeEscape();
+        } else {
+          // Spawn goal tile in the center of the arena (only if it doesn't exist)
+          const level = levels[currentLevel];
+          const goalExists = level.tiles.some(t => t.type === 5);
+          if (!goalExists) {
+            const goalX = boss.isCactusTitan
+              ? Math.max(3, Math.floor((level.width || 44) / 2))
+              : 19;
+            const goalY = boss.isCactusTitan
+              ? Math.max(3, (level.height || 22) - 4)
+              : 19;
+            level.tiles.push({
+              x: goalX,
+              y: goalY,
+              type: 5
+            });
+          }
         }
       }
+    }
+
+    function startSpikeEscape() {
+      const level = levels[currentLevel];
+      spikeEscapeActive = true;
+      spikeEscapeFinished = false;
+      spikeEscapeTimer = 0;
+      spikeEscapeBossFade = 1;
+      spikeEscapeDebris = [];
+      spikeEscapeCaption = 'THE RELIC FALLS — RUN!';
+      spikeEscapeCollapseX = -TILE_SIZE * 2;
+      spikeEscapeRespawnX = 2;
+      bossAttacks = [];
+      bullets = [];
+      bossMedkit = null;
+      playerHP = Math.max(playerHP, 8);
+
+      // Snapshot original arena so reload/retry restores the boss fight
+      if (!spikeBossArenaBackup) {
+        spikeBossArenaBackup = {
+          width: level.width,
+          playerStart: { x: level.playerStart.x, y: level.playerStart.y },
+          tiles: level.tiles.map(t => ({ ...t })),
+          movingPlatforms: (level.movingPlatforms || []).map(p => ({ ...p }))
+        };
+      }
+
+      // Rebuild arena into a long playable escape corridor
+      const W = 168;
+      level.width = W;
+      level.movingPlatforms = [
+        { x: 28, y: 14, width: 2, moveX: 1.2, moveY: 0, speed: 0.018 },
+        { x: 52, y: 12, width: 2, moveX: -1.0, moveY: 0.2, speed: 0.016 },
+        { x: 78, y: 13, width: 2, moveX: 1.1, moveY: 0.1, speed: 0.015 },
+        { x: 104, y: 11, width: 2, moveX: -1.2, moveY: 0.18, speed: 0.017 },
+        { x: 128, y: 10, width: 2, moveX: 0.9, moveY: -0.15, speed: 0.015 },
+        { x: 148, y: 12, width: 2, moveX: -0.8, moveY: 0.12, speed: 0.014 }
+      ];
+      level.movingPlatforms.forEach(p => {
+        p.startX = p.x * TILE_SIZE;
+        p.startY = p.y * TILE_SIZE;
+        p.currentX = p.startX;
+        p.currentY = p.startY;
+        p.phase = 0;
+      });
+      const T = [];
+      // Floor with intentional gaps (more sections for a longer chase)
+      const gaps = [
+        [18, 20], [38, 40], [58, 61], [76, 78],
+        [96, 99], [118, 121], [138, 141], [152, 154]
+      ];
+      for (let x = 0; x < W; x++) {
+        if (gaps.some(([a, b]) => x >= a && x <= b)) continue;
+        T.push({ x, y: 20, type: 1 });
+      }
+      // Ceiling / void floor
+      for (let x = 0; x < W; x++) {
+        T.push({ x, y: 21, type: 2 });
+        if (x > 4 && x < W - 4) T.push({ x, y: 1, type: 2, spikeDir: 'down' });
+      }
+      // Left wall (collapse starts behind)
+      for (let y = 2; y <= 19; y++) T.push({ x: 0, y, type: 1 });
+      // Platforms — layered gauntlet across the whole run
+      [
+        [6,18,5],[12,16,4],[22,17,4],[32,15,5],[42,13,4],[48,16,3],
+        [62,14,5],[66,11,3],[82,16,4],[88,13,4],[92,17,3],
+        [108,15,5],[112,12,3],[122,14,4],[132,11,4],[136,16,3],
+        [144,14,4],[150,11,3],[156,16,4]
+      ].forEach(([x0, y, w]) => {
+        for (let i = 0; i < w; i++) T.push({ x: x0 + i, y, type: 1 });
+      });
+      // Side spikes / hazards
+      [
+        [15,19,'up'],[16,19,'up'],[25,19,'up'],[34,14,'up'],[45,12,'up'],
+        [55,19,'up'],[64,13,'up'],[72,19,'up'],[86,15,'up'],[94,12,'up'],
+        [110,14,'up'],[120,19,'up'],[134,10,'up'],[146,13,'up'],[158,15,'up']
+      ].forEach(([x, y, dir]) => {
+        T.push({ x, y, type: 2, spikeDir: dir });
+      });
+      [
+        [24,16,'right'],[24,17,'right'],[47,14,'left'],[47,15,'left'],
+        [68,12,'right'],[90,14,'left'],[114,13,'right'],[140,12,'left']
+      ].forEach(([x, y, dir]) => {
+        T.push({ x, y, type: 2, spikeDir: dir });
+      });
+      // Soft checkpoints / coins as breadcrumbs
+      T.push(
+        { x: 14, y: 15, type: TILE_COIN }, { x: 36, y: 14, type: TILE_COIN },
+        { x: 56, y: 15, type: TILE_COIN }, { x: 84, y: 12, type: TILE_COIN },
+        { x: 106, y: 14, type: TILE_COIN }, { x: 130, y: 10, type: TILE_COIN },
+        { x: 150, y: 10, type: TILE_COIN }
+      );
+      // Exit landing pad
+      for (let x = 160; x < W; x++) {
+        T.push({ x, y: 18, type: 1 });
+        T.push({ x, y: 19, type: 1 });
+      }
+      level.tiles = T;
+      level.playerStart = { x: 2, y: 18 };
+
+      player.x = 2 * TILE_SIZE;
+      player.y = 18 * TILE_SIZE;
+      player.vx = 0;
+      player.vy = 0;
+      cameraX = 0;
+
+      spikeEscapeExit = {
+        x: 161 * TILE_SIZE,
+        y: 12 * TILE_SIZE,
+        width: 5 * TILE_SIZE,
+        height: 7 * TILE_SIZE
+      };
+
+      triggerShake(22, 40);
+      if (!AudioManager.muted) AudioManager.startSpikeEscapeBGM();
+    }
+
+    function updateSpikeEscape() {
+      if (!spikeEscapeActive || spikeEscapeFinished) return;
+      spikeEscapeTimer++;
+
+      if (spikeEscapeBossFade > 0) {
+        spikeEscapeBossFade = Math.max(0, spikeEscapeBossFade - 0.008);
+      }
+
+      // Caption beats
+      if (spikeEscapeTimer === 70) spikeEscapeCaption = 'THE SPIKE REALM COLLAPSES...';
+      if (spikeEscapeTimer === 160) spikeEscapeCaption = 'KEEP RUNNING — REACH THE LIGHT!';
+      if (spikeEscapeTimer === 320) spikeEscapeCaption = '';
+
+      // Chasing collapse wall (paced for the long corridor)
+      const collapseSpeed = 0.82 + Math.min(0.95, spikeEscapeTimer / 900);
+      spikeEscapeCollapseX += collapseSpeed;
+      // Soft checkpoint: advance respawn as player progresses
+      const pxTile = Math.floor(player.x / TILE_SIZE);
+      if (pxTile > spikeEscapeRespawnX + 4) {
+        spikeEscapeRespawnX = Math.min(pxTile - 2, 155);
+      }
+      // Hit by collapse
+      if (!flyMode && player.x < spikeEscapeCollapseX + 18) {
+        playerHP = Math.max(0, playerHP - 2);
+        AudioManager.playSound('death');
+        triggerShake(12, 16);
+        if (playerHP <= 0) {
+          playerHP = 6;
+          deaths++;
+          updateHUD();
+        }
+        const rx = Math.max(spikeEscapeRespawnX, Math.floor(spikeEscapeCollapseX / TILE_SIZE) + 3);
+        player.x = rx * TILE_SIZE;
+        player.y = 16 * TILE_SIZE;
+        player.vx = 4;
+        player.vy = -4;
+        spikeEscapeCollapseX = Math.min(spikeEscapeCollapseX, player.x - TILE_SIZE * 4);
+      }
+
+      // Falling debris / dust (cosmetic + light hazard)
+      if (spikeEscapeTimer % 6 === 0) {
+        const levelPxW = (levels[currentLevel]?.width || 168) * TILE_SIZE;
+        const spawnMin = Math.max(spikeEscapeCollapseX, cameraX);
+        spikeEscapeDebris.push({
+          x: spawnMin + Math.random() * Math.max(80, canvas.width + 120),
+          y: -20,
+          vx: (Math.random() - 0.5) * 2,
+          vy: 3.5 + Math.random() * 5,
+          size: 4 + Math.random() * 10,
+          life: 140,
+          lethal: spikeEscapeTimer > 120 && Math.random() < 0.28
+        });
+      }
+      for (let i = spikeEscapeDebris.length - 1; i >= 0; i--) {
+        const d = spikeEscapeDebris[i];
+        d.x += d.vx;
+        d.y += d.vy;
+        d.vy += 0.15;
+        d.life--;
+        if (d.life <= 0 || d.y > 900) {
+          spikeEscapeDebris.splice(i, 1);
+          continue;
+        }
+        if (d.lethal && !flyMode &&
+            d.x < player.x + player.width && d.x + d.size > player.x &&
+            d.y < player.y + player.height && d.y + d.size > player.y) {
+          playerHP = Math.max(0, playerHP - 1);
+          spikeEscapeDebris.splice(i, 1);
+          AudioManager.playSound('death');
+          if (playerHP <= 0) {
+            playerHP = 6;
+            const rx = Math.max(spikeEscapeRespawnX, Math.floor(spikeEscapeCollapseX / TILE_SIZE) + 3);
+            player.x = rx * TILE_SIZE;
+            player.y = 16 * TILE_SIZE;
+            player.vx = 3;
+            player.vy = -3;
+            deaths++;
+            updateHUD();
+            triggerShake(10, 14);
+          }
+        }
+      }
+
+      if (spikeEscapeTimer % 40 === 0) triggerShake(5, 8);
+
+      if (spikeEscapeExit && rectIntersect(player, spikeEscapeExit)) {
+        finishSpikeEscape();
+      }
+    }
+
+    function finishSpikeEscape() {
+      if (spikeEscapeFinished) return;
+      spikeEscapeFinished = true;
+      spikeEscapeActive = false;
+      gameRunning = false;
+      AudioManager.playSound('victory');
+      if (!AudioManager.muted) {
+        try { AudioManager.startSpikeEscapeBGM(); } catch (e) {}
+      }
+
+      const lines = [
+        'THE IRON THORN CRUMBLES...',
+        'SPIKES FALL LIKE RAIN BEHIND YOU.',
+        'YOU BURST INTO OPEN AIR.',
+        'THE SPIKE REALM IS SILENT.',
+        'YOU ESCAPED.'
+      ];
+      const overlay = document.getElementById('escape-scene');
+      const lineEl = document.getElementById('escape-scene-line');
+      const btn = document.getElementById('escape-continue-btn');
+      if (!overlay || !lineEl || !btn) {
+        completeLevel();
+        return;
+      }
+      overlay.classList.remove('hidden');
+      overlay.classList.add('flex');
+      btn.classList.add('hidden');
+      let idx = 0;
+      lineEl.textContent = lines[0];
+      const step = () => {
+        idx++;
+        if (idx < lines.length) {
+          lineEl.style.opacity = '0';
+          setTimeout(() => {
+            lineEl.textContent = lines[idx];
+            lineEl.style.opacity = '1';
+            setTimeout(step, idx === lines.length - 1 ? 1400 : 1100);
+          }, 220);
+        } else {
+          btn.classList.remove('hidden');
+        }
+      };
+      setTimeout(step, 1200);
     }
 
     function getEnemyShotRect(tile) {
@@ -4449,6 +5517,8 @@
           return { fill: '#fb7185', stroke: '#042f2e', glow: '#fda4af', lw: 1 };
         case 'void':
           return { fill: '#fde047', stroke: '#3730a3', glow: '#fef08a', lw: 1 };
+        case 'spikeworld':
+          return { fill: '#fef2f2', stroke: '#7f1d1d', glow: '#fb7185', lw: 1 };
         default:
           return { fill: '#5eead4', stroke: '#0f172a', glow: '#99f6e4', lw: 1 };
       }
@@ -4560,9 +5630,12 @@
     }
 
     function renderBoss() {
-      if (!boss || !bossActive) return;
+      if (!boss) return;
+      const escapeGhost = spikeEscapeActive && boss.isSpikeColossus && spikeEscapeBossFade > 0;
+      if (!bossActive && !escapeGhost) return;
 
       ctx.save();
+      if (escapeGhost) ctx.globalAlpha = spikeEscapeBossFade;
       // NOTE: render() already applied ctx.translate(-cameraX, 0) before calling renderBoss()
       // so we do NOT add another translate here — that was causing the double-offset freeze bug.
 
@@ -4662,6 +5735,86 @@
         ctx.fillStyle = 'rgba(132, 204, 22, 0.18)';
         ctx.fillRect(boss.x - 8, boss.y - 8, boss.width + 16, boss.height + 16);
         ctx.globalAlpha = 1;
+      } else if (boss.isSpikeColossus) {
+        const t = Date.now();
+        const bob = Math.sin(t / 280) * 4;
+        const flash = boss.flashTimer > 0;
+        // Sepia brass body
+        const bodyGrad = ctx.createLinearGradient(boss.x, boss.y + bob, boss.x, boss.y + boss.height + bob);
+        bodyGrad.addColorStop(0, flash ? '#fff7ed' : '#a16207');
+        bodyGrad.addColorStop(0.45, flash ? '#ffffff' : '#78350f');
+        bodyGrad.addColorStop(1, flash ? '#fde68a' : '#451a03');
+        ctx.fillStyle = bodyGrad;
+        ctx.fillRect(boss.x + 18, boss.y + 22 + bob, boss.width - 36, boss.height - 36);
+        // Riveted frame
+        ctx.strokeStyle = flash ? '#fef3c7' : '#292524';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(boss.x + 18, boss.y + 22 + bob, boss.width - 36, boss.height - 36);
+        // Vintage clockwork core
+        ctx.fillStyle = flash ? '#ffffff' : '#1c1917';
+        ctx.beginPath();
+        ctx.arc(boss.x + boss.width / 2, boss.y + boss.height / 2 + bob, 28, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#d6d3d1';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(boss.x + boss.width / 2, boss.y + boss.height / 2 + bob, 22, 0, Math.PI * 2);
+        ctx.stroke();
+        const gearAng = t / 400;
+        for (let g = 0; g < 8; g++) {
+          const a = gearAng + g * (Math.PI / 4);
+          ctx.strokeStyle = '#a8a29e';
+          ctx.beginPath();
+          ctx.moveTo(boss.x + boss.width / 2, boss.y + boss.height / 2 + bob);
+          ctx.lineTo(
+            boss.x + boss.width / 2 + Math.cos(a) * 20,
+            boss.y + boss.height / 2 + bob + Math.sin(a) * 20
+          );
+          ctx.stroke();
+        }
+        // Spikes covering every side
+        ctx.fillStyle = flash ? '#fecaca' : '#e7e5e4';
+        const cx = boss.x + boss.width / 2;
+        const cy = boss.y + boss.height / 2 + bob;
+        for (let i = 0; i < 24; i++) {
+          const ang = (i / 24) * Math.PI * 2 + t / 2000;
+          const inner = 58;
+          const outer = 78 + (i % 3) * 6;
+          ctx.beginPath();
+          ctx.moveTo(cx + Math.cos(ang) * inner, cy + Math.sin(ang) * inner);
+          ctx.lineTo(cx + Math.cos(ang) * outer, cy + Math.sin(ang) * outer);
+          ctx.lineTo(cx + Math.cos(ang + 0.12) * inner, cy + Math.sin(ang + 0.12) * inner);
+          ctx.closePath();
+          ctx.fill();
+        }
+        // Extra body spikes (up / down / sides)
+        for (let i = 0; i < 9; i++) {
+          const sx = boss.x + 28 + i * ((boss.width - 56) / 8);
+          ctx.beginPath();
+          ctx.moveTo(sx, boss.y + 22 + bob);
+          ctx.lineTo(sx + 5, boss.y + 4 + bob);
+          ctx.lineTo(sx + 10, boss.y + 22 + bob);
+          ctx.closePath();
+          ctx.fill();
+          ctx.beginPath();
+          ctx.moveTo(sx, boss.y + boss.height - 14 + bob);
+          ctx.lineTo(sx + 5, boss.y + boss.height + 6 + bob);
+          ctx.lineTo(sx + 10, boss.y + boss.height - 14 + bob);
+          ctx.closePath();
+          ctx.fill();
+        }
+        // Antique eyes
+        ctx.fillStyle = flash ? '#7f1d1d' : '#450a0a';
+        ctx.fillRect(boss.x + boss.width / 2 - 36, boss.y + 52 + bob, 18, 14);
+        ctx.fillRect(boss.x + boss.width / 2 + 18, boss.y + 52 + bob, 18, 14);
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillRect(boss.x + boss.width / 2 - 32, boss.y + 56 + bob, 8, 6);
+        ctx.fillRect(boss.x + boss.width / 2 + 22, boss.y + 56 + bob, 8, 6);
+        // Film grain wash
+        ctx.globalAlpha = 0.12 + 0.04 * Math.sin(t / 180);
+        ctx.fillStyle = '#fef3c7';
+        ctx.fillRect(boss.x + 10, boss.y + 14 + bob, boss.width - 20, boss.height - 24);
+        ctx.globalAlpha = 1;
       } else {
         ctx.fillRect(boss.x, boss.y, boss.width, boss.height);
       }
@@ -4671,24 +5824,34 @@
       ctx.save();
       ctx.font = '10px "Press Start 2P"';
       ctx.textAlign = 'center';
-      ctx.fillStyle = '#ff00ff';
-      ctx.shadowColor = '#ff00ff';
+      const bossTitle = boss.isSpikeColossus
+        ? 'IRON THORN RELIC'
+        : (boss.isSkyTyrant ? 'SKY SPIRE ROC' : (boss.isCactusTitan ? 'CACTUS TITAN' : 'VOID EMPEROR'));
+      ctx.fillStyle = boss.isSpikeColossus ? '#fbbf24' : '#ff00ff';
+      ctx.shadowColor = boss.isSpikeColossus ? '#78350f' : '#ff00ff';
       ctx.shadowBlur = 10 + 6 * Math.sin(Date.now() / 300);
-      ctx.fillText(boss.isSkyTyrant ? 'SKY SPIRE ROC' : (boss.isCactusTitan ? 'CACTUS TITAN' : 'VOID EMPEROR'), boss.x + boss.width / 2, boss.y - 14);
+      ctx.fillText(bossTitle, boss.x + boss.width / 2, boss.y - 14);
+      if (boss.isSpikeColossus && boss.phaseBanner > 0) {
+        ctx.font = '8px "Press Start 2P"';
+        ctx.fillStyle = '#fecaca';
+        ctx.fillText('PHASE ' + (boss.combatPhase + 1), boss.x + boss.width / 2, boss.y - 28);
+      }
       ctx.shadowBlur = 0;
       ctx.restore();
 
-      // Boss eyes
-      ctx.fillStyle = boss.flashTimer > 0 ? '#ff00ff' : '#ff0000';
-      if (boss.isSkyTyrant) {
-        ctx.fillRect(boss.x + boss.width / 2 + 8, boss.y + 22, 10, 10);
-        ctx.fillRect(boss.x + boss.width / 2 + 22, boss.y + 24, 8, 8);
-      } else if (boss.isCactusTitan) {
-        ctx.fillRect(boss.x + boss.width / 2 - 44, boss.y + 118, 22, 22);
-        ctx.fillRect(boss.x + boss.width / 2 + 22, boss.y + 118, 22, 22);
-      } else {
-        ctx.fillRect(boss.x + 15, boss.y + 15, 12, 12);
-        ctx.fillRect(boss.x + 37, boss.y + 15, 12, 12);
+      // Boss eyes (non-spike already drawn above for spike)
+      if (!boss.isSpikeColossus) {
+        ctx.fillStyle = boss.flashTimer > 0 ? '#ff00ff' : '#ff0000';
+        if (boss.isSkyTyrant) {
+          ctx.fillRect(boss.x + boss.width / 2 + 8, boss.y + 22, 10, 10);
+          ctx.fillRect(boss.x + boss.width / 2 + 22, boss.y + 24, 8, 8);
+        } else if (boss.isCactusTitan) {
+          ctx.fillRect(boss.x + boss.width / 2 - 44, boss.y + 118, 22, 22);
+          ctx.fillRect(boss.x + boss.width / 2 + 22, boss.y + 118, 22, 22);
+        } else {
+          ctx.fillRect(boss.x + 15, boss.y + 15, 12, 12);
+          ctx.fillRect(boss.x + 37, boss.y + 15, 12, 12);
+        }
       }
 
       // Boss HP bar
@@ -4772,6 +5935,67 @@
           ctx.lineTo(attack.x - attack.size * 0.45, attack.y + attack.size * 0.7);
           ctx.closePath();
           ctx.fill();
+        } else if (attack.type === 'vintageNeedle' || attack.type === 'dropSpike' || attack.type === 'sideColumn' || attack.type === 'crawlSpike') {
+          ctx.fillStyle = '#e7e5e4';
+          ctx.strokeStyle = '#7f1d1d';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(attack.x, attack.y - attack.size);
+          ctx.lineTo(attack.x + attack.size * 0.45, attack.y + attack.size);
+          ctx.lineTo(attack.x - attack.size * 0.45, attack.y + attack.size);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+        } else if (attack.type === 'rustSaw') {
+          ctx.save();
+          ctx.translate(attack.x, attack.y);
+          ctx.rotate(attack.spin || 0);
+          ctx.fillStyle = '#a8a29e';
+          ctx.beginPath();
+          ctx.arc(0, 0, attack.size, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#44403c';
+          for (let t = 0; t < 8; t++) {
+            const a = t * Math.PI / 4;
+            ctx.beginPath();
+            ctx.moveTo(Math.cos(a) * (attack.size - 2), Math.sin(a) * (attack.size - 2));
+            ctx.lineTo(Math.cos(a) * (attack.size + 5), Math.sin(a) * (attack.size + 5));
+            ctx.lineTo(Math.cos(a + 0.2) * (attack.size - 2), Math.sin(a + 0.2) * (attack.size - 2));
+            ctx.closePath();
+            ctx.fill();
+          }
+          ctx.restore();
+        } else if (attack.type === 'spikeGeyser') {
+          ctx.fillStyle = 'rgba(248, 113, 113, 0.9)';
+          ctx.fillRect(attack.x - 4, attack.y - attack.size * 1.8, 8, attack.size * 1.8);
+          ctx.fillStyle = '#e7e5e4';
+          ctx.beginPath();
+          ctx.moveTo(attack.x, attack.y - attack.size * 2.1);
+          ctx.lineTo(attack.x + 6, attack.y - attack.size * 1.2);
+          ctx.lineTo(attack.x - 6, attack.y - attack.size * 1.2);
+          ctx.closePath();
+          ctx.fill();
+        } else if (attack.type === 'crossBolt' || attack.type === 'antiqueRing' || attack.type === 'sepiaShard') {
+          ctx.fillStyle = attack.type === 'sepiaShard' ? '#fcd34d' : '#d6d3d1';
+          ctx.beginPath();
+          ctx.moveTo(attack.x, attack.y - attack.size);
+          ctx.lineTo(attack.x + attack.size * 0.5, attack.y);
+          ctx.lineTo(attack.x, attack.y + attack.size);
+          ctx.lineTo(attack.x - attack.size * 0.5, attack.y);
+          ctx.closePath();
+          ctx.fill();
+        } else if (attack.type === 'scrapBoom') {
+          ctx.fillStyle = '#78716c';
+          ctx.fillRect(attack.x - attack.size * 0.6, attack.y - attack.size * 0.4, attack.size * 1.2, attack.size * 0.8);
+          ctx.fillStyle = '#a8a29e';
+          ctx.fillRect(attack.x - 2, attack.y - attack.size * 0.7, 4, attack.size * 0.3);
+        } else if (attack.type === 'homingRust') {
+          ctx.fillStyle = '#b45309';
+          ctx.beginPath();
+          ctx.arc(attack.x, attack.y, attack.size * 0.7, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#fde68a';
+          ctx.fillRect(attack.x - 2, attack.y - 2, 4, 4);
         } else {
           // Normal projectile
           ctx.fillStyle = '#ff6600';
@@ -4824,6 +6048,100 @@
       ctx.restore();
     }
 
+    function renderSpikeEscapeWorld() {
+      if (!spikeEscapeActive && !spikeEscapeFinished) return;
+      // Chasing collapse front
+      if (spikeEscapeActive) {
+        const levelH = (levels[currentLevel]?.height || 22) * TILE_SIZE;
+        const grad = ctx.createLinearGradient(spikeEscapeCollapseX - 80, 0, spikeEscapeCollapseX + 40, 0);
+        grad.addColorStop(0, 'rgba(20, 8, 8, 0)');
+        grad.addColorStop(0.55, 'rgba(40, 10, 12, 0.75)');
+        grad.addColorStop(1, 'rgba(120, 20, 24, 0.95)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(spikeEscapeCollapseX - 80, 0, 120, levelH);
+        ctx.fillStyle = '#7f1d1d';
+        for (let y = 0; y < levelH; y += 18) {
+          ctx.beginPath();
+          ctx.moveTo(spikeEscapeCollapseX + 8, y);
+          ctx.lineTo(spikeEscapeCollapseX + 28, y + 9);
+          ctx.lineTo(spikeEscapeCollapseX + 8, y + 18);
+          ctx.closePath();
+          ctx.fill();
+        }
+      }
+      // Exit breach glow
+      if (spikeEscapeExit) {
+        const pulse = 0.45 + 0.35 * Math.sin(Date.now() / 180);
+        ctx.save();
+        ctx.fillStyle = `rgba(251, 191, 36, ${0.15 + pulse * 0.2})`;
+        ctx.fillRect(spikeEscapeExit.x - 8, spikeEscapeExit.y - 8, spikeEscapeExit.width + 16, spikeEscapeExit.height + 16);
+        ctx.strokeStyle = `rgba(253, 230, 138, ${0.5 + pulse * 0.4})`;
+        ctx.lineWidth = 3;
+        ctx.strokeRect(spikeEscapeExit.x, spikeEscapeExit.y, spikeEscapeExit.width, spikeEscapeExit.height);
+        ctx.fillStyle = '#fef3c7';
+        ctx.font = '10px "Press Start 2P"';
+        ctx.textAlign = 'center';
+        ctx.shadowColor = '#f59e0b';
+        ctx.shadowBlur = 12;
+        ctx.fillText('EXIT', spikeEscapeExit.x + spikeEscapeExit.width / 2, spikeEscapeExit.y + spikeEscapeExit.height / 2);
+        ctx.shadowBlur = 0;
+        ctx.textAlign = 'left';
+        ctx.restore();
+      }
+      // Debris
+      spikeEscapeDebris.forEach(d => {
+        ctx.fillStyle = d.lethal ? '#e7e5e4' : '#78716c';
+        if (d.lethal) {
+          ctx.beginPath();
+          ctx.moveTo(d.x, d.y - d.size);
+          ctx.lineTo(d.x + d.size * 0.45, d.y + d.size);
+          ctx.lineTo(d.x - d.size * 0.45, d.y + d.size);
+          ctx.closePath();
+          ctx.fill();
+        } else {
+          ctx.fillRect(d.x, d.y, d.size, d.size * 0.7);
+        }
+      });
+    }
+
+    function renderSpikeEscapeHUD() {
+      if (!spikeEscapeActive) return;
+      ctx.save();
+      ctx.fillStyle = 'rgba(0,0,0,0.55)';
+      ctx.fillRect(canvas.width / 2 - 210, 18, 420, 36);
+      ctx.fillStyle = '#fbbf24';
+      ctx.font = '12px "Press Start 2P"';
+      ctx.textAlign = 'center';
+      ctx.fillText('ESCAPE!', canvas.width / 2, 42);
+      if (spikeEscapeCaption) {
+        ctx.font = '8px "Press Start 2P"';
+        ctx.fillStyle = '#fde68a';
+        ctx.fillText(spikeEscapeCaption, canvas.width / 2, 78);
+      }
+      // Distance / progress toward exit
+      const lvlW = (levels[currentLevel]?.width || 168) * TILE_SIZE;
+      const prog = Math.max(0, Math.min(1, player.x / Math.max(1, lvlW - canvas.width * 0.4)));
+      ctx.fillStyle = 'rgba(0,0,0,0.55)';
+      ctx.fillRect(canvas.width / 2 - 120, 88, 240, 10);
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillRect(canvas.width / 2 - 120, 88, 240 * prog, 10);
+      ctx.fillStyle = '#7f1d1d';
+      const cProg = Math.max(0, Math.min(1, spikeEscapeCollapseX / Math.max(1, lvlW)));
+      ctx.fillRect(canvas.width / 2 - 120 + 240 * cProg - 2, 86, 4, 14);
+      // Player HP during escape
+      ctx.textAlign = 'left';
+      ctx.fillStyle = 'rgba(0,0,0,0.65)';
+      ctx.fillRect(20, 60, 180, 28);
+      ctx.fillStyle = '#fff';
+      ctx.font = '10px "Press Start 2P"';
+      ctx.fillText('HP', 30, 78);
+      ctx.fillStyle = '#333';
+      ctx.fillRect(70, 68, 120, 10);
+      ctx.fillStyle = playerHP > 3 ? '#22c55e' : '#ef4444';
+      ctx.fillRect(70, 68, (playerHP / 12) * 120, 10);
+      ctx.restore();
+    }
+
     function renderBossUI() {
       if (!bossActive && !cinderBossActive && !showShootTip) return;
 
@@ -4838,18 +6156,27 @@
         ctx.fillStyle = '#333';
         ctx.fillRect(130, 68, 100, 12);
         ctx.fillStyle = playerHP > 3 ? '#00ff00' : '#ff0000';
-        ctx.fillRect(130, 68, playerHP * 10, 12);
+        const pMax = (boss && boss.isSpikeColossus) ? 12 : 10;
+        ctx.fillRect(130, 68, (playerHP / pMax) * 100, 12);
 
         // Boss HP bar
         ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
         ctx.fillRect(canvas.width - 240, 60, 220, 30);
         ctx.fillStyle = '#fff';
-        ctx.fillText((boss && boss.isSkyTyrant) ? 'SKY SPIRE ROC' : ((boss && boss.isCactusTitan) ? 'CACTUS TITAN' : 'VOID EMPEROR'), canvas.width - 230, 78);
+        const uiName = (boss && boss.isSpikeColossus)
+          ? 'IRON THORN'
+          : ((boss && boss.isSkyTyrant) ? 'SKY SPIRE ROC' : ((boss && boss.isCactusTitan) ? 'CACTUS TITAN' : 'VOID EMPEROR'));
+        ctx.fillText(uiName, canvas.width - 230, 78);
 
         ctx.fillStyle = '#333';
         ctx.fillRect(canvas.width - 130, 68, 120, 12);
-        ctx.fillStyle = '#ff00ff';
+        ctx.fillStyle = (boss && boss.isSpikeColossus) ? '#f59e0b' : '#ff00ff';
         ctx.fillRect(canvas.width - 130, 68, (boss.hp / boss.maxHP) * 120, 12);
+        if (boss && boss.isSpikeColossus) {
+          ctx.fillStyle = '#fecaca';
+          ctx.font = '8px "Press Start 2P"';
+          ctx.fillText('P' + (boss.combatPhase + 1) + '/7', canvas.width - 230, 98);
+        }
       }
 
       // Cinder boss HP bar
@@ -5971,6 +7298,17 @@
       document.getElementById('roast-restart-btn').addEventListener('click', restartGame);
       document.getElementById('roast3-restart-btn').addEventListener('click', restartGame);
       document.getElementById('roast4-btn').addEventListener('click', permanentCheaterPage);
+      const escapeContinueBtn = document.getElementById('escape-continue-btn');
+      if (escapeContinueBtn) {
+        escapeContinueBtn.addEventListener('click', () => {
+          const overlay = document.getElementById('escape-scene');
+          if (overlay) {
+            overlay.classList.add('hidden');
+            overlay.classList.remove('flex');
+          }
+          completeLevel();
+        });
+      }
 
       // Skin selector (includes premium row)
       document.querySelectorAll('.skin-btn').forEach(btn => {
@@ -6213,6 +7551,12 @@
             secretCode = '';
             toggleFlyMode();
           }
+
+          // Holy water — instant boss kill during any boss fight
+          if (secretCode.includes('holy')) {
+            secretCode = '';
+            activateHolyWater();
+          }
         }
 
         // Reset after 3 seconds of no typing
@@ -6402,6 +7746,50 @@
         }
       }
     }
+
+    /** Secret cheat: type "holy" in a boss fight to defeat the boss instantly. */
+    function activateHolyWater() {
+      if (!gameRunning) return;
+      const inBoss =
+        bossActive || cinderBossActive || frozenBossActive || wardenBossActive;
+      if (!inBoss) return;
+
+      cheatUsed = true;
+      unlockAchievement('holy_water');
+      holyWaterFlash = 45;
+      bossAttacks = [];
+      bullets = [];
+      cinderAttacks = [];
+      cinderPools = [];
+      icicles = [];
+      freezeBreaths = [];
+      icicleWarnings = [];
+      if (typeof wardenMissiles !== 'undefined') wardenMissiles = [];
+      if (typeof wardenDrones !== 'undefined') wardenDrones = [];
+      if (typeof wardenLasers !== 'undefined') wardenLasers = [];
+      if (typeof wardenConveyorTraps !== 'undefined') wardenConveyorTraps = [];
+      if (typeof wardenSparks !== 'undefined') wardenSparks = [];
+
+      if (bossActive && boss) {
+        boss.hp = 0;
+        boss.flashTimer = 20;
+      }
+      if (cinderBossActive && cinderBoss) {
+        cinderBoss.hp = 0;
+        cinderBoss.flashTimer = 20;
+      }
+      if (frozenBossActive && frozenBoss) {
+        frozenBoss.hp = 0;
+        frozenBoss.flashTimer = 20;
+      }
+      if (wardenBossActive && wardenBoss) {
+        wardenBoss.hp = 0;
+        wardenBoss.flashTimer = 20;
+      }
+
+      AudioManager.playSound('boost');
+      triggerShake(16, 22);
+    }
     
     function showStoryIntro() {
       document.getElementById('start-screen').classList.add('hidden');
@@ -6422,6 +7810,19 @@
       boss = null;
       bullets = [];
       bossAttacks = [];
+      spikeEscapeActive = false;
+      spikeEscapeFinished = false;
+      spikeEscapeExit = null;
+      spikeEscapeDebris = [];
+      spikeEscapeCaption = '';
+      spikeEscapeBossFade = 1;
+      spikeEscapeCollapseX = 0;
+      spikeEscapeRespawnX = 2;
+      const escapeOverlay = document.getElementById('escape-scene');
+      if (escapeOverlay) {
+        escapeOverlay.classList.add('hidden');
+        escapeOverlay.classList.remove('flex');
+      }
       cinderBossActive = false;
       cinderBoss = null;
       cinderAttacks = [];
@@ -6525,6 +7926,13 @@
 
     function loadLevel(levelIndex) {
       const level = levels[levelIndex];
+      // Restore Iron Thorn arena if escape sequence previously mutated it
+      if (level.isSpikeBoss && spikeBossArenaBackup) {
+        level.width = spikeBossArenaBackup.width;
+        level.playerStart = { x: spikeBossArenaBackup.playerStart.x, y: spikeBossArenaBackup.playerStart.y };
+        level.tiles = spikeBossArenaBackup.tiles.map(t => ({ ...t }));
+        level.movingPlatforms = spikeBossArenaBackup.movingPlatforms.map(p => ({ ...p }));
+      }
       if (level.bgTheme === 'desert') {
         // Force every normal platform in desert levels to be sand platform.
         level.tiles.forEach(t => {
@@ -6533,6 +7941,15 @@
       }
       memoryChaser = null;
       bossMedkit = null;
+      spikeEscapeActive = false;
+      spikeEscapeFinished = false;
+      spikeEscapeExit = null;
+      spikeEscapeDebris = [];
+      spikeEscapeCaption = '';
+      spikeEscapeBossFade = 1;
+      spikeEscapeTimer = 0;
+      spikeEscapeCollapseX = 0;
+      spikeEscapeRespawnX = 2;
       player = {
         x: level.playerStart.x * TILE_SIZE,
         y: level.playerStart.y * TILE_SIZE,
@@ -6738,6 +8155,7 @@
           AudioManager.stopBGM();
           if (levels[levelIndex].isSkyBoss) AudioManager.startSkyBossBGM();
           else if (levels[levelIndex].isDesertBoss) AudioManager.startDesertBossBGM();
+          else if (levels[levelIndex].isSpikeBoss) AudioManager.startSpikeBossBGM();
           else AudioManager.startBossBGM();
         }
       } else if (levels[levelIndex].isMinionBoss) {
@@ -6830,6 +8248,8 @@
             AudioManager.startSkylandBGM();
           } else if (levels[levelIndex].bgTheme === 'desert') {
             AudioManager.startDesertBGM();
+          } else if (levels[levelIndex].bgTheme === 'spikeworld') {
+            AudioManager.startSpikeWorldBGM();
           } else if (levels[levelIndex].bgTheme === 'ice') {
             AudioManager.startFrostBGM();
           } else if (levels[levelIndex].bgTheme === 'factory') {
@@ -7122,6 +8542,7 @@
         if (currentLevel === 29 && levels[29] && levels[29].isMemoryChase) unlockAchievement('chase_escape');
         if (currentLevel === 34) unlockAchievement('sky_tyrant');
         if (currentLevel === 39) unlockAchievement('sand_scourge');
+        if (currentLevel === 44) unlockAchievement('spike_crown');
         if (currentLevel >= levels.length - 1) unlockAchievement('marathon');
       }
 
@@ -7807,6 +9228,9 @@
       // Update boss fight
       if (bossActive) {
         updateBoss();
+      }
+      if (spikeEscapeActive) {
+        updateSpikeEscape();
       }
       if (cinderBossActive) {
         updateCinderBoss();
@@ -8587,6 +10011,8 @@
         gradient.addColorStop(0, '#6ed6ff'); gradient.addColorStop(0.55, '#9ce8ff'); gradient.addColorStop(1, '#d7f7ff');
       } else if (bgTheme === 'desert') {
         gradient.addColorStop(0, '#f59e0b'); gradient.addColorStop(0.55, '#fbbf24'); gradient.addColorStop(1, '#fde68a');
+      } else if (bgTheme === 'spikeworld') {
+        gradient.addColorStop(0, '#1a0508'); gradient.addColorStop(0.45, '#2a0a10'); gradient.addColorStop(1, '#140308');
       } else { // space (default)
         gradient.addColorStop(0, '#060818'); gradient.addColorStop(0.6, '#0f172a'); gradient.addColorStop(1, '#1a1a3e');
       }
@@ -8830,6 +10256,37 @@
           ctx.arc(sx, sy, 0.8 + (d % 3) * 0.45, 0, Math.PI * 2);
           ctx.fill();
         }
+      } else if (bgTheme === 'spikeworld') {
+        // Jagged iron ridgeline (far)
+        ctx.fillStyle = 'rgba(60, 10, 18, 0.55)';
+        ctx.beginPath(); ctx.moveTo(0, canvas.height);
+        for (let px = 0; px <= canvas.width; px += 10) {
+          const wx = px + cameraX * 0.07;
+          const peak = ((Math.floor(wx / 48) % 2) === 0) ? 70 : 28;
+          ctx.lineTo(px, canvas.height * 0.55 + Math.sin(wx * 0.004) * 18 - peak * 0.35);
+        }
+        ctx.lineTo(canvas.width, canvas.height); ctx.closePath(); ctx.fill();
+        // Near spike silhouettes
+        ctx.fillStyle = 'rgba(90, 16, 28, 0.7)';
+        for (let i = 0; i < 18; i++) {
+          const base = ((i * 97 + cameraX * 0.18) % (canvas.width + 80)) - 40;
+          const h = 55 + (i % 5) * 18;
+          ctx.beginPath();
+          ctx.moveTo(base, canvas.height);
+          ctx.lineTo(base + 14, canvas.height - h);
+          ctx.lineTo(base + 28, canvas.height);
+          ctx.closePath();
+          ctx.fill();
+        }
+        // Ember dust
+        ctx.fillStyle = 'rgba(251, 113, 133, 0.35)';
+        for (let d = 0; d < 28; d++) {
+          const sx = ((d * 141 + now * 0.05 + cameraX * 0.04) % canvas.width + canvas.width) % canvas.width;
+          const sy = (d * 67 + now * (0.03 + (d % 4) * 0.01)) % canvas.height;
+          ctx.beginPath();
+          ctx.arc(sx, sy, 0.7 + (d % 3) * 0.4, 0, Math.PI * 2);
+          ctx.fill();
+        }
       }
       
       ctx.save();
@@ -8873,6 +10330,19 @@
               ctx.beginPath();
               ctx.arc(tcx, tcy, 2.8, 0, Math.PI * 2);
               ctx.fill();
+            } else if (bgTheme === 'spikeworld') {
+              ctx.fillStyle = '#1c1917';
+              ctx.fillRect(x, y, TILE_SIZE, TILE_SIZE);
+              ctx.fillStyle = '#57534e';
+              ctx.fillRect(x, y, TILE_SIZE, 3);
+              ctx.fillStyle = '#7f1d1d';
+              ctx.fillRect(x, y + 3, TILE_SIZE, 2);
+              ctx.fillStyle = '#0c0a09';
+              ctx.fillRect(x, y + TILE_SIZE - 4, TILE_SIZE, 4);
+              // Rivets
+              ctx.fillStyle = '#a8a29e';
+              ctx.beginPath(); ctx.arc(x + 6, y + 10, 1.6, 0, Math.PI * 2); ctx.fill();
+              ctx.beginPath(); ctx.arc(x + TILE_SIZE - 6, y + 10, 1.6, 0, Math.PI * 2); ctx.fill();
             } else {
               ctx.fillStyle = '#4a5568';
               ctx.fillRect(x, y, TILE_SIZE, TILE_SIZE);
@@ -8891,21 +10361,98 @@
             }
             break;
 
-          case 2: // Spike — pulsing glow, staggered per column
+          case 2: { // Spike — real metal thorns in Spike Realm; classic elsewhere
+            const dir = tile.spikeDir || 'up';
+            const real = !!(level.isSpikeWorld || bgTheme === 'spikeworld');
+            const pulse = Math.sin(Date.now() / 320 + tile.x * 0.85 + tile.y * 0.4);
             const spikeGlow = glitchMode
               ? 14 + 18 * Math.abs(Math.sin(Date.now() / 150 + tile.x * 0.7))
-              : 6 + 8 * Math.sin(Date.now() / 350 + tile.x * 0.7);
-            ctx.shadowColor = '#ef4444';
-            ctx.shadowBlur = spikeGlow;
-            ctx.fillStyle = '#ef4444';
-            ctx.beginPath();
-            ctx.moveTo(x + TILE_SIZE/2, y);
-            ctx.lineTo(x + TILE_SIZE, y + TILE_SIZE);
-            ctx.lineTo(x, y + TILE_SIZE);
-            ctx.closePath();
-            ctx.fill();
-            ctx.shadowBlur = 0;
+              : (real ? 10 + 10 * pulse : 6 + 8 * Math.sin(Date.now() / 350 + tile.x * 0.7));
+
+            let tipX, tipY, b1x, b1y, b2x, b2y;
+            if (dir === 'down') {
+              tipX = x + TILE_SIZE / 2; tipY = y + TILE_SIZE;
+              b1x = x; b1y = y; b2x = x + TILE_SIZE; b2y = y;
+            } else if (dir === 'left') {
+              tipX = x; tipY = y + TILE_SIZE / 2;
+              b1x = x + TILE_SIZE; b1y = y; b2x = x + TILE_SIZE; b2y = y + TILE_SIZE;
+            } else if (dir === 'right') {
+              tipX = x + TILE_SIZE; tipY = y + TILE_SIZE / 2;
+              b1x = x; b1y = y; b2x = x; b2y = y + TILE_SIZE;
+            } else {
+              tipX = x + TILE_SIZE / 2; tipY = y;
+              b1x = x + TILE_SIZE; b1y = y + TILE_SIZE; b2x = x; b2y = y + TILE_SIZE;
+            }
+
+            if (real) {
+              // Cast shadow / depth
+              ctx.fillStyle = 'rgba(0,0,0,0.45)';
+              ctx.beginPath();
+              ctx.moveTo(tipX + 2, tipY + 2);
+              ctx.lineTo(b1x + 2, b1y + 2);
+              ctx.lineTo(b2x + 2, b2y + 2);
+              ctx.closePath();
+              ctx.fill();
+
+              // Dark steel body
+              const bodyGrad = ctx.createLinearGradient(b2x, b2y, tipX, tipY);
+              bodyGrad.addColorStop(0, '#1c1917');
+              bodyGrad.addColorStop(0.45, '#44403c');
+              bodyGrad.addColorStop(0.78, '#78716c');
+              bodyGrad.addColorStop(1, '#fecaca');
+              ctx.shadowColor = '#ef4444';
+              ctx.shadowBlur = spikeGlow;
+              ctx.fillStyle = bodyGrad;
+              ctx.beginPath();
+              ctx.moveTo(tipX, tipY);
+              ctx.lineTo(b1x, b1y);
+              ctx.lineTo(b2x, b2y);
+              ctx.closePath();
+              ctx.fill();
+              ctx.shadowBlur = 0;
+
+              // Bevel highlight edge
+              ctx.strokeStyle = 'rgba(254, 226, 226, 0.75)';
+              ctx.lineWidth = 1.5;
+              ctx.beginPath();
+              ctx.moveTo(tipX, tipY);
+              ctx.lineTo((b1x + tipX) * 0.5, (b1y + tipY) * 0.5);
+              ctx.stroke();
+
+              // Dark edge
+              ctx.strokeStyle = 'rgba(28, 25, 23, 0.9)';
+              ctx.lineWidth = 1.2;
+              ctx.beginPath();
+              ctx.moveTo(tipX, tipY);
+              ctx.lineTo((b2x + tipX) * 0.5, (b2y + tipY) * 0.5);
+              ctx.stroke();
+
+              // Bloody tip gleam
+              ctx.fillStyle = `rgba(248, 113, 113, ${0.55 + 0.35 * pulse})`;
+              ctx.beginPath();
+              ctx.arc(tipX, tipY, 2.4, 0, Math.PI * 2);
+              ctx.fill();
+
+              // Iron base plate
+              ctx.fillStyle = '#292524';
+              if (dir === 'up') ctx.fillRect(x + 2, y + TILE_SIZE - 5, TILE_SIZE - 4, 5);
+              else if (dir === 'down') ctx.fillRect(x + 2, y, TILE_SIZE - 4, 5);
+              else if (dir === 'left') ctx.fillRect(x + TILE_SIZE - 5, y + 2, 5, TILE_SIZE - 4);
+              else ctx.fillRect(x, y + 2, 5, TILE_SIZE - 4);
+            } else {
+              ctx.shadowColor = '#ef4444';
+              ctx.shadowBlur = spikeGlow;
+              ctx.fillStyle = '#ef4444';
+              ctx.beginPath();
+              ctx.moveTo(tipX, tipY);
+              ctx.lineTo(b1x, b1y);
+              ctx.lineTo(b2x, b2y);
+              ctx.closePath();
+              ctx.fill();
+              ctx.shadowBlur = 0;
+            }
             break;
+          }
             
           case 3: { // Enemy — walks with leg bob, turn squash, direction-aware eyes
             if (tile.shotDead) break;
@@ -9701,6 +11248,18 @@
           ctx.strokeStyle = 'rgba(254, 240, 138, 0.35)';
           ctx.lineWidth = 1;
           ctx.strokeRect(plat.currentX + 0.5, plat.currentY + 0.5, plat.width * TILE_SIZE - 1, TILE_SIZE - 1);
+        } else if (level.bgTheme === 'spikeworld') {
+          ctx.fillStyle = '#1c1917';
+          ctx.fillRect(plat.currentX, plat.currentY, plat.width * TILE_SIZE, TILE_SIZE);
+          ctx.fillStyle = '#57534e';
+          ctx.fillRect(plat.currentX, plat.currentY, plat.width * TILE_SIZE, 3);
+          ctx.fillStyle = '#7f1d1d';
+          ctx.fillRect(plat.currentX, plat.currentY + 3, plat.width * TILE_SIZE, 2);
+          ctx.fillStyle = '#0c0a09';
+          ctx.fillRect(plat.currentX, plat.currentY + TILE_SIZE - 4, plat.width * TILE_SIZE, 4);
+          ctx.strokeStyle = 'rgba(248, 113, 113, 0.35)';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(plat.currentX + 0.5, plat.currentY + 0.5, plat.width * TILE_SIZE - 1, TILE_SIZE - 1);
         } else {
           ctx.fillStyle = '#60a5fa';
           ctx.fillRect(plat.currentX, plat.currentY, plat.width * TILE_SIZE, TILE_SIZE);
@@ -9832,6 +11391,7 @@
       renderCinderBoss();
       renderFrozenBoss();
       renderWardenBoss();
+      renderSpikeEscapeWorld();
 
       if (bullets.length) drawPlayerBullets(ctx, level);
 
@@ -9839,6 +11399,7 @@
 
       // Draw boss UI (outside camera transform)
       renderBossUI();
+      renderSpikeEscapeHUD();
       renderMemoryChaseHUD();
       renderFracturedMemoryHints();
 
@@ -9846,6 +11407,24 @@
 
       // Glitch overlay — applied after everything else
       if (glitchMode) renderGlitchOverlay();
+
+      // Holy water flash
+      if (holyWaterFlash > 0) {
+        ctx.save();
+        const a = Math.min(1, holyWaterFlash / 45);
+        ctx.fillStyle = `rgba(186, 230, 253, ${0.35 * a})`;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = `rgba(255, 255, 255, ${0.55 * a})`;
+        ctx.font = '16px "Press Start 2P"';
+        ctx.textAlign = 'center';
+        ctx.shadowColor = '#38bdf8';
+        ctx.shadowBlur = 18;
+        ctx.fillText('HOLY WATER', canvas.width / 2, canvas.height / 2);
+        ctx.shadowBlur = 0;
+        ctx.textAlign = 'left';
+        ctx.restore();
+        holyWaterFlash--;
+      }
     }
 
     function renderGlitchOverlay() {
