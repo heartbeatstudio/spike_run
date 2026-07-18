@@ -4537,6 +4537,10 @@
     }
 
     function shootBullet() {
+      const lv = levels[currentLevel];
+      // Levels 26–30 (fractured memory): no player shooting
+      if (lv && lv.isFracturedMemory) return;
+
       const now = Date.now();
       if (now - lastShootTime < SHOOT_COOLDOWN) return;
 
@@ -8172,6 +8176,9 @@
     }
 
     function shootBullet2() {
+      const lv = levels[currentLevel];
+      if (lv && lv.isFracturedMemory) return;
+
       const now = Date.now();
       if (now - lastShootTime < SHOOT_COOLDOWN) return;
       lastShootTime = now;
