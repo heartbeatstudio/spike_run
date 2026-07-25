@@ -278,8 +278,10 @@
    </div><!-- Progress level select (unlocked by beating prior levels) -->
    <div id="progress-level-select" class="absolute inset-0 flex-col items-center justify-center bg-black/95 z-50 hidden overflow-y-auto py-8">
     <h2 class="game-font text-2xl text-cyan-400 mb-2">LEVEL SELECT</h2>
-    <p class="game-font text-[10px] text-gray-500 mb-6 text-center max-w-md px-4 leading-relaxed">Green = cleared. Cyan = unlocked next. 🔒 = beat the level before it first. No bonus coins for clearing — only pickups count.</p>
-    <div id="progress-level-select-grid" class="grid grid-cols-5 gap-3 mb-8 px-4 max-w-3xl w-full justify-items-stretch"></div>
+    <p class="game-font text-[10px] text-gray-500 mb-6 text-center max-w-md px-4 leading-relaxed">Green = cleared. Cyan = unlocked next. 🔒 = beat the level before it first. Secret stages appear here after you find their hidden exits.</p>
+    <div id="progress-level-select-grid" class="grid grid-cols-5 gap-3 mb-6 px-4 max-w-3xl w-full justify-items-stretch"></div>
+    <h3 id="progress-secret-heading" class="game-font text-sm text-fuchsia-400 mb-3 hidden">SECRET LEVELS</h3>
+    <div id="progress-secret-select-grid" class="grid grid-cols-4 gap-3 mb-8 px-4 max-w-2xl w-full justify-items-stretch hidden"></div>
     <button type="button" id="close-progress-level-select" class="game-font text-sm bg-gradient-to-r from-gray-600 to-gray-500 hover:from-gray-500 hover:to-gray-400 text-white px-8 py-4 rounded-lg">BACK</button>
    </div><!-- Secret Level Select -->
    <div id="level-select" class="absolute inset-0 flex-col items-center justify-center bg-black/95 z-50 hidden">
@@ -338,6 +340,8 @@
     // Game Constants
     const TILE_SIZE = 32;
     const TILE_COIN = 23; // collectible — spend in shop (session only; resets on reload)
+    const TILE_SECRET_EXIT = 28; // hidden warp to a secret level (warpTo: index)
+    const MAIN_LEVEL_COUNT = 45; // campaign stages 1–45 (indices 0–44); secrets append after
     const COIN_PICKUP_VALUE = 10; // wallet credit per coin tile collected
     const GRAVITY = 0.8;
     const JUMP_FORCE = -14;
@@ -352,6 +356,8 @@
     let currentLevel = 0;
     let maxSelectableLevelIndex = 0; // can play 0 .. this (inclusive); grows when you beat a level
     let beatenLevelIndices = new Set();
+    let unlockedSecretIndices = new Set(); // secret stages found via hidden exits
+    let secretReturnLevel = null; // host level to return to after clearing a secret
     let deaths = 0;
     let player = {};
     let keys = {};
@@ -423,6 +429,8 @@
       { id: 'sand_scourge', title: "DESERT'S END", desc: 'Defeat the Cactus Titan.', secret: true },
       { id: 'spike_crown', title: 'CROWN OF THORNS', desc: 'Defeat the Iron Thorn Relic (level 45).', secret: false },
       { id: 'field_medic', title: 'FIELD MEDIC', desc: 'Grab a floating boss medkit heal.', secret: true },
+      { id: 'secret_door', title: 'BEHIND THE WALL', desc: 'Enter a secret level from a hidden exit.', secret: true },
+      { id: 'secret_hunter', title: 'CARTOGRAPHER', desc: 'Clear every secret level.', secret: true },
       { id: 'cheat_first', title: 'HOLLOW WIN', desc: 'Beat the game once while using cheats.', secret: true },
       { id: 'cheat_second', title: 'NAME ON THE LIST', desc: 'Take the second cheat-ending.', secret: true },
       { id: 'cheat_third', title: 'INCIDENT REPORT', desc: 'Reach the third cheat-ending.', secret: true },
@@ -2783,7 +2791,7 @@
       }
     };
 
-    // Level Definitions (1 = platform, 2 = spike, 3 = enemy, 4 = boost, 5 = goal, 6 = moving platform, 24/25 = skyland enemies)
+    // Level Definitions (1 = platform, 2 = spike, 3 = enemy, 4 = boost, 5 = goal, 6 = moving platform, 24/25 = skyland enemies, 28 = secret exit)
     const levels = [
       // Level 1 - Introduction
       {
@@ -2855,7 +2863,7 @@
       // Level 3 - Enemy Gauntlet
       {
         width: 60,
-        height: 15,
+        height: 22,
         playerStart: { x: 2, y: 12 },
         tiles: [
           // Ground with gaps
@@ -2883,6 +2891,10 @@
           { x: 30, y: 12, type: TILE_COIN },
           { x: 44, y: 8, type: TILE_COIN },
           { x: 8, y: 11, type: TILE_COIN },
+          // Secret: fall into the boost gap (x~36–41) — deep ledges instead of a bottomless pit
+          { x: 37, y: 20, type: 1 }, { x: 38, y: 20, type: 1 }, { x: 39, y: 20, type: 1 },
+          { x: 36, y: 18, type: 1 }, { x: 35, y: 17, type: 1 },
+          { x: 34, y: 16, type: TILE_SECRET_EXIT, warpTo: 45 },
         ],
         movingPlatforms: []
       },
@@ -3320,6 +3332,9 @@
           { x: 20, y: 13, type: TILE_COIN },
           { x: 35, y: 12, type: TILE_COIN },
           { x: 49, y: 16, type: TILE_COIN },
+          // Secret: backtrack left off the start ledge — tiny shelf above the lava
+          { x: 0, y: 18, type: 1 }, { x: 1, y: 18, type: 1 },
+          { x: 0, y: 17, type: TILE_SECRET_EXIT, warpTo: 46 },
         ],
         movingPlatforms: []
       },
@@ -3530,14 +3545,19 @@
       // Level 17 - ICE CAVERN (two-step platforms, all jumps ≤3 tiles)
       {
         bgTheme: 'ice',
-        width: 55,
+        width: 58,
         height: 22,
         playerStart: { x: 2, y: 19 },
         tiles: [
           ...Array(55).fill().map((_, i) => ({ x: i, y: 21, type: 1 })),
-          ...Array(55).fill().map((_, i) => ({ x: i, y: 0,  type: 1 })),
+          ...Array(58).fill().map((_, i) => ({ x: i, y: 0,  type: 1 })),
           ...Array(20).fill().map((_, i) => ({ x: 0,  y: i + 1, type: 1 })),
-          ...Array(20).fill().map((_, i) => ({ x: 54, y: i + 1, type: 1 })),
+          // Right wall with a floor-level breach (walk along the ice floor into the wall)
+          ...Array(20).fill().map((_, i) => {
+            const y = i + 1;
+            if (y === 19 || y === 20) return null;
+            return { x: 54, y, type: 1 };
+          }).filter(Boolean),
           // Narrow spike pits (2 wide — jumpable)
           { x: 10, y: 21, type: 2 }, { x: 11, y: 21, type: 2 },
           { x: 25, y: 21, type: 2 }, { x: 26, y: 21, type: 2 },
@@ -3568,6 +3588,9 @@
           { x: 25, y: 16, type: TILE_COIN },
           { x: 40, y: 16, type: TILE_COIN },
           { x: 50, y: 12, type: TILE_COIN },
+          // Secret room past the right wall — keep walking the floor under the goal ledge
+          { x: 55, y: 21, type: 18 }, { x: 56, y: 21, type: 18 }, { x: 57, y: 21, type: 18 },
+          { x: 56, y: 20, type: TILE_SECRET_EXIT, warpTo: 47 },
         ],
         movingPlatforms: []
       },
@@ -3734,11 +3757,11 @@
       {
         bgTheme: 'factory',
         width: 55,
-        height: 18,
+        height: 22,
         playerStart: { x: 2, y: 15 },
         tiles: [
-          // Start solid
-          ...Array(6).fill().map((_, i) => ({ x: i, y: 17, type: 1 })),
+          // Start solid — leave a 1-tile trapdoor gap at x=5 (looks like a floor seam)
+          ...Array(5).fill().map((_, i) => ({ x: i, y: 17, type: 1 })),
           // Acid pool 1
           { x: 6, y: 17, type: 21 }, { x: 7, y: 17, type: 21 }, { x: 8, y: 17, type: 21 },
           { x: 9, y: 17, type: 21 }, { x: 10, y: 17, type: 21 }, { x: 11, y: 17, type: 21 },
@@ -3774,6 +3797,11 @@
           { x: 21, y: 11, type: TILE_COIN },
           { x: 34, y: 11, type: TILE_COIN },
           { x: 45, y: 14, type: TILE_COIN },
+          // Secret: drop through the 1-tile floor gap under the start into a crawlspace
+          // (x=5 removed from start solid — see start solid array truncated to 5)
+          { x: 3, y: 20, type: 1 }, { x: 4, y: 20, type: 1 }, { x: 5, y: 20, type: 1 },
+          { x: 6, y: 20, type: 1 }, { x: 7, y: 20, type: 1 }, { x: 8, y: 19, type: 1 },
+          { x: 8, y: 18, type: TILE_SECRET_EXIT, warpTo: 48 },
         ],
         movingPlatforms: []
       },
@@ -4541,6 +4569,132 @@
           ...Array(4).fill().map((_, i) => ({ x: 20 + i, y: 9, type: 1 })),
           { x: 16, y: 15, type: 12 }, { x: 26, y: 13, type: 12 }, { x: 36, y: 15, type: 12 },
           { x: 12, y: 11, type: 12 }, { x: 30, y: 10, type: 12 }
+        ],
+        movingPlatforms: []
+      },
+
+      // ── SECRET LEVELS (found via TILE_SECRET_EXIT in host stages) ──
+
+      // Secret A — Mirror Corridor (hidden in Level 3)
+      {
+        isSecret: true,
+        secretName: 'MIRROR CORRIDOR',
+        secretHost: 2,
+        bgTheme: 'space',
+        width: 48,
+        height: 16,
+        playerStart: { x: 2, y: 13 },
+        tiles: [
+          ...Array(10).fill().map((_, i) => ({ x: i, y: 15, type: 1 })),
+          ...Array(8).fill().map((_, i) => ({ x: 12 + i, y: 15, type: 2 })),
+          ...Array(10).fill().map((_, i) => ({ x: 22 + i, y: 15, type: 1 })),
+          ...Array(6).fill().map((_, i) => ({ x: 34 + i, y: 15, type: 2 })),
+          ...Array(6).fill().map((_, i) => ({ x: 42 + i, y: 15, type: 1 })),
+          { x: 11, y: 12, type: 1 }, { x: 12, y: 12, type: 1 }, { x: 13, y: 12, type: 1 },
+          { x: 16, y: 10, type: 1 }, { x: 17, y: 10, type: 1 }, { x: 18, y: 10, type: 1 },
+          { x: 20, y: 12, type: 1 }, { x: 21, y: 12, type: 1 },
+          { x: 17, y: 9, type: 3 },
+          { x: 26, y: 13, type: 3 }, { x: 29, y: 13, type: 3 },
+          { x: 33, y: 12, type: 1 }, { x: 34, y: 12, type: 4 },
+          { x: 38, y: 8, type: 1 }, { x: 39, y: 8, type: 1 }, { x: 40, y: 8, type: 1 },
+          { x: 21, y: 11, type: 7 },
+          { x: 45, y: 13, type: 1 }, { x: 46, y: 13, type: 1 }, { x: 47, y: 13, type: 1 },
+          { x: 47, y: 12, type: 5 },
+          { x: 8, y: 12, type: TILE_COIN }, { x: 17, y: 7, type: TILE_COIN },
+          { x: 28, y: 12, type: TILE_COIN }, { x: 39, y: 6, type: TILE_COIN },
+          { x: 44, y: 12, type: TILE_COIN }
+        ],
+        movingPlatforms: [
+          { x: 14, y: 13, width: 2, moveX: 0.45, moveY: 0, speed: 0.012 }
+        ]
+      },
+
+      // Secret B — Ember Attic (hidden in Level 12)
+      {
+        isSecret: true,
+        secretName: 'EMBER ATTIC',
+        secretHost: 11,
+        bgTheme: 'volcano',
+        width: 42,
+        height: 18,
+        playerStart: { x: 2, y: 15 },
+        tiles: [
+          ...Array(6).fill().map((_, i) => ({ x: i, y: 17, type: 1 })),
+          ...Array(30).fill().map((_, i) => ({ x: 6 + i, y: 17, type: 13 })),
+          ...Array(6).fill().map((_, i) => ({ x: 36 + i, y: 17, type: 1 })),
+          { x: 5, y: 15, type: 1 }, { x: 6, y: 15, type: 1 }, { x: 7, y: 15, type: 1 },
+          { x: 10, y: 13, type: 1 }, { x: 11, y: 13, type: 1 }, { x: 12, y: 13, type: 1 },
+          { x: 15, y: 11, type: 1 }, { x: 16, y: 11, type: 1 }, { x: 17, y: 11, type: 12 },
+          { x: 20, y: 14, type: 1 }, { x: 21, y: 14, type: 1 }, { x: 22, y: 14, type: 1 },
+          { x: 25, y: 12, type: 1 }, { x: 26, y: 12, type: 1 }, { x: 27, y: 12, type: 1 },
+          { x: 30, y: 10, type: 1 }, { x: 31, y: 10, type: 1 }, { x: 32, y: 10, type: 1 },
+          { x: 34, y: 13, type: 1 }, { x: 35, y: 13, type: 1 },
+          { x: 11, y: 12, type: 14 }, { x: 26, y: 11, type: 14 },
+          { x: 16, y: 10, type: 7 },
+          { x: 38, y: 15, type: 1 }, { x: 39, y: 15, type: 1 }, { x: 40, y: 15, type: 1 },
+          { x: 40, y: 14, type: 5 },
+          { x: 6, y: 13, type: TILE_COIN }, { x: 16, y: 8, type: TILE_COIN },
+          { x: 27, y: 10, type: TILE_COIN }, { x: 32, y: 8, type: TILE_COIN }
+        ],
+        movingPlatforms: []
+      },
+
+      // Secret C — Frost Vault (hidden in Level 17)
+      {
+        isSecret: true,
+        secretName: 'FROST VAULT',
+        secretHost: 16,
+        bgTheme: 'ice',
+        width: 44,
+        height: 18,
+        playerStart: { x: 2, y: 15 },
+        tiles: [
+          ...Array(44).fill().map((_, i) => ({ x: i, y: 17, type: 1 })),
+          ...Array(44).fill().map((_, i) => ({ x: i, y: 0, type: 1 })),
+          ...Array(16).fill().map((_, i) => ({ x: 0, y: i + 1, type: 1 })),
+          ...Array(16).fill().map((_, i) => ({ x: 43, y: i + 1, type: 1 })),
+          { x: 8, y: 17, type: 2 }, { x: 9, y: 17, type: 2 },
+          { x: 20, y: 17, type: 2 }, { x: 21, y: 17, type: 2 },
+          { x: 32, y: 17, type: 2 }, { x: 33, y: 17, type: 2 },
+          ...Array(5).fill().map((_, i) => ({ x: 6 + i, y: 14, type: 18 })),
+          ...Array(5).fill().map((_, i) => ({ x: 14 + i, y: 12, type: 18 })),
+          ...Array(5).fill().map((_, i) => ({ x: 22 + i, y: 14, type: 18 })),
+          ...Array(5).fill().map((_, i) => ({ x: 30 + i, y: 11, type: 18 })),
+          ...Array(4).fill().map((_, i) => ({ x: 37 + i, y: 13, type: 1 })),
+          { x: 8, y: 13, type: 3 }, { x: 24, y: 13, type: 3 }, { x: 32, y: 10, type: 16 },
+          { x: 16, y: 11, type: 7 },
+          { x: 40, y: 12, type: 5 },
+          { x: 7, y: 12, type: TILE_COIN }, { x: 16, y: 9, type: TILE_COIN },
+          { x: 25, y: 12, type: TILE_COIN }, { x: 34, y: 9, type: TILE_COIN }
+        ],
+        movingPlatforms: []
+      },
+
+      // Secret D — Rust Crawl (hidden in Level 22)
+      {
+        isSecret: true,
+        secretName: 'RUST CRAWL',
+        secretHost: 21,
+        bgTheme: 'factory',
+        width: 46,
+        height: 16,
+        playerStart: { x: 2, y: 13 },
+        tiles: [
+          ...Array(8).fill().map((_, i) => ({ x: i, y: 15, type: 1 })),
+          ...Array(8).fill().map((_, i) => ({ x: 8 + i, y: 15, type: 21 })),
+          ...Array(6).fill().map((_, i) => ({ x: 16 + i, y: 15, type: 1 })),
+          ...Array(8).fill().map((_, i) => ({ x: 22 + i, y: 15, type: 21 })),
+          ...Array(16).fill().map((_, i) => ({ x: 30 + i, y: 15, type: 1 })),
+          ...Array(6).fill().map((_, i) => ({ x: 8 + i, y: 12, type: 20, conveyorDir: 1 })),
+          ...Array(6).fill().map((_, i) => ({ x: 22 + i, y: 12, type: 20, conveyorDir: -1 })),
+          { x: 10, y: 11, type: 22 }, { x: 25, y: 11, type: 22 },
+          { x: 18, y: 13, type: 7 },
+          { x: 34, y: 12, type: 1 }, { x: 35, y: 12, type: 1 }, { x: 36, y: 12, type: 1 },
+          { x: 35, y: 11, type: 22 },
+          { x: 42, y: 13, type: 1 }, { x: 43, y: 13, type: 1 }, { x: 44, y: 13, type: 1 },
+          { x: 44, y: 12, type: 5 },
+          { x: 4, y: 12, type: TILE_COIN }, { x: 12, y: 10, type: TILE_COIN },
+          { x: 26, y: 10, type: TILE_COIN }, { x: 38, y: 12, type: TILE_COIN }
         ],
         movingPlatforms: []
       },
@@ -7684,7 +7838,7 @@
       const grid = document.getElementById('progress-level-select-grid');
       if (!grid) return;
       grid.innerHTML = '';
-      for (let i = 0; i < levels.length; i++) {
+      for (let i = 0; i < MAIN_LEVEL_COUNT; i++) {
         const beaten = beatenLevelIndices.has(i);
         const unlocked = i <= maxSelectableLevelIndex;
         const btn = document.createElement('button');
@@ -7712,6 +7866,37 @@
         }
         grid.appendChild(btn);
       }
+
+      const secretHeading = document.getElementById('progress-secret-heading');
+      const secretGrid = document.getElementById('progress-secret-select-grid');
+      if (!secretHeading || !secretGrid) return;
+      secretGrid.innerHTML = '';
+      const secrets = [];
+      for (let i = MAIN_LEVEL_COUNT; i < levels.length; i++) {
+        if (levels[i] && levels[i].isSecret && unlockedSecretIndices.has(i)) secrets.push(i);
+      }
+      if (secrets.length === 0) {
+        secretHeading.classList.add('hidden');
+        secretGrid.classList.add('hidden');
+        return;
+      }
+      secretHeading.classList.remove('hidden');
+      secretGrid.classList.remove('hidden');
+      secrets.forEach((i, n) => {
+        const beaten = beatenLevelIndices.has(i);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = beaten
+          ? 'game-font text-xs sm:text-sm px-2 py-3 rounded-lg bg-gradient-to-r from-fuchsia-800 to-purple-700 hover:from-fuchsia-700 hover:to-purple-600 text-white shadow-md transform hover:scale-105 transition-all'
+          : 'game-font text-xs sm:text-sm px-2 py-3 rounded-lg bg-gradient-to-r from-fuchsia-600 to-violet-500 hover:from-fuchsia-500 hover:to-violet-400 text-white shadow-md transform hover:scale-105 transition-all';
+        btn.textContent = beaten ? `S${n + 1} ✓` : `S${n + 1}`;
+        btn.title = levels[i].secretName || `Secret ${n + 1}`;
+        btn.addEventListener('click', () => {
+          closeProgressLevelSelect();
+          startFromProgressLevel(i);
+        });
+        secretGrid.appendChild(btn);
+      });
     }
 
     function openProgressLevelSelect() {
@@ -7728,7 +7913,12 @@
     }
 
     function startFromProgressLevel(levelIndex) {
-      if (levelIndex < 0 || levelIndex > maxSelectableLevelIndex || levelIndex >= levels.length) {
+      const lv = levels[levelIndex];
+      const isSecret = lv && lv.isSecret;
+      const allowed = isSecret
+        ? unlockedSecretIndices.has(levelIndex)
+        : (levelIndex >= 0 && levelIndex <= maxSelectableLevelIndex && levelIndex < MAIN_LEVEL_COUNT);
+      if (!allowed) {
         AudioManager.playSound('deny');
         return;
       }
@@ -7740,6 +7930,7 @@
       else practiceHud.classList.add('hidden');
 
       currentLevel = levelIndex;
+      secretReturnLevel = isSecret ? (typeof lv.secretHost === 'number' ? lv.secretHost : 0) : null;
       deaths = 0;
       totalTime = 0;
       levelTimes = [];
@@ -7968,6 +8159,7 @@
       coinsEarnedThisRun = 0;
       playerInvulnFrames = 0;
       player2InvulnFrames = 0;
+      secretReturnLevel = null;
       gameRunning = true;
       moonBootActiveLevelIndex = -1;
 
@@ -8334,7 +8526,11 @@
     }
 
     function updateHUD() {
-      document.getElementById('level-display').textContent = currentLevel + 1;
+      const lv = levels[currentLevel];
+      const levelLabel = (lv && lv.isSecret)
+        ? (lv.secretName || 'SECRET')
+        : String(currentLevel + 1);
+      document.getElementById('level-display').textContent = levelLabel;
       document.getElementById('death-display').textContent = deaths;
       updateCoinDisplays();
 
@@ -8354,12 +8550,50 @@
       levelElapsed = Date.now() - levelStartTime;
       document.getElementById('timer-display').textContent = formatTime(levelElapsed);
     }
-    
+
+    function enterSecretLevel(targetIndex) {
+      if (typeof targetIndex !== 'number' || !levels[targetIndex] || !levels[targetIndex].isSecret) return;
+      if (levels[currentLevel] && levels[currentLevel].isSecret) return;
+      unlockedSecretIndices.add(targetIndex);
+      secretReturnLevel = currentLevel;
+      unlockAchievement('secret_door');
+      AudioManager.playSound('levelComplete');
+      triggerShake(10, 14);
+      // Pause this frame's loop (gameLoop only re-schedules if still running),
+      // then resume with a single loop — calling gameLoop() while one is already
+      // scheduled was stacking updates and making secrets feel 2× fast.
+      gameRunning = false;
+      const dest = targetIndex;
+      requestAnimationFrame(() => {
+        if (gameRunning) return;
+        currentLevel = dest;
+        loadLevel(currentLevel);
+        gameRunning = true;
+        gameLoop();
+      });
+    }
+
     function nextLevel() {
       document.getElementById('level-complete').classList.remove('flex');
       document.getElementById('level-complete').classList.add('hidden');
       const lcLine = document.getElementById('level-coins-earned');
       if (lcLine) lcLine.classList.add('hidden');
+      const nextBtn = document.getElementById('next-level-btn');
+      if (nextBtn) nextBtn.textContent = 'NEXT LEVEL';
+
+      const lv = levels[currentLevel];
+      if (lv && lv.isSecret) {
+        const ret = (typeof secretReturnLevel === 'number')
+          ? secretReturnLevel
+          : (typeof lv.secretHost === 'number' ? lv.secretHost : 0);
+        secretReturnLevel = null;
+        currentLevel = Math.max(0, Math.min(MAIN_LEVEL_COUNT - 1, ret));
+        gameRunning = true;
+        loadLevel(currentLevel);
+        gameLoop();
+        return;
+      }
+
       currentLevel++;
       gameRunning = true;
       loadLevel(currentLevel);
@@ -8625,12 +8859,27 @@
       levelTimes[currentLevel] = finishTime;
       totalTime += finishTime;
 
+      const lv = levels[currentLevel];
+      const clearingSecret = !!(lv && lv.isSecret);
+
       if (!practiceMode && !cheatUsed) {
         beatenLevelIndices.add(currentLevel);
-        maxSelectableLevelIndex = Math.min(
-          levels.length - 1,
-          Math.max(maxSelectableLevelIndex, currentLevel + 1)
-        );
+        if (!clearingSecret) {
+          maxSelectableLevelIndex = Math.min(
+            MAIN_LEVEL_COUNT - 1,
+            Math.max(maxSelectableLevelIndex, currentLevel + 1)
+          );
+        } else {
+          unlockedSecretIndices.add(currentLevel);
+          let allSecretsCleared = true;
+          for (let i = MAIN_LEVEL_COUNT; i < levels.length; i++) {
+            if (levels[i] && levels[i].isSecret && !beatenLevelIndices.has(i)) {
+              allSecretsCleared = false;
+              break;
+            }
+          }
+          if (allSecretsCleared) unlockAchievement('secret_hunter');
+        }
         if (currentLevel === 0) {
           unlockAchievement('first_contact');
           if (twoPlayerMode) unlockAchievement('duo_begin');
@@ -8643,12 +8892,14 @@
         if (currentLevel === 34) unlockAchievement('sky_tyrant');
         if (currentLevel === 39) unlockAchievement('sand_scourge');
         if (currentLevel === 44) unlockAchievement('spike_crown');
-        if (currentLevel >= levels.length - 1) unlockAchievement('marathon');
+        if (!clearingSecret && currentLevel === MAIN_LEVEL_COUNT - 1) unlockAchievement('marathon');
       }
 
       // Coins are only from pickups in the level — no bonus for clearing a stage.
 
-      if (currentLevel >= levels.length - 1) {
+      const nextBtn = document.getElementById('next-level-btn');
+
+      if (!clearingSecret && currentLevel === MAIN_LEVEL_COUNT - 1) {
         // Game complete
         if (cheatUsed) {
           cheatCount++;
@@ -8700,6 +8951,9 @@
         document.getElementById('total-time-interim-display').textContent = formatTime(totalTime);
         const lcLine = document.getElementById('level-coins-earned');
         if (lcLine) lcLine.classList.add('hidden');
+        if (nextBtn) nextBtn.textContent = clearingSecret ? 'RETURN' : 'NEXT LEVEL';
+        const titleEl = document.querySelector('#level-complete h2');
+        if (titleEl) titleEl.textContent = clearingSecret ? 'SECRET CLEARED!' : 'LEVEL COMPLETE!';
         document.getElementById('level-complete').classList.remove('hidden');
         document.getElementById('level-complete').classList.add('flex');
       }
@@ -8714,7 +8968,8 @@
       } catch(e) {
         console.error('[SpikeRunner] frame error:', e);
       }
-      requestAnimationFrame(gameLoop);
+      // Re-check: warps/pauses may clear gameRunning mid-frame — avoid stacking loops
+      if (gameRunning) requestAnimationFrame(gameLoop);
     }
     
     function update() {
@@ -8789,7 +9044,8 @@
       // Update factory bots (type 22 — 2.5× speed, wider patrol)
       level.tiles.filter(t => t.type === 22).forEach(e => {
         if (e.shotDead) return;
-        e.currentX += e.direction * (glitchMode ? 5 : 2.5);
+        const botSpd = level.isSecret ? 1.15 : 2.5;
+        e.currentX += e.direction * (glitchMode ? 5 : botSpd);
         if (Math.abs(e.currentX - e.startX) > e.moveRange) {
           e.direction *= -1;
         }
@@ -9150,7 +9406,10 @@
       }
 
       // Conveyor push (uses flag from last frame's vertical collision)
-      if (player.onConveyorDir !== 0 && !flyMode) player.vx += player.onConveyorDir * 2.5;
+      if (player.onConveyorDir !== 0 && !flyMode) {
+        const beltPush = (levels[currentLevel] && levels[currentLevel].isSecret) ? 1.35 : 2.5;
+        player.vx += player.onConveyorDir * beltPush;
+      }
 
       player.x += player.vx;
       const hTiles = getCollidingTiles(player, level);
@@ -9268,6 +9527,7 @@
             AudioManager.playSound('boost');
           }
           if (tile.type === 5) completeLevel(); // Goal
+          if (tile.type === TILE_SECRET_EXIT && !flyMode) enterSecretLevel(tile.warpTo);
           if (tile.type === 7 && !tile.activated) { // Checkpoint
             tile.activated = true;
             checkpointPos = { x: player.x, y: player.y };
@@ -9468,7 +9728,10 @@
         player2.vx = moveX;
       }
       // Conveyor push for P2
-      if (player2.onConveyorDir !== 0 && !flyMode) player2.vx += player2.onConveyorDir * 2.5;
+      if (player2.onConveyorDir !== 0 && !flyMode) {
+        const beltPush2 = (levels[currentLevel] && levels[currentLevel].isSecret) ? 1.35 : 2.5;
+        player2.vx += player2.onConveyorDir * beltPush2;
+      }
 
       // Fly mode (shared global flag — P2 uses ArrowUp/ArrowDown)
       if (flyMode) {
@@ -9633,6 +9896,7 @@
           if (tile.type === 21 && !flyMode) die2(); // Acid
           if (tile.type === 4  && !flyMode) { player2.vy = BOOST_FORCE; player2.onGround = false; AudioManager.playSound('boost'); }
           if (tile.type === 5)  completeLevel(); // Goal
+          if (tile.type === TILE_SECRET_EXIT && !flyMode) enterSecretLevel(tile.warpTo);
           if (tile.type === 7 && !tile.activated) {
             tile.activated = true;
             checkpointPos = { x: player2.x, y: player2.y };
@@ -11301,6 +11565,29 @@
             ctx.fill();
             ctx.fillStyle = '#451a03';
             ctx.fillRect(ex + TILE_SIZE / 2 - 5, ey + TILE_SIZE / 2 + 3, 10, 2);
+            break;
+          }
+
+          case 28: { // Secret exit — nearly invisible; faint only when nearby
+            const cx = x + TILE_SIZE / 2;
+            const cy = y + TILE_SIZE / 2;
+            const px = player.x + player.width / 2;
+            const py = player.y + player.height / 2;
+            const dist = Math.hypot(px - cx, py - cy);
+            // Invisible beyond ~2 tiles; ghostly speck only when close
+            if (dist > TILE_SIZE * 2.2) break;
+            const near = 1 - dist / (TILE_SIZE * 2.2);
+            const st = Date.now();
+            ctx.save();
+            ctx.globalAlpha = 0.04 + near * near * (0.22 + 0.08 * Math.sin(st / 320));
+            ctx.fillStyle = '#1e1b4b';
+            ctx.fillRect(x + 10, y + 8, TILE_SIZE - 20, TILE_SIZE - 16);
+            if (near > 0.55) {
+              ctx.globalAlpha = (near - 0.55) * 0.35;
+              ctx.fillStyle = '#a78bfa';
+              ctx.fillRect(cx - 1, cy - 5, 2, 10);
+            }
+            ctx.restore();
             break;
           }
         }
