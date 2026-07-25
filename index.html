@@ -2422,82 +2422,150 @@
         }
       },
 
-      // Escape chase — urgent rising theme after the Relic falls
+      // Escape chase — dissonant collapsing-realm horror after the Relic falls
       playSpikeEscapeBGMLoop() {
         if (!this.ctx || this.muted) return;
         if (this.ctx.state === 'suspended') this.ctx.resume();
-        const now = this.ctx.currentTime;
-        const b = 60 / 138;
+        const t0 = this.ctx.currentTime;
+        const bpm = 152;
+        const b = 60 / bpm;
+        const out = this.bgmGain;
         this.bgmOscillators = [];
 
-        const C3=130.81, D3=146.83, E3=164.81, F3=174.61, G3=196, A3=220, B3=246.94;
-        const C4=261.63, D4=293.66, E4=329.63, F4=349.23, G4=392, A4=440, B4=493.88, C5=523.25, D5=587.33, E5=659.25, G5=783.99;
-
-        const hit = (freq, start, dur, type, vol, cut) => {
-          const st = start, et = st + dur;
+        // Unstable low drones (tritone / minor 2nds)
+        const low = [36.71, 38.89, 41.2, 43.65, 46.25, 49.0];
+        for (let i = 0; i < 16; i++) {
+          const st = t0 + i * b * 0.5;
           const osc = this.ctx.createOscillator();
           const g = this.ctx.createGain();
           const filter = this.ctx.createBiquadFilter();
-          osc.type = type;
-          osc.frequency.setValueAtTime(freq, st);
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(low[i % low.length], st);
           filter.type = 'lowpass';
-          filter.frequency.setValueAtTime(cut || 2800, st);
-          g.gain.setValueAtTime(0.0001, st);
-          g.gain.linearRampToValueAtTime(vol, st + 0.015);
-          g.gain.exponentialRampToValueAtTime(0.0001, et);
-          osc.connect(filter); filter.connect(g); g.connect(this.bgmGain);
-          osc.start(st); osc.stop(et + 0.02);
+          filter.frequency.setValueAtTime(380 + (i % 4) * 40, st);
+          g.gain.setValueAtTime(0, st);
+          g.gain.linearRampToValueAtTime(0.26, st + 0.02);
+          g.gain.exponentialRampToValueAtTime(0.02, st + b * 0.44);
+          osc.connect(filter);
+          filter.connect(g);
+          g.connect(out);
+          osc.start(st);
+          osc.stop(st + b * 0.5);
           this.bgmOscillators.push(osc);
-        };
-
-        const lead = [
-          {n:C4,d:0.5},{n:E4,d:0.5},{n:G4,d:0.5},{n:C5,d:0.5},
-          {n:B4,d:0.5},{n:G4,d:0.5},{n:E4,d:0.5},{n:C4,d:0.5},
-          {n:D4,d:0.5},{n:F4,d:0.5},{n:A4,d:0.5},{n:D5,d:0.5},
-          {n:C5,d:0.5},{n:A4,d:0.5},{n:F4,d:0.5},{n:D4,d:0.5},
-          {n:E4,d:0.5},{n:G4,d:0.5},{n:B4,d:0.5},{n:E5,d:0.5},
-          {n:D5,d:0.5},{n:B4,d:0.5},{n:G4,d:0.5},{n:E4,d:0.5},
-          {n:F4,d:0.5},{n:A4,d:0.5},{n:C5,d:1},
-          {n:D5,d:1},{n:C5,d:1},{n:G4,d:1},{n:C5,d:1},
-          // Second phrase — higher urgency
-          {n:E5,d:0.5},{n:D5,d:0.5},{n:C5,d:0.5},{n:G4,d:0.5},
-          {n:A4,d:0.5},{n:B4,d:0.5},{n:C5,d:1},
-          {n:D5,d:0.5},{n:E5,d:0.5},{n:G5,d:1},
-          {n:E5,d:1},{n:C5,d:1},{n:G4,d:1},{n:C4,d:5}
-        ];
-        const bass = [
-          C3,C3,G3,G3, C3,C3,G3,G3,
-          D3,D3,A3,A3, D3,D3,A3,A3,
-          E3,E3,B3,B3, E3,E3,B3,B3,
-          F3,F3,C4,C4, G3,G3,C3,C3
-        ];
-
-        let t = 0;
-        lead.forEach(n => {
-          const st = now + t * b;
-          hit(n.n, st, n.d * b * 0.88, 'triangle', 0.065, 3200);
-          hit(n.n * 2.01, st, n.d * b * 0.7, 'sine', 0.022, 5000);
-          t += n.d;
-        });
-        const loopBeats = t;
-
-        bass.forEach((f, i) => {
-          const st = now + i * b;
-          hit(f, st, b * 0.82, 'sine', 0.1, 420);
-          hit(f * 2, st, b * 0.4, 'square', 0.018, 900);
-        });
-
-        for (let i = 0; i < loopBeats; i++) {
-          if (i % 2 === 1) {
-            const st = now + i * b + b * 0.5;
-            hit(G4, st, b * 0.18, 'square', 0.012, 2400);
-          }
         }
 
-        hit(C3, now, loopBeats * b, 'sine', 0.025, 200);
-        hit(G3, now + loopBeats * b * 0.5, loopBeats * b * 0.5, 'sine', 0.02, 260);
+        // Chromatic screech lead — no major-key resolution
+        const hi = [311.13, 329.63, 349.23, 369.99, 392.0, 415.3, 440.0, 466.16];
+        for (let i = 0; i < 32; i++) {
+          const st = t0 + i * b * 0.25;
+          const osc = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          osc.type = 'square';
+          const f = hi[(i * 3 + (i % 5)) % hi.length] * (1 + (i % 7) * 0.008);
+          osc.frequency.setValueAtTime(f, st);
+          if (i % 8 === 0) osc.frequency.linearRampToValueAtTime(f * 0.92, st + b * 0.2);
+          g.gain.setValueAtTime(0, st);
+          g.gain.linearRampToValueAtTime(0.07, st + 0.005);
+          g.gain.exponentialRampToValueAtTime(0.006, st + b * 0.14);
+          osc.connect(g);
+          g.connect(out);
+          osc.start(st);
+          osc.stop(st + b * 0.18);
+          this.bgmOscillators.push(osc);
+        }
 
-        this.bgmTimeout = setTimeout(() => this.playSpikeEscapeBGMLoop(), loopBeats * b * 1000);
+        // Metallic tick / collapse pulse
+        for (let i = 0; i < 64; i++) {
+          const st = t0 + i * b * 0.125;
+          const osc = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(1800 + (i % 11) * 210, st);
+          g.gain.setValueAtTime(0, st);
+          g.gain.linearRampToValueAtTime(i % 4 === 0 ? 0.11 : 0.045, st + 0.002);
+          g.gain.exponentialRampToValueAtTime(0.008, st + 0.035);
+          osc.connect(g);
+          g.connect(out);
+          osc.start(st);
+          osc.stop(st + 0.04);
+          this.bgmOscillators.push(osc);
+        }
+
+        // Sustained uneasy pad under the chase
+        const pad = this.ctx.createOscillator();
+        const padG = this.ctx.createGain();
+        const padF = this.ctx.createBiquadFilter();
+        pad.type = 'sine';
+        pad.frequency.setValueAtTime(55, t0);
+        pad.frequency.linearRampToValueAtTime(58.27, t0 + 8 * b);
+        padF.type = 'lowpass';
+        padF.frequency.setValueAtTime(220, t0);
+        padG.gain.setValueAtTime(0.04, t0);
+        pad.connect(padF);
+        padF.connect(padG);
+        padG.connect(out);
+        pad.start(t0);
+        pad.stop(t0 + 8 * b + 0.05);
+        this.bgmOscillators.push(pad);
+
+        this.bgmTimeout = setTimeout(() => this.playSpikeEscapeBGMLoop(), 8 * b * 1000);
+      },
+
+      // Epilogue overlay — quieter dread after reaching the exit
+      playSpikeEscapeEpilogueBGMLoop() {
+        if (!this.ctx || this.muted) return;
+        if (this.ctx.state === 'suspended') this.ctx.resume();
+        const t0 = this.ctx.currentTime;
+        const dur = 6.5;
+        this.bgmOscillators = [];
+        const out = this.bgmGain;
+
+        const drones = [
+          { f: 41.2, vol: 0.09 },
+          { f: 61.74, vol: 0.055 },
+          { f: 82.41, vol: 0.04 },
+          { f: 123.47, vol: 0.025 }
+        ];
+        drones.forEach((d, i) => {
+          const osc = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          const filter = this.ctx.createBiquadFilter();
+          osc.type = i < 2 ? 'sawtooth' : 'sine';
+          osc.frequency.setValueAtTime(d.f, t0);
+          osc.frequency.linearRampToValueAtTime(d.f * (i % 2 === 0 ? 1.015 : 0.985), t0 + dur);
+          filter.type = 'lowpass';
+          filter.frequency.setValueAtTime(180 + i * 60, t0);
+          g.gain.setValueAtTime(0, t0);
+          g.gain.linearRampToValueAtTime(d.vol, t0 + 0.8);
+          g.gain.setValueAtTime(d.vol * 0.85, t0 + dur * 0.6);
+          g.gain.linearRampToValueAtTime(0.001, t0 + dur);
+          osc.connect(filter);
+          filter.connect(g);
+          g.connect(out);
+          osc.start(t0);
+          osc.stop(t0 + dur + 0.05);
+          this.bgmOscillators.push(osc);
+        });
+
+        // Sparse distant chime — unresolved
+        const chimes = [207.65, 233.08, 246.94, 277.18];
+        for (let i = 0; i < 4; i++) {
+          const st = t0 + 0.9 + i * 1.35;
+          const osc = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(chimes[i], st);
+          g.gain.setValueAtTime(0, st);
+          g.gain.linearRampToValueAtTime(0.035, st + 0.05);
+          g.gain.exponentialRampToValueAtTime(0.001, st + 1.1);
+          osc.connect(g);
+          g.connect(out);
+          osc.start(st);
+          osc.stop(st + 1.2);
+          this.bgmOscillators.push(osc);
+        }
+
+        this.bgmTimeout = setTimeout(() => this.playSpikeEscapeEpilogueBGMLoop(), dur * 1000);
       },
 
       startSpikeEscapeBGM() {
@@ -2505,6 +2573,13 @@
         if (this.ctx.state === 'suspended') this.ctx.resume();
         this.stopBGM();
         this.playSpikeEscapeBGMLoop();
+      },
+
+      startSpikeEscapeEpilogueBGM() {
+        if (!this.ctx || this.muted) return;
+        if (this.ctx.state === 'suspended') this.ctx.resume();
+        this.stopBGM();
+        this.playSpikeEscapeEpilogueBGMLoop();
       },
 
       // Mechanical Warden boss music — D minor, 160 BPM, industrial/aggressive
@@ -4480,13 +4555,14 @@
       const arenaW = (lv.width || 44) * TILE_SIZE;
       const arenaH = (lv.height || 22) * TILE_SIZE;
       const spikeHP = 72;
+      const cactusHP = 50;
       boss = {
         x: skyBoss ? 980 : (cactusBoss ? 36 : (spikeBoss ? arenaW * 0.55 : 800)),
         y: skyBoss ? 220 : (cactusBoss ? 38 : (spikeBoss ? 160 : 300)),
         width: skyBoss ? 180 : (cactusBoss ? Math.max(900, arenaW - 72) : (spikeBoss ? 156 : 64)),
         height: skyBoss ? 110 : (cactusBoss ? Math.max(420, arenaH - 180) : (spikeBoss ? 156 : 64)),
-        hp: spikeBoss ? spikeHP : 30,
-        maxHP: spikeBoss ? spikeHP : 30,
+        hp: spikeBoss ? spikeHP : (cactusBoss ? cactusHP : 30),
+        maxHP: spikeBoss ? spikeHP : (cactusBoss ? cactusHP : 30),
         vx: 0,
         vy: 0,
         phase: 0,
@@ -5224,6 +5300,23 @@
       }
     }
 
+    function findSpikeEscapeSafeSpot(minTileX) {
+      const level = levels[currentLevel];
+      const solids = (level.tiles || []).filter(t => t.type === 1);
+      const startX = Math.max(1, Math.floor(minTileX));
+      for (let x = startX; x < (level.width || 100) - 2; x++) {
+        // Prefer main floor (y=20) then mid platforms
+        for (const y of [20, 18, 16, 14, 12]) {
+          const hasFloor = solids.some(t => t.x === x && t.y === y);
+          if (!hasFloor) continue;
+          const blocked = solids.some(t => t.x === x && t.y === y - 1);
+          if (blocked) continue;
+          return { x: x * TILE_SIZE, y: (y - 1) * TILE_SIZE };
+        }
+      }
+      return { x: startX * TILE_SIZE, y: 18 * TILE_SIZE };
+    }
+
     function startSpikeEscape() {
       const level = levels[currentLevel];
       spikeEscapeActive = true;
@@ -5237,7 +5330,8 @@
       bossAttacks = [];
       bullets = [];
       bossMedkit = null;
-      playerHP = Math.max(playerHP, 8);
+      playerHP = Math.max(playerHP, 10);
+      playerInvulnFrames = 90;
 
       // Snapshot original arena so reload/retry restores the boss fight
       if (!spikeBossArenaBackup) {
@@ -5249,16 +5343,15 @@
         };
       }
 
-      // Rebuild arena into a long playable escape corridor
-      const W = 168;
+      // Long fair chase corridor — solid floor, spaced gaps, exit at the far end
+      const W = 170;
       level.width = W;
       level.movingPlatforms = [
-        { x: 28, y: 14, width: 2, moveX: 1.2, moveY: 0, speed: 0.018 },
-        { x: 52, y: 12, width: 2, moveX: -1.0, moveY: 0.2, speed: 0.016 },
-        { x: 78, y: 13, width: 2, moveX: 1.1, moveY: 0.1, speed: 0.015 },
-        { x: 104, y: 11, width: 2, moveX: -1.2, moveY: 0.18, speed: 0.017 },
-        { x: 128, y: 10, width: 2, moveX: 0.9, moveY: -0.15, speed: 0.015 },
-        { x: 148, y: 12, width: 2, moveX: -0.8, moveY: 0.12, speed: 0.014 }
+        { x: 28, y: 17, width: 3, moveX: 0.7, moveY: 0, speed: 0.013 },
+        { x: 55, y: 16, width: 3, moveX: -0.6, moveY: 0, speed: 0.012 },
+        { x: 88, y: 17, width: 3, moveX: 0.65, moveY: 0, speed: 0.012 },
+        { x: 120, y: 16, width: 3, moveX: -0.55, moveY: 0, speed: 0.011 },
+        { x: 145, y: 17, width: 3, moveX: 0.5, moveY: 0, speed: 0.011 }
       ];
       level.movingPlatforms.forEach(p => {
         p.startX = p.x * TILE_SIZE;
@@ -5268,56 +5361,48 @@
         p.phase = 0;
       });
       const T = [];
-      // Floor with intentional gaps (more sections for a longer chase)
+      // Mostly continuous floor — short gaps spaced across the long run
       const gaps = [
-        [18, 20], [38, 40], [58, 61], [76, 78],
-        [96, 99], [118, 121], [138, 141], [152, 154]
+        [22, 23], [40, 41], [58, 59], [76, 77],
+        [94, 95], [112, 113], [130, 131], [148, 149]
       ];
       for (let x = 0; x < W; x++) {
         if (gaps.some(([a, b]) => x >= a && x <= b)) continue;
         T.push({ x, y: 20, type: 1 });
       }
-      // Ceiling / void floor
+      // Decorative ceiling (far above jump height — not a hazard)
       for (let x = 0; x < W; x++) {
-        T.push({ x, y: 21, type: 2 });
-        if (x > 4 && x < W - 4) T.push({ x, y: 1, type: 2, spikeDir: 'down' });
+        T.push({ x, y: 0, type: 1 });
+        T.push({ x, y: 1, type: 1 });
       }
-      // Left wall (collapse starts behind)
+      // Left wall
       for (let y = 2; y <= 19; y++) T.push({ x: 0, y, type: 1 });
-      // Platforms — layered gauntlet across the whole run
+      // Step-up platforms / gap bridges along the whole corridor
       [
-        [6,18,5],[12,16,4],[22,17,4],[32,15,5],[42,13,4],[48,16,3],
-        [62,14,5],[66,11,3],[82,16,4],[88,13,4],[92,17,3],
-        [108,15,5],[112,12,3],[122,14,4],[132,11,4],[136,16,3],
-        [144,14,4],[150,11,3],[156,16,4]
+        [8, 18, 4], [20, 18, 3], [24, 18, 3],
+        [38, 17, 3], [42, 18, 3],
+        [56, 17, 3], [60, 18, 3],
+        [74, 17, 3], [78, 18, 3],
+        [92, 16, 3], [96, 18, 3],
+        [110, 17, 3], [114, 18, 3],
+        [128, 16, 3], [132, 18, 3],
+        [146, 17, 3], [150, 18, 3],
+        [158, 16, 4]
       ].forEach(([x0, y, w]) => {
         for (let i = 0; i < w; i++) T.push({ x: x0 + i, y, type: 1 });
       });
-      // Side spikes / hazards
-      [
-        [15,19,'up'],[16,19,'up'],[25,19,'up'],[34,14,'up'],[45,12,'up'],
-        [55,19,'up'],[64,13,'up'],[72,19,'up'],[86,15,'up'],[94,12,'up'],
-        [110,14,'up'],[120,19,'up'],[134,10,'up'],[146,13,'up'],[158,15,'up']
-      ].forEach(([x, y, dir]) => {
-        T.push({ x, y, type: 2, spikeDir: dir });
-      });
-      [
-        [24,16,'right'],[24,17,'right'],[47,14,'left'],[47,15,'left'],
-        [68,12,'right'],[90,14,'left'],[114,13,'right'],[140,12,'left']
-      ].forEach(([x, y, dir]) => {
-        T.push({ x, y, type: 2, spikeDir: dir });
-      });
-      // Soft checkpoints / coins as breadcrumbs
+      // Breadcrumb coins
       T.push(
-        { x: 14, y: 15, type: TILE_COIN }, { x: 36, y: 14, type: TILE_COIN },
-        { x: 56, y: 15, type: TILE_COIN }, { x: 84, y: 12, type: TILE_COIN },
-        { x: 106, y: 14, type: TILE_COIN }, { x: 130, y: 10, type: TILE_COIN },
-        { x: 150, y: 10, type: TILE_COIN }
+        { x: 12, y: 17, type: TILE_COIN }, { x: 32, y: 17, type: TILE_COIN },
+        { x: 52, y: 17, type: TILE_COIN }, { x: 72, y: 17, type: TILE_COIN },
+        { x: 100, y: 17, type: TILE_COIN }, { x: 124, y: 17, type: TILE_COIN },
+        { x: 142, y: 17, type: TILE_COIN }, { x: 160, y: 15, type: TILE_COIN }
       );
       // Exit landing pad
-      for (let x = 160; x < W; x++) {
+      for (let x = 162; x < W; x++) {
         T.push({ x, y: 18, type: 1 });
         T.push({ x, y: 19, type: 1 });
+        T.push({ x, y: 20, type: 1 });
       }
       level.tiles = T;
       level.playerStart = { x: 2, y: 18 };
@@ -5327,12 +5412,13 @@
       player.vx = 0;
       player.vy = 0;
       cameraX = 0;
+      lastSafePos = { x: player.x, y: player.y };
 
       spikeEscapeExit = {
-        x: 161 * TILE_SIZE,
+        x: 163 * TILE_SIZE,
         y: 12 * TILE_SIZE,
-        width: 5 * TILE_SIZE,
-        height: 7 * TILE_SIZE
+        width: 6 * TILE_SIZE,
+        height: 8 * TILE_SIZE
       };
 
       triggerShake(22, 40);
@@ -5352,35 +5438,21 @@
       if (spikeEscapeTimer === 160) spikeEscapeCaption = 'KEEP RUNNING — REACH THE LIGHT!';
       if (spikeEscapeTimer === 320) spikeEscapeCaption = '';
 
-      // Chasing collapse wall (paced for the long corridor)
-      const collapseSpeed = 0.82 + Math.min(0.95, spikeEscapeTimer / 900);
+      // Collapse chases hard — keep moving or it catches you
+      const collapseSpeed = 2.4 + Math.min(2.0, spikeEscapeTimer / 700);
       spikeEscapeCollapseX += collapseSpeed;
       // Soft checkpoint: advance respawn as player progresses
       const pxTile = Math.floor(player.x / TILE_SIZE);
-      if (pxTile > spikeEscapeRespawnX + 4) {
-        spikeEscapeRespawnX = Math.min(pxTile - 2, 155);
+      if (pxTile > spikeEscapeRespawnX + 3) {
+        spikeEscapeRespawnX = Math.min(pxTile - 1, (levels[currentLevel]?.width || 170) - 8);
       }
-      // Hit by collapse
-      if (!flyMode && player.x < spikeEscapeCollapseX + 18) {
-        playerHP = Math.max(0, playerHP - 2);
-        AudioManager.playSound('death');
-        triggerShake(12, 16);
-        if (playerHP <= 0) {
-          playerHP = 6;
-          deaths++;
-          updateHUD();
-        }
-        const rx = Math.max(spikeEscapeRespawnX, Math.floor(spikeEscapeCollapseX / TILE_SIZE) + 3);
-        player.x = rx * TILE_SIZE;
-        player.y = 16 * TILE_SIZE;
-        player.vx = 4;
-        player.vy = -4;
-        spikeEscapeCollapseX = Math.min(spikeEscapeCollapseX, player.x - TILE_SIZE * 4);
+      // Hit by collapse — soft-fail with invuln so it can't multi-hit
+      if (!flyMode && playerInvulnFrames <= 0 && player.x < spikeEscapeCollapseX + 18) {
+        softFailSpikeEscape();
       }
 
-      // Falling debris / dust (cosmetic + light hazard)
-      if (spikeEscapeTimer % 6 === 0) {
-        const levelPxW = (levels[currentLevel]?.width || 168) * TILE_SIZE;
+      // Falling debris / dust (mostly cosmetic; rare light hazard)
+      if (spikeEscapeTimer % 8 === 0) {
         const spawnMin = Math.max(spikeEscapeCollapseX, cameraX);
         spikeEscapeDebris.push({
           x: spawnMin + Math.random() * Math.max(80, canvas.width + 120),
@@ -5389,7 +5461,7 @@
           vy: 3.5 + Math.random() * 5,
           size: 4 + Math.random() * 10,
           life: 140,
-          lethal: spikeEscapeTimer > 120 && Math.random() < 0.28
+          lethal: spikeEscapeTimer > 180 && Math.random() < 0.12
         });
       }
       for (let i = spikeEscapeDebris.length - 1; i >= 0; i--) {
@@ -5402,23 +5474,11 @@
           spikeEscapeDebris.splice(i, 1);
           continue;
         }
-        if (d.lethal && !flyMode &&
+        if (d.lethal && !flyMode && playerInvulnFrames <= 0 &&
             d.x < player.x + player.width && d.x + d.size > player.x &&
             d.y < player.y + player.height && d.y + d.size > player.y) {
-          playerHP = Math.max(0, playerHP - 1);
           spikeEscapeDebris.splice(i, 1);
-          AudioManager.playSound('death');
-          if (playerHP <= 0) {
-            playerHP = 6;
-            const rx = Math.max(spikeEscapeRespawnX, Math.floor(spikeEscapeCollapseX / TILE_SIZE) + 3);
-            player.x = rx * TILE_SIZE;
-            player.y = 16 * TILE_SIZE;
-            player.vx = 3;
-            player.vy = -3;
-            deaths++;
-            updateHUD();
-            triggerShake(10, 14);
-          }
+          softFailSpikeEscape();
         }
       }
 
@@ -5436,7 +5496,7 @@
       gameRunning = false;
       AudioManager.playSound('victory');
       if (!AudioManager.muted) {
-        try { AudioManager.startSpikeEscapeBGM(); } catch (e) {}
+        try { AudioManager.startSpikeEscapeEpilogueBGM(); } catch (e) {}
       }
 
       const lines = [
@@ -8431,8 +8491,48 @@
       document.close();
     }
     
+    function softFailSpikeEscape() {
+      if (playerInvulnFrames > 0) return;
+      playerVoidFallActive = false;
+      playerFallSpin = 0;
+      spawnDeathParticles(player.x, player.y, SKINS[selectedSkin]);
+      playerHP = Math.max(0, playerHP - 1);
+      AudioManager.playSound('death');
+      triggerShake(10, 14);
+      if (playerHP <= 0) {
+        playerHP = 8;
+        deaths++;
+        updateHUD();
+      }
+      const minX = Math.max(
+        spikeEscapeRespawnX,
+        Math.floor(spikeEscapeCollapseX / TILE_SIZE) + 4
+      );
+      const spot = findSpikeEscapeSafeSpot(minX);
+      player.x = spot.x;
+      player.y = spot.y;
+      player.vx = 4;
+      player.vy = -2;
+      player.onGround = false;
+      player.onPlatform = null;
+      player.mimicTile = null;
+      playerSquish = { x: 1.5, y: 0.5 };
+      playerInvulnFrames = 90;
+      lastSafePos = { x: player.x, y: player.y };
+      spikeEscapeCollapseX = Math.min(spikeEscapeCollapseX, player.x - TILE_SIZE * 5);
+      cameraX = Math.max(0, Math.min(
+        player.x - canvas.width * 0.35,
+        (levels[currentLevel].width * TILE_SIZE) - canvas.width
+      ));
+    }
+
     function die() {
       if (playerInvulnFrames > 0) return;
+      // During Iron Thorn escape, never reload the boss arena — soft-respawn instead
+      if (spikeEscapeActive) {
+        softFailSpikeEscape();
+        return;
+      }
       playerVoidFallActive = false;
       spawnDeathParticles(player.x, player.y, SKINS[selectedSkin]);
       triggerShake(10, 15);
@@ -8911,6 +9011,8 @@
         moveX = MOVE_SPEED * p1Spd;
         playerFacingRight = true;
       }
+      // Escape chase — slight speed boost so collapse never outruns you
+      if (spikeEscapeActive && moveX !== 0) moveX *= 1.22;
 
       const memChase = !flyMode && level.isMemoryChase;
       if (memChase) {
@@ -9154,7 +9256,10 @@
       // Check hazards (skipped while tumbling off the bottom)
       if (!playerVoidFallActive) {
         vTiles.concat(hTiles).forEach(tile => {
-          if (tile.type === 2  && !flyMode) die(); // Spike
+          if (tile.type === 2  && !flyMode) {
+            if (spikeEscapeActive) softFailSpikeEscape();
+            else die(); // Spike
+          }
           if (tile.type === 13 && !flyMode) die(); // Lava
           if (tile.type === 21 && !flyMode) die(); // Acid
           if (tile.type === 4 && !flyMode) { // Boost
